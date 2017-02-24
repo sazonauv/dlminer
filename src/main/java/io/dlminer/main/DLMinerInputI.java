@@ -28,7 +28,7 @@ public interface DLMinerInputI {
 	/**
 	 * Default maxHypothesesNumber
 	 */
-	Integer DEF_MAX_HYPOTHESES_NUMBER = 100000000;
+	Integer DEF_MAX_HYPOTHESES_NUMBER = 500000;
 	
 	
 	/**
@@ -120,7 +120,7 @@ public interface DLMinerInputI {
 	/**
 	 * Default flag for using minimal precision
 	 */
-	Boolean DEF_USE_MIN_PRECISION = false;
+	Boolean DEF_USE_MIN_PRECISION = true;
 	
 	
 
@@ -141,7 +141,7 @@ public interface DLMinerInputI {
 	/**
 	 * Default flag for using cleaning
 	 */
-	Boolean DEF_USE_CLEANING = true;
+	Boolean DEF_USE_CLEANING = false;
 	
 	
 	/**
