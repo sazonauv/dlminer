@@ -241,16 +241,16 @@ public class ConceptBuilder {
 		buildRoleDefinitions();
 	}
 
-	
-	
+
+
 	public void build(List<Language> languages) {
 		// build expressions
-		buildForLanguages(languages);			
+		buildForLanguages(languages);
 	}
-	
-	
-	
-	private void initCollections() {		
+
+
+
+	private void initCollections() {
 		// init classes and properties
 		classes = new ArrayList<>();
 		properties = new ArrayList<>();
@@ -302,31 +302,31 @@ public class ConceptBuilder {
 	private void initInstanceChecker() {		
 		instanceChecker = new InstanceChecker(handler);		
 	}
-	
-	
-	
-	
-	
-		
+
+
+
+
+
+
 	private void buildForLanguages(List<Language> languages) {
 		for (Language lang : languages) {
 			buildForLanguage(lang);
 		}
 	}
-	
-	
+
+
 	public void buildForLanguage(Language lang) {
 		buildExpressionsForLanguage(lang);
 		buildDefinitionsForLanguage(lang);
-	}	
-
-
-	private void buildExpressionsForLanguage(Language lang) {				
-		buildClassExpressionForLanguage(classes, lang);
-		buildRoleExpressionForLanguage(properties, lang);		
 	}
-	
-	
+
+
+	private void buildExpressionsForLanguage(Language lang) {
+		buildClassExpressionForLanguage(classes, lang);
+		buildRoleExpressionForLanguage(properties, lang);
+	}
+
+
 	private void buildDefinitionsForLanguage(Language lang) {
 		if (languageClassMap.containsKey(lang)) {
 			for (OWLClass cl : languageClassMap.get(lang)) {
@@ -339,9 +339,9 @@ public class ConceptBuilder {
 			}
 		}
 	}
-	
-	
-	
+
+
+
 	public void buildClassDefinitions() {
 		for (OWLClass cl : classExpressionMap.keySet()) {
 			buildClassDefinition(cl);
@@ -381,18 +381,18 @@ public class ConceptBuilder {
 			}
 		}
 	}
-	
-	
+
+
 	private List<OWLClass> generateClasses(Collection<OWLClassExpression> exprs) {
 		List<OWLClass> cls = new ArrayList<>(exprs.size());
 		for (OWLClassExpression expr : exprs) {
 			// generate a definition
 			OWLClass cl = handler.generateClass();
-			cls.add(cl);			
+			cls.add(cl);
 		}
 		return cls;
 	}
-	
+
 	private List<OWLObjectProperty> generateProperties(
 			List<OWLObjectPropertyExpression> exprs) {
 		List<OWLObjectProperty> props = new ArrayList<>(exprs.size());
@@ -403,8 +403,8 @@ public class ConceptBuilder {
 		}		
 		return props;
 	}
-	
-		
+
+
 	private void addClassExpressionMappings(
 			List<OWLClass> cls, List<? extends OWLClassExpression> exprs) {
 		for (int i=0; i<cls.size(); i++) {
@@ -412,7 +412,7 @@ public class ConceptBuilder {
 			expressionClassMap.put(exprs.get(i), cls.get(i));
 		}
 	}
-	
+
 	private void addRoleExpressionMappings(
 			List<OWLObjectProperty> props, List<? extends OWLObjectPropertyExpression> exprs) {
 		for (int i=0; i<props.size(); i++) {
@@ -420,22 +420,22 @@ public class ConceptBuilder {
 			expressionRoleMap.put(exprs.get(i), props.get(i));
 		}
 	}
-	
-	
-	
-	private void buildClassExpressionForLanguage(List<? extends OWLClassExpression> As, Language lang) {		
+
+
+
+	private void buildClassExpressionForLanguage(List<? extends OWLClassExpression> As, Language lang) {
 		// atomic classes
 		if (lang.equals(Language.A)) {
 			languageClassMap.put(Language.A, classes);
 			addClassExpressionMappings(classes, As);
 		} else
-		// add subconcepts if required (all or only for the signature)		
-		if (lang.equals(Language.C)) {			
+		// add subconcepts if required (all or only for the signature)
+		if (lang.equals(Language.C)) {
 			List<OWLClassExpression> subcons = buildSubConceptsForSignature();
 			if (subcons != null && !subcons.isEmpty()) {
 				List<OWLClass> subconCls = generateClasses(subcons);
-				addClassExpressionMappings(subconCls, subcons);			
-				languageClassMap.put(Language.C, subconCls);				
+				addClassExpressionMappings(subconCls, subcons);
+				languageClassMap.put(Language.C, subconCls);
 			}
 		} else
 		if (lang.equals(Language.NOT_C)) {
@@ -448,7 +448,7 @@ public class ConceptBuilder {
 			List<OWLClassExpression> exprs = generateAandBs(As, As);
 			List<OWLClass> cls = generateClasses(exprs);
 			addClassExpressionMappings(cls, exprs);
-			languageClassMap.put(Language.C_AND_D, cls);				
+			languageClassMap.put(Language.C_AND_D, cls);
 		} else
 		if (lang.equals(Language.C_AND_NOT_D)) {
 			List<OWLClassExpression> notAs = generateNotAs(As);
@@ -505,13 +505,13 @@ public class ConceptBuilder {
 			List<OWLClass> cls = generateClasses(exprs);
 			addClassExpressionMappings(cls, exprs);
 			languageClassMap.put(Language.R_SOME_S_SOME_C, cls);
-		} else 
+		} else
 		if (lang.equals(Language.R_ONLY_C)) {
 			List<OWLClassExpression> exprs = generateRonlyAs(As);
 			List<OWLClass> cls = generateClasses(exprs);
 			addClassExpressionMappings(cls, exprs);
 			languageClassMap.put(Language.R_ONLY_C, cls);
-		} else			
+		} else
 		if (lang.equals(Language.R_ONLY_NOT_C)) {
 			List<OWLClassExpression> notAs = generateNotAs(As);
 			List<OWLClassExpression> exprs = generateRonlyAs(notAs);
@@ -524,7 +524,7 @@ public class ConceptBuilder {
 			List<OWLClass> cls = generateClasses(exprs);
 			addClassExpressionMappings(cls, exprs);
 			languageClassMap.put(Language.C_OR_D, cls);
-		} else		
+		} else
 		if (lang.equals(Language.C_OR_NOT_D)) {
 			List<OWLClassExpression> notAs = generateNotAs(As);
 			List<OWLClassExpression> exprs = generateAorBs(As, notAs);
@@ -555,14 +555,14 @@ public class ConceptBuilder {
 			languageClassMap.put(Language.R_SOME_C_OR_D, cls);
 		} else
 		if (lang.equals(Language.CDL)) {
-			// do nothing here			
+			// do nothing here
 		} else
 		if (lang.equals(Language.DATA_C)) {
-			// do nothing here			
+			// do nothing here
 		}
 	}
-	
-	
+
+
 
 
 	private void buildRoleExpressionForLanguage(List<? extends OWLObjectPropertyExpression> Rs, Language lang) {
@@ -601,8 +601,8 @@ public class ConceptBuilder {
 		languageClassMap.put(Language.CDL, cls);
 		buildClassDefinitions();
 	}*/
-	
-		
+
+
 	
 	
 	
@@ -639,37 +639,37 @@ public class ConceptBuilder {
 			}
 		}
 	}
-	
-			
+
+
 	private void buildRefinements(LearnerOperator operator) {
-		// root		
+		// root
 		OWLClassExpression root = factory.getOWLThing();
-		expressionInstanceMap.put(root, handler.getIndividuals());		
+		expressionInstanceMap.put(root, handler.getIndividuals());
 		// loop
 		LinkedList<OWLClassExpression> candidates = new LinkedList<>();
 		Set<OWLClassExpression> processed = new HashSet<>();
 		candidates.add(root);
 		processed.add(root);
-		int iters = 0;		
+		int iters = 0;
 		loop:
 			while (!candidates.isEmpty()) {
-				OWLClassExpression current = candidates.pollFirst();			
+				OWLClassExpression current = candidates.pollFirst();
 				// generate all extensions of length+2
-				Set<OWLClassExpression> extensions = operator.refine(current);		
+				Set<OWLClassExpression> extensions = operator.refine(current);
 				// beam
-				List<OWLClassExpression> beam = new LinkedList<>();				
-				// evaluate extensions			
+				List<OWLClassExpression> beam = new LinkedList<>();
+				// evaluate extensions
 				for (OWLClassExpression extension : extensions) {
 					try {
 						if (DepthMetric.depth(extension) <= maxRoleDepth
 								&& LengthMetric.length(extension) <= maxConceptLength
 								&& !processed.contains(extension)
 								&& !isEquivalentTo(extension, current)) {
-							Set<OWLNamedIndividual> instances = null;						
+							Set<OWLNamedIndividual> instances = null;
 							instances = reasoner.getInstances(extension, false).getFlattened();
 							if (instances != null && instances.size() >= minSupport) {
 								beam.add(extension);
-								expressionInstanceMap.put(extension, instances);																					
+								expressionInstanceMap.put(extension, instances);
 							}
 						}
 					} catch (Exception e) {
@@ -684,20 +684,20 @@ public class ConceptBuilder {
 				} else {
 					candidates.addAll(beam.subList(0, beamSize));
 				}
-				// debug		
-				Out.p("iterations=" + (++iters) 
+				// debug
+				Out.p("iterations=" + (++iters)
 						+ " concepts=" + expressionInstanceMap.size()
 						+ " candidates=" + candidates.size()
 						+ " extensions=" + extensions.size()
-						+ " current=" + current);			
+						+ " current=" + current);
 			}
 		Out.p("\nDL-Refinement has terminated");
 	}
 
 
-	
-		
-	private boolean isEquivalentTo(OWLClassExpression cl1, 
+
+
+	private boolean isEquivalentTo(OWLClassExpression cl1,
 			OWLClassExpression cl2) throws Exception {		
 		OWLAxiom axiom1 = factory.getOWLSubClassOfAxiom(cl1, cl2);
 		OWLAxiom axiom2 = factory.getOWLSubClassOfAxiom(cl2, cl1);
@@ -711,11 +711,11 @@ public class ConceptBuilder {
 //			initStartLanguage(lang);
 //		}
 //	}
-//	
-//	
+//
+//
 //	private void buildStartClasses() {
-//		startClasses = new HashSet<OWLClassExpression>();		
-//		Map<OWLClassExpression, Set<OWLNamedIndividual>> 
+//		startClasses = new HashSet<OWLClassExpression>();
+//		Map<OWLClassExpression, Set<OWLNamedIndividual>>
 //			clasIndMap = instanceChecker.getClasIndMap();
 //		for (OWLClassExpression cl : clasIndMap.keySet()) {
 //			if (clasIndMap.get(cl).size() >= minSupport) {
@@ -723,8 +723,8 @@ public class ConceptBuilder {
 //			}
 //		}
 //	}
-	
-	
+
+
 	private void initStartLanguage(Language lang) {
 		if (!lang.equals(Language.A)
 				&& !lang.equals(Language.R)
@@ -735,19 +735,19 @@ public class ConceptBuilder {
 			buildForLanguage(lang);
 //			for (OWLClass cl : languageClassMap.get(lang)) {
 //				startClasses.add(classExpressionMap.get(cl));
-//			}		
-			// initialise the reasoner on complex class expressions if necessary			
+//			}
+			// initialise the reasoner on complex class expressions if necessary
 //			addDefinitions(lang, handler);
 //			reasoner.flush();
 //			reasoner.precomputeInferences(InferenceType.CLASS_HIERARCHY,
 //					InferenceType.OBJECT_PROPERTY_HIERARCHY,
-//					InferenceType.CLASS_ASSERTIONS, 
+//					InferenceType.CLASS_ASSERTIONS,
 //					InferenceType.OBJECT_PROPERTY_ASSERTIONS);
 		}
 	}
-	
-	
-	
+
+
+
 	private void buildClassExpressions() {
 		buildALCConceptsOptimised();
 		// generate encoding classes
@@ -768,14 +768,14 @@ public class ConceptBuilder {
 
 
 	/*private void buildALCConcepts() {
-		// build concepts		
+		// build concepts
 		aprioriALC();
 		// remove redundant concepts
 		removeRedundantNodesInd();
 		// convert to expressionInstanceMap
 		convertToExpressionInstanceMapInd();
 	}*/
-	
+
 	
 	
 	private void removeRedundantNodesExp() {
@@ -813,8 +813,8 @@ public class ConceptBuilder {
 		return false;
 	}
 	
-	
-	
+
+
 	/*private void removeRedundantNodesInd() {
 		Set<ALCNode> redunNodes = new HashSet<>();
 		for (ALCNode node : nodeInstanceMap.keySet()) {
@@ -829,9 +829,9 @@ public class ConceptBuilder {
 	}*/
 
 
-	
+
 	/*private void aprioriALC() {
-		PriorityQueue<ALCNode> candidates = new PriorityQueue<>(100, 
+		PriorityQueue<ALCNode> candidates = new PriorityQueue<>(100,
 				new NodeLengthComparator(SortingOrder.ASC));
 		Set<ALCNode> processed = new HashSet<>();
 		if (nodeInstanceMap.isEmpty()) {
@@ -842,14 +842,14 @@ public class ConceptBuilder {
 			// if CDL
 			if (positiveClass != null && negativeClass != null) {
 				// set positive
-				positiveNode = processNode(positiveClass);				
+				positiveNode = processNode(positiveClass);
 				candidates.add(positiveNode);
 				processed.add(positiveNode);
 				// set negative
-				negativeNode = processNode(negativeClass);				
+				negativeNode = processNode(negativeClass);
 				candidates.add(negativeNode);
 				processed.add(negativeNode);
-			}			
+			}
 		} else {
 			candidates.addAll(nodeInstanceMap.keySet());
 			processed.addAll(nodeInstanceMap.keySet());
@@ -857,20 +857,20 @@ public class ConceptBuilder {
 		// loop
 		Out.p("\nEntering the main loop");
 		int initialNumber = nodeInstanceMap.size();
-		int iters = 0;		
-		loop:			
+		int iters = 0;
+		loop:
 		while (!candidates.isEmpty()) {
-			ALCNode current = (ALCNode) candidates.poll();			
+			ALCNode current = (ALCNode) candidates.poll();
 			// generate all extensions of labelSize+1
-			Set<ALCNode> extensions = operator.refine(current);			
+			Set<ALCNode> extensions = operator.refine(current);
 			// beam
-			List<ALCNode> beam = new LinkedList<>();			
-			// evaluate extensions			
+			List<ALCNode> beam = new LinkedList<>();
+			// evaluate extensions
 			for (ALCNode extension : extensions) {
 				OWLClassExpression concept = extension.getConcept();
 				if (extension.depth() <= maxRoleDepth
 						&& extension.length() <= maxConceptLength
-						&& !processed.contains(extension)) {					
+						&& !processed.contains(extension)) {
 					// if prediction
 					if (positiveClass != null && negativeClass != null
 							&& (concept.containsEntityInSignature(positiveClass)
@@ -878,12 +878,12 @@ public class ConceptBuilder {
 						continue;
 					}
 					double t1 = System.nanoTime();
-					Set<OWLNamedIndividual> instances = null;										
+					Set<OWLNamedIndividual> instances = null;
 					try {
 						if (reasoner.isSatisfiable(concept)) {
 							instances = reasoner.getInstances(concept, false).getFlattened();
 						}
-					} catch (Exception e) {						
+					} catch (Exception e) {
 						Out.p(e + DLMinerOutputI.CONCEPT_BUILDING_ERROR);
 					}
 					extension.coverage = (instances == null) ? 0 : instances.size();
@@ -902,10 +902,10 @@ public class ConceptBuilder {
 						if (nodeInstanceMap.size() - initialNumber >= maxConceptNumber) {
 							break loop;
 						}
-					}					
-				}				
-			}			
-			processed.addAll(extensions);			
+					}
+				}
+			}
+			processed.addAll(extensions);
 			// find beam concepts and add them to candidates
 			Collections.sort(beam, new NodeCoverageComparator(SortingOrder.DESC));
 			if (beam.size() <= beamSize) {
@@ -913,18 +913,18 @@ public class ConceptBuilder {
 			} else {
 				candidates.addAll(beam.subList(0, beamSize));
 			}
-			// debug		
-			Out.p("iterations=" + (++iters) 
+			// debug
+			Out.p("iterations=" + (++iters)
 					+ " concepts=" + nodeInstanceMap.size()
 					+ " candidates=" + candidates.size()
 					+ " extensions=" + extensions.size()
-					+ " current=" + current);			
+					+ " current=" + current);
 		}
-		Out.p("\nDL-Apriori has terminated");		
+		Out.p("\nDL-Apriori has terminated");
 	}*/
-	
-	
-	
+
+
+
 	
 	private void aprioriALCOptimised() {
 		PriorityQueue<ALCNode> candidates = new PriorityQueue<>(100, 
@@ -957,7 +957,7 @@ public class ConceptBuilder {
 		int iters = 0;
 		loop:
 		while (!candidates.isEmpty()) {
-			ALCNode current = (ALCNode) candidates.poll();			
+			ALCNode current = candidates.poll();
 			// generate all non-redundant extensions of labelSize+1
 			Set<ALCNode> refinements = operator.refine(current);
 			// first check atomic nodes
@@ -975,7 +975,7 @@ public class ConceptBuilder {
 				OWLClassExpression concept = extension.getConcept();				
 				if (extension.depth() <= maxRoleDepth
 						&& extension.length() <= maxConceptLength
-						&& !processed.contains(extension)) {					
+						&& !processed.contains(extension)) {
 					// if prediction
 					if (positiveClass != null && negativeClass != null) {
 						if (concept.containsEntityInSignature(positiveClass)
@@ -1460,12 +1460,12 @@ public class ConceptBuilder {
 		subcons.removeAll(classes);		
 		return subcons;
 	}
-	
-	
-	private List<OWLClassExpression> buildSubConceptsForSignature() {		
+
+
+	private List<OWLClassExpression> buildSubConceptsForSignature() {
 		List<OWLClassExpression> subcons = new ArrayList<>(classes.size());
 		Set<OWLAxiom> axioms = handler.copyAxioms();
-		for (OWLAxiom ax : axioms) {	
+		for (OWLAxiom ax : axioms) {
 			Set<OWLClassExpression> nestedCons = ax.getNestedClassExpressions();
 			for (OWLClassExpression nestedCon : nestedCons) {
 				if (signature.containsAll(nestedCon.getSignature())) {
@@ -1473,33 +1473,33 @@ public class ConceptBuilder {
 				}
 			}
 		}
-		subcons.removeAll(classes);		
+		subcons.removeAll(classes);
 		return subcons;
 	}
-	
-	
+
+
 	private List<OWLClassExpression> generateNotAs(List<? extends OWLClassExpression> As) {
 		// not A
 		List<OWLClassExpression> notAs = new ArrayList<>(As.size());
 		for (OWLClassExpression A : As) {
 			if (!A.isOWLThing() && !A.isOWLNothing()) {
 				// generate an expression
-				OWLClassExpression notA = factory.getOWLObjectComplementOf(A);			
+				OWLClassExpression notA = factory.getOWLObjectComplementOf(A);
 				notAs.add(notA);
 			}
 		}
 		return notAs;
 	}
-	
-	
+
+
 	private List<OWLClassExpression> generateAandBs(List<? extends OWLClassExpression> As, List<? extends OWLClassExpression> Bs) {
-		// A and B		
+		// A and B
 		Set<OWLClassExpression> set = new HashSet<>();
 		for (OWLClassExpression A : As) {
 			for (OWLClassExpression B : Bs) {
-				if (!A.equals(B) && !A.isOWLThing() && !B.isOWLThing()) {					
+				if (!A.equals(B) && !A.isOWLThing() && !B.isOWLThing()) {
 					// generate an expression
-					OWLClassExpression AandB = factory.getOWLObjectIntersectionOf(A, B);			
+					OWLClassExpression AandB = factory.getOWLObjectIntersectionOf(A, B);
 					set.add(AandB);
 				}
 			}
@@ -1507,17 +1507,17 @@ public class ConceptBuilder {
 		List<OWLClassExpression> AandBs = new ArrayList<>(set);
 		return AandBs;
 	}
-	
-	
+
+
 	private List<OWLClassExpression> generateAorBs(List<? extends OWLClassExpression> As,
 			List<? extends OWLClassExpression> Bs) {
 		// A or B
 		Set<OWLClassExpression> set = new HashSet<>();
 		for (OWLClassExpression A : As) {
 			for (OWLClassExpression B : Bs) {
-				if (!A.equals(B) && !A.isOWLThing() && !B.isOWLThing()) {					
+				if (!A.equals(B) && !A.isOWLThing() && !B.isOWLThing()) {
 					// generate an expression
-					OWLClassExpression AorB = factory.getOWLObjectUnionOf(A, B);			
+					OWLClassExpression AorB = factory.getOWLObjectUnionOf(A, B);
 					set.add(AorB);
 				}
 			}
@@ -1525,53 +1525,53 @@ public class ConceptBuilder {
 		List<OWLClassExpression> AorBs = new ArrayList<>(set);
 		return AorBs;
 	}
-	
-	
+
+
 	private List<OWLClassExpression> generateRonlyAs(
 			List<? extends OWLClassExpression> As) {
 		// R some A
 		List<OWLClassExpression> RonlyAs = new ArrayList<>(As.size()*properties.size());
-		for (OWLClassExpression A : As) {			
+		for (OWLClassExpression A : As) {
 			for (OWLObjectProperty R : properties) {
 				// generate an expression
-				OWLClassExpression RonlyA = factory.getOWLObjectAllValuesFrom(R, A);			
+				OWLClassExpression RonlyA = factory.getOWLObjectAllValuesFrom(R, A);
 				RonlyAs.add(RonlyA);
-			}			
+			}
 		}
 		return RonlyAs;
 	}
-	
-	
-	
+
+
+
 	private List<OWLClassExpression> generateRsomeAs(List<? extends OWLClassExpression> As) {
 		// R some A
 		List<OWLClassExpression> RsomeAs = new ArrayList<>(As.size()*properties.size());
-		for (OWLClassExpression A : As) {			
+		for (OWLClassExpression A : As) {
 			for (OWLObjectProperty R : properties) {
 				// generate an expression
-				OWLClassExpression RsomeA = factory.getOWLObjectSomeValuesFrom(R, A);			
+				OWLClassExpression RsomeA = factory.getOWLObjectSomeValuesFrom(R, A);
 				RsomeAs.add(RsomeA);
-			}			
+			}
 		}
 		return RsomeAs;
 	}
-	
-	
+
+
 	private List<OWLClassExpression> generateRsomeAs(
 			List<? extends OWLObjectPropertyExpression> Rs, List<? extends OWLClassExpression> As) {
 		// R some A
 		List<OWLClassExpression> RsomeAs = new ArrayList<>(As.size()*Rs.size());
-		for (OWLClassExpression A : As) {			
+		for (OWLClassExpression A : As) {
 			for (OWLObjectPropertyExpression R : Rs) {
 				// generate an expression
-				OWLClassExpression RsomeA = factory.getOWLObjectSomeValuesFrom(R, A);			
+				OWLClassExpression RsomeA = factory.getOWLObjectSomeValuesFrom(R, A);
 				RsomeAs.add(RsomeA);
-			}			
+			}
 		}
 		return RsomeAs;
 	}
-	
-	
+
+
 	private List<OWLObjectPropertyExpression> generateInverseRs(List<? extends OWLObjectPropertyExpression> Rs) {
 		// inverse of R		
 		List<OWLObjectPropertyExpression> invRs = new ArrayList<>(Rs.size());
@@ -1584,13 +1584,13 @@ public class ConceptBuilder {
 		}
 		return invRs;
 	}
-	
-	
+
+
 	private List<OWLObjectPropertyExpression> generateInverseRs() {
-		return generateInverseRs(properties);		
+		return generateInverseRs(properties);
 	}
-	
-	
+
+
 	private List<OWLObjectPropertyExpression> generateRchainSs(
 			List<? extends OWLObjectPropertyExpression> Rs,
 			List<? extends OWLObjectPropertyExpression> Ss) {		

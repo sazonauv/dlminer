@@ -5,6 +5,7 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.InputStream;
 
+import io.dlminer.ont.Logic;
 import io.dlminer.print.Out;
 
 
@@ -24,12 +25,16 @@ public class DLMinerTest {
 		InputStream ontologyFile = null;
         try {
         	ontologyFile = new FileInputStream(args[0]);
-//          ontologyFile = new FileInputStream("/home/slava/PhD/Ontologies/Bioportal/selected/glyco.glycomics-ontology.1.orig.owl.xml");
-//        	ontologyFile = new FileInputStream("/home/slava/Workspaces/Eclipse/ExperimentRunner/hpo/hpo_abox.owl");
         } catch (FileNotFoundException e) {
             e.printStackTrace();
         }
         DLMinerInput input = new DLMinerInput(ontologyFile);
+        input.setMaxConceptLength(3);
+        input.setMinConceptSupport(20);
+        input.setMinPrecision(0.9);
+//        input.setLogic(Logic.ALC);
+//        input.setUseDisjunction(true);
+        input.setUseCleaning(true);
         DLMiner miner = new DLMiner(input);
 		try {
 			miner.run();			
@@ -38,11 +43,7 @@ public class DLMinerTest {
 		}
 		Out.p("\nSaving hypotheses");
 		File hypothesesFile = new File(args[1]);
-		miner.saveHypotheses(hypothesesFile);		
-//		Out.p("\nHypothesis sorter test:");
-//		HypothesisSorter sorter = new HypothesisSorter(miner.getHypothesesData());
-//		sorter.sort();
-//		sorter.test();		
+		miner.saveHypotheses(hypothesesFile);
 		Out.p("\nStatistics:");
 		Out.p(miner.getStats());
 	}

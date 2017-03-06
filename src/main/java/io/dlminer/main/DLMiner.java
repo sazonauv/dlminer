@@ -288,7 +288,7 @@ public class DLMiner {
     			input.getDlminerMode(), seedClasses);
        
         // build hypotheses
-        Collection<Hypothesis> hypotheses = buildHypotheses(handler, 
+        Collection<Hypothesis> hypotheses = buildHypotheses(
         		reasoner, conceptBuilder, axiomBuilder);
 
         // initialise the evaluator
@@ -337,10 +337,9 @@ public class DLMiner {
     
     
     
-    private Collection<Hypothesis> buildHypotheses(OntologyHandler handler, 
-    		OWLReasoner reasoner, ConceptBuilder conceptBuilder, 
-    		AxiomBuilder axiomBuilder) {
-    	 
+    private Collection<Hypothesis> buildHypotheses(OWLReasoner reasoner,
+                                                   ConceptBuilder conceptBuilder,
+                                                   AxiomBuilder axiomBuilder) {
                 
         // initialise parameters
         Set<Hypothesis> hypotheses = new HashSet<>();
@@ -387,10 +386,9 @@ public class DLMiner {
     	Map<OWLClass, Set<OWLNamedIndividual>> classInstMap =
     			conceptBuilder.getClassInstanceMap();       	
     	Out.p("\n" + classInstMap.size() + " concepts are built");
-    	
-    	// debug
+
+        // debug
 //        Out.printClassesMS(conceptBuilder.getExpressionClassMap().keySet());
-    	
 
     	// build hypotheses
     	Out.p("\nBuilding hypotheses of length at most " + 2*input.getMaxConceptLength());
@@ -416,11 +414,6 @@ public class DLMiner {
     	    	
     	// add all hypotheses
     	Out.p("\nAppending hypotheses");
-//    	if (!input.getDlminerMode().equals(DLMinerMode.CDL)) {
-//    		appendRandom(hypotheses, cleanClassAxioms);
-//    	} else {
-//    		hypotheses.addAll(cleanClassAxioms);
-//    	}
     	hypotheses.addAll(cleanClassAxioms);
     	Out.p(hypotheses.size() + " axioms are built in total");
         
@@ -443,6 +436,8 @@ public class DLMiner {
            
         // sort by length
         List<Hypothesis> sortedHypotheses = HypothesisSorter.sortByLength(hypotheses);
+        // add quality values
+        addQualityValues(sortedHypotheses);
         return sortedHypotheses;
     }
     
@@ -500,28 +495,6 @@ public class DLMiner {
 
 	
 
-
-	/*private void addAccurateHypotheses(Collection<Hypothesis> hypotheses, 
-    		double minPrecision, OntologyHandler handler, OWLReasoner reasoner) {
-    	Out.p("\nAdding accurate and consistent hypotheses");
-		for (Hypothesis h : hypotheses) {
-			try {
-				if (h.precision >= minPrecision) {
-					if (input.isUseConsistency() 
-							&& !HypothesisEvaluator.isConsistent(h.axioms, handler, reasoner)) {
-						continue;
-					}
-					handler.addAxioms(h.axioms);
-				}
-			} catch (Exception e) {
-				Out.p(e + DLMinerOutputI.HYPOTHESIS_EVALUATION_ERROR);
-			}
-		}
-	}*/
-    
-    
-    
-    
     
     private void append(Collection<Hypothesis> oldHypotheses, 
     		Collection<Hypothesis> newHypotheses) {
@@ -711,23 +684,6 @@ public class DLMiner {
 	
 
 
-	/*public void addLabels() {
-		OWLOntology ont = output.getOntology();		
-		for (Hypothesis h : output.getHypotheses()) {
-			Set<OWLEntity> ents = h.signature;
-			for (OWLEntity ent : ents) {
-				Set<OWLAnnotationAssertionAxiom> annots = 
-					ont.getAnnotationAssertionAxioms(ent.getIRI());
-				// find a label
-				for (OWLAnnotationAssertionAxiom annot : annots) {
-					if (annot.getProperty().toString().contains("label")) {
-						h.axioms.add(annot);
-					}
-				}							
-			}
-		}
-	}*/
-
 
 	public static void addQualityValues(Collection<Hypothesis> hypotheses) {
 		IRI iri = IRI.create("http://www.dlminer.io");
@@ -735,14 +691,14 @@ public class DLMiner {
 		for (Hypothesis h : hypotheses) {	
 			Set<OWLAnnotation> annots = new HashSet<>();
 			// ids
-			if (h.id != null) {
-				OWLAnnotationProperty annProp = factory.getOWLAnnotationProperty(
-						IRI.create(iri.toString() + Out.IRI_SEPARATOR + "_id"));
-				OWLLiteral value = factory.getOWLLiteral(h.id);					
-				OWLAnnotation annot = 							
-						factory.getOWLAnnotation(annProp, value);
-				annots.add(annot);
-			}
+//			if (h.id != null) {
+//				OWLAnnotationProperty annProp = factory.getOWLAnnotationProperty(
+//						IRI.create(iri.toString() + Out.IRI_SEPARATOR + "_id"));
+//				OWLLiteral value = factory.getOWLLiteral(h.id);
+//				OWLAnnotation annot =
+//						factory.getOWLAnnotation(annProp, value);
+//				annots.add(annot);
+//			}
 			// logical measures			
 			if (h.novelty != null) {
 				OWLAnnotationProperty annProp = factory.getOWLAnnotationProperty(
@@ -900,12 +856,6 @@ public class DLMiner {
 		return sortedHypotheses;
 	}
 	
-	
-	/*public void evaluateHypotheses(Collection<Hypothesis> hypotheses) {
-		HypothesisEvaluator evaluator = output.getEvaluator();
-		evaluator.evaluateHypothesesContrapositive(hypotheses, stats);
-		evaluator.evaluateHypotheses(hypotheses, stats);
-	}*/
 
 
 	public void evaluateStrength(Collection<Hypothesis> hypotheses) {

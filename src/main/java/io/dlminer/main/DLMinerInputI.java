@@ -53,7 +53,7 @@ public interface DLMinerInputI {
 	/**
 	 * Default beamSize
 	 */
-	Integer DEF_BEAM_SIZE = 100;
+	Integer DEF_BEAM_SIZE = 10000;
 	
 	
 	/**
