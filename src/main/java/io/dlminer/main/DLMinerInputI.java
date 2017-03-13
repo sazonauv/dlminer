@@ -148,6 +148,18 @@ public interface DLMinerInputI {
 	 * Default flag for using the Closed World Assumption (CWA)
 	 */
 	Boolean DEF_USE_CWA = false;
+
+
+    /**
+     * Default flag for using data properties
+     */
+    Boolean DEF_USE_DATA_PROPERTIES = true;
+
+
+	/**
+	 * Default number of thresholds for expressions with data properties
+	 */
+	Integer DEF_DP_THRESHOLD_NUMBER = 100;
 	
 		
 	
@@ -175,5 +187,5 @@ public interface DLMinerInputI {
 	String PARSING_ONTOLOGY_ERR = "your ontology cannot be parsed! check your file.";
 
 
-				
+
 }

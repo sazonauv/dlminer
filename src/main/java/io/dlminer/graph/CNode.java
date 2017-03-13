@@ -7,6 +7,7 @@ import java.util.Set;
 import org.semanticweb.owlapi.model.OWLClassExpression;
 import org.semanticweb.owlapi.model.OWLDataFactory;
 
+import org.semanticweb.owlapi.model.OWLLiteral;
 import uk.ac.manchester.cs.owl.owlapi.OWLDataFactoryImpl;
 
 public abstract class CNode {
@@ -107,7 +108,18 @@ public abstract class CNode {
 	
 	
 	public abstract boolean isMoreSpecificThan(CNode node);
-	
+
+
+	public static boolean isMoreSpecificThan(Object obj1, Object obj2) {
+	    if (obj1 instanceof CNode && obj2 instanceof CNode) {
+            CNode node1 = (CNode) obj1;
+            CNode node2 = (CNode) obj2;
+            return node1.isMoreSpecificThan(node2);
+        }
+        return obj1.equals(obj2);
+    }
+
+
 	
 	protected boolean isEqualTo(CNode node) {
 		if (concept != null && node.concept != null 

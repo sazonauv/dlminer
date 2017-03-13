@@ -418,20 +418,22 @@ public class ELNode extends CNode {
 		if (outEdges != null) {
 			Set<CEdge> duplicates = new HashSet<>();
 			for (CEdge e1 : outEdges) {
-				boolean isEx1 = e1 instanceof SomeEdge;
 				for (CEdge e2 : outEdges) {
 					if (!e1.equals(e2)
-							&& isEx1 == e2 instanceof SomeEdge
+							&& e1 instanceof SomeEdge == e2 instanceof SomeEdge
+                            && e1 instanceof OnlyEdge == e2 instanceof OnlyEdge
 							&& e1.label.equals(e2.label)
-							&& !duplicates.contains(e1)							
-							&& e1.object.isMoreSpecificThan(e2.object)) {
+							&& !duplicates.contains(e1)
+                            && CNode.isMoreSpecificThan(e1.object, e2.object)) {
 						duplicates.add(e2);						
 					}
 				}
 			}
 			removeOutEdges(duplicates);
 			for (CEdge e : outEdges) {
-				((ELNode)e.object).removeRedundantSuccessors();
+			    if (!(e instanceof DataEdge)) {
+                    ((ELNode) e.object).removeRedundantSuccessors();
+                }
 			}
 		}
 	}

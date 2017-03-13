@@ -6,11 +6,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import org.semanticweb.owlapi.model.OWLClass;
-import org.semanticweb.owlapi.model.OWLClassExpression;
-import org.semanticweb.owlapi.model.OWLDataFactory;
-import org.semanticweb.owlapi.model.OWLObjectProperty;
-import org.semanticweb.owlapi.model.OWLObjectPropertyExpression;
+import org.semanticweb.owlapi.model.*;
 import org.semanticweb.owlapi.reasoner.OWLReasoner;
 
 import io.dlminer.graph.ALCNode;
@@ -26,7 +22,8 @@ import io.dlminer.print.Out;
 public abstract class RefinementOperator implements Operator {
 	
 	// signature to use
-	protected Set<OWLObjectProperty> properties;	
+    protected Set<OWLDataProperty> dataProperties;
+    protected Set<OWLObjectProperty> properties;
 	protected Set<OWLClass> classes;
 	
 	// reasoner	

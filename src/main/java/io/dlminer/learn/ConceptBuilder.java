@@ -16,29 +16,10 @@ import java.util.Set;
 import java.util.SortedSet;
 import java.util.TreeSet;
 
-import org.semanticweb.owlapi.model.IRI;
-import org.semanticweb.owlapi.model.OWLAxiom;
-import org.semanticweb.owlapi.model.OWLClass;
-import org.semanticweb.owlapi.model.OWLClassAssertionAxiom;
-import org.semanticweb.owlapi.model.OWLClassExpression;
-import org.semanticweb.owlapi.model.OWLDataFactory;
-import org.semanticweb.owlapi.model.OWLEntity;
-import org.semanticweb.owlapi.model.OWLIndividual;
-import org.semanticweb.owlapi.model.OWLNamedIndividual;
-import org.semanticweb.owlapi.model.OWLObjectAllValuesFrom;
-import org.semanticweb.owlapi.model.OWLObjectProperty;
-import org.semanticweb.owlapi.model.OWLObjectPropertyAssertionAxiom;
-import org.semanticweb.owlapi.model.OWLObjectPropertyExpression;
-import org.semanticweb.owlapi.model.OWLSubClassOfAxiom;
-import org.semanticweb.owlapi.model.OWLSubObjectPropertyOfAxiom;
+import io.dlminer.graph.*;
+import org.semanticweb.owlapi.model.*;
 import org.semanticweb.owlapi.reasoner.OWLReasoner;
 
-import io.dlminer.graph.ALCNode;
-import io.dlminer.graph.CEdge;
-import io.dlminer.graph.ELNode;
-import io.dlminer.graph.Expansion;
-import io.dlminer.graph.OnlyEdge;
-import io.dlminer.graph.SomeEdge;
 import io.dlminer.main.DLMinerOutputI;
 import io.dlminer.ont.DepthMetric;
 import io.dlminer.ont.InstanceChecker;
@@ -61,6 +42,7 @@ public class ConceptBuilder {
 		
 	private List<OWLClass> classes;
 	private List<OWLObjectProperty> properties;
+    private List<OWLDataProperty> dataProperties;
 	private Set<OWLEntity> signature;
 	
 	// class maps
@@ -109,6 +91,7 @@ public class ConceptBuilder {
 	private boolean useDisjunction;
 	private boolean useNegation;
 	private boolean useUniversalRestriction;
+	private boolean useDataProperties;
 	
 	
 	private Logic logic;		
@@ -194,13 +177,14 @@ public class ConceptBuilder {
 
 	private void initRefinementOperator() {
 		Set<OWLClass> cls = new HashSet<>(classes);
-		Set<OWLObjectProperty> props = new HashSet<>(properties);		
+		Set<OWLObjectProperty> props = new HashSet<>(properties);
+        Set<OWLDataProperty> dataProps = new HashSet<>(dataProperties);
 		if (logic.equals(Logic.EL)) {	
-			operator = new ALCOperator(reasoner, cls, props, 
-					maxConceptLength, maxRoleDepth, checkDisjointness);
+			operator = new ALCOperator(reasoner, cls, props, dataProps,
+					maxConceptLength, maxRoleDepth, checkDisjointness, useDataProperties);
 		} else {
-			operator = new ALCOperator(reasoner, cls, props, 
-					maxConceptLength, maxRoleDepth, checkDisjointness,
+			operator = new ALCOperator(reasoner, cls, props, dataProps,
+					maxConceptLength, maxRoleDepth, checkDisjointness, useDataProperties,
 					useNegation, useUniversalRestriction, useDisjunction);
 		}
 	}
@@ -254,6 +238,7 @@ public class ConceptBuilder {
 		// init classes and properties
 		classes = new ArrayList<>();
 		properties = new ArrayList<>();
+        dataProperties = new ArrayList<>();
 		for (OWLEntity en : signature) {
 			if (en.isOWLClass()) {
 				OWLClass cl = (OWLClass)en;
@@ -266,7 +251,10 @@ public class ConceptBuilder {
 					properties.add(prop);
 				}
 			} else if (en.isOWLDataProperty()) {
-				// no data properties yet
+                OWLDataProperty prop = (OWLDataProperty)en;
+                if (!prop.isOWLTopDataProperty() && !prop.isOWLBottomDataProperty()) {
+                    dataProperties.add(prop);
+                }
 			}
 		}				
 		// init class maps
@@ -1173,7 +1161,9 @@ public class ConceptBuilder {
 		Map<OWLNamedIndividual, Set<OWLClassAssertionAxiom>> indCAssMap = 
 				handler.createIndClassAssertionMap();
 		Map<OWLNamedIndividual, Set<OWLObjectPropertyAssertionAxiom>> indRAssMap = 
-				handler.createIndPropertyAssertionMap();		
+				handler.createIndPropertyAssertionMap();
+        Map<OWLNamedIndividual, Set<OWLDataPropertyAssertionAxiom>> indDRAssMap =
+                handler.createIndDataPropertyAssertionMap();
 		// create an ABox graph
 		Map<OWLNamedIndividual, ELNode> aboxMap = 
 				new HashMap<>();
@@ -1190,6 +1180,15 @@ public class ConceptBuilder {
 			ELNode node = new ELNode(label);
 			aboxMap.put(ind, node);
 		}
+		// create data relations
+        for (OWLNamedIndividual ind : indDRAssMap.keySet()) {
+            Set<OWLDataPropertyAssertionAxiom> drfacts = indDRAssMap.get(ind);
+            ELNode subj = aboxMap.get(ind);
+            for (OWLDataPropertyAssertionAxiom drfact : drfacts) {
+                EDataEdge edge = new EDataEdge(subj, drfact.getProperty(), drfact.getObject());
+                subj.addOutEdge(edge);
+            }
+        }
 		// build map of universals
 		Map<OWLClassExpression, Set<OWLObjectAllValuesFrom>> classUniversalMap = new HashMap<>();
 		for (OWLAxiom ax : handler.getTBoxAxioms()) {
@@ -1400,12 +1399,20 @@ public class ConceptBuilder {
 				LinkedList<CEdge> edges = current.pointer.getOutEdges();
 				if (edges != null) {					
 					for (CEdge edge : edges) {
-						ELNode obj = (ELNode) edge.object;
+						// process a data property
+						if (edge instanceof EDataEdge) {
+                            EDataEdge dataEdge = (EDataEdge) edge;
+                            EDataEdge newEdge = new EDataEdge(current, dataEdge.label, dataEdge.object);
+                            current.addOutEdge(newEdge);
+                            continue;
+                        }
+                        // process object properties
+                        ELNode obj = (ELNode) edge.object;
 						Expansion child = new Expansion(obj.labels);						
 						child.depth = current.depth + 1;
 						if (child.depth <= maxRoleDepth) {
 							child.pointer = obj;
-							CEdge newEdge = null;
+							CEdge newEdge;
 							if (edge instanceof SomeEdge) {
 								newEdge = new SomeEdge(current, edge.label, child);
 							} else {
@@ -2213,6 +2220,15 @@ public class ConceptBuilder {
 	}
 
 
+    /**
+     *
+     * @param useDataProperties the flag to use data properties
+     */
+    public void setUseDataProperties(boolean useDataProperties) {
+        this.useDataProperties = useDataProperties;
+    }
+
+
 
 	public void retainClassDefinitions(Set<Hypothesis> hypotheses) {
 		// collect expressions
@@ -2236,8 +2252,4 @@ public class ConceptBuilder {
 	}
 
 
-
-	
-	
-					
 }

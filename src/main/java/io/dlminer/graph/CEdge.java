@@ -1,5 +1,7 @@
 package io.dlminer.graph;
 
+import org.semanticweb.owlapi.model.OWLDataProperty;
+import org.semanticweb.owlapi.model.OWLLiteral;
 import org.semanticweb.owlapi.model.OWLObjectPropertyExpression;
 
 public abstract class CEdge {
@@ -18,7 +20,8 @@ public abstract class CEdge {
 		this.label = label;
 		this.object = object;
 	}
-	
+
+
 
 	
 	@Override

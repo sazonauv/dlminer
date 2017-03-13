@@ -1190,7 +1190,7 @@ public class OntologyHandler {
 	
 	
 	
-	private Map<OWLNamedIndividual, Set<OWLDataPropertyAssertionAxiom>> 
+	public Map<OWLNamedIndividual, Set<OWLDataPropertyAssertionAxiom>>
 		createIndDataPropertyAssertionMap() {
 		Set<OWLAxiom> axioms = getABoxAxioms();
 		Map<OWLNamedIndividual, Set<OWLDataPropertyAssertionAxiom>> indDAssMap = new HashMap<>();
@@ -1908,16 +1908,17 @@ public class OntologyHandler {
 					}
 				}
 			}
-		}			
+		}
+		// create data property assertions?
 		Out.p("ABox axioms = " + getOntologySize());
 		addAxioms(assertions);
 		Out.p("ABox axioms after materialisation = " + getOntologySize());
 	}
-	
-	
-	
 
-	private Set<OWLClass> getDisjointClasses(Set<OWLClassExpression> cls, 
+
+
+
+    private Set<OWLClass> getDisjointClasses(Set<OWLClassExpression> cls, 
 			Map<OWLClass, Set<OWLClass>> disjClassMap) {
 		Set<OWLClass> disjCls = new HashSet<>();
 		for (OWLClassExpression cl : cls) {
@@ -1970,6 +1971,17 @@ public class OntologyHandler {
 		extProps.remove(factory.getOWLBottomObjectProperty());
 		return extProps;
 	}
+
+
+    private Set<OWLDataProperty> addSuperProperties(
+            OWLDataProperty property, OWLReasoner reasoner) {
+        Set<OWLDataProperty> extProps = new HashSet<>();
+        extProps.addAll(reasoner.getEquivalentDataProperties(property).getEntities());
+        extProps.addAll(reasoner.getSuperDataProperties(property, false).getFlattened());
+        extProps.remove(factory.getOWLTopDataProperty());
+        extProps.remove(factory.getOWLBottomDataProperty());
+        return extProps;
+    }
 	
 	
 	private Set<OWLObjectPropertyExpression> addInverseProperties(
@@ -2662,7 +2674,22 @@ public class OntologyHandler {
 		}
 		addAxioms(assertions);
 	}
-	
-	
-		
+
+
+
+    public boolean containsDataProperties() {
+        return containsDataProperties(getLogicalAxioms());
+    }
+
+
+    public static boolean containsDataProperties(Set<? extends OWLAxiom> axioms) {
+        for (OWLAxiom ax : axioms) {
+            if (ax.isOfType(AxiomType.DATA_PROPERTY_ASSERTION)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+
 }

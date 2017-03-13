@@ -1,25 +1,9 @@
 package io.dlminer.refine;
 
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 
-import org.semanticweb.owlapi.model.OWLAxiom;
-import org.semanticweb.owlapi.model.OWLClass;
-import org.semanticweb.owlapi.model.OWLClassAssertionAxiom;
-import org.semanticweb.owlapi.model.OWLClassExpression;
-import org.semanticweb.owlapi.model.OWLDataFactory;
-import org.semanticweb.owlapi.model.OWLIndividual;
-import org.semanticweb.owlapi.model.OWLNamedIndividual;
-import org.semanticweb.owlapi.model.OWLObjectComplementOf;
-import org.semanticweb.owlapi.model.OWLObjectProperty;
-import org.semanticweb.owlapi.model.OWLObjectPropertyExpression;
-import org.semanticweb.owlapi.model.OWLOntology;
+import org.semanticweb.owlapi.model.*;
 import org.semanticweb.owlapi.reasoner.OWLReasoner;
 
 import io.dlminer.graph.ALCNode;
@@ -48,22 +32,28 @@ public class ALCOperator extends RefinementOperator {
 	private boolean useNegation;
 	private boolean useUniversalRestriction;
 	private boolean useDisjunction;
+	private boolean useDataProperties;
 	
 	// structures
 	private Map<OWLClassExpression, Set<OWLClassExpression>> classHierarchy;
 	private Map<OWLClassExpression, OWLClassExpression> negationMap;
 	private Map<OWLClassExpression, Set<OWLNamedIndividual>> classInstanceMap;
+	private Map<OWLDataProperty, List<Double>> dataPropertyThresholdsMap;
 	
 	
 	public ALCOperator(OWLReasoner reasoner, 
-			Set<OWLClass> classes, Set<OWLObjectProperty> properties, 
-			int maxLength, int maxDepth, boolean checkDisjointness) {
+			Set<OWLClass> classes, Set<OWLObjectProperty> properties,
+                       Set<OWLDataProperty> dataProperties,
+			int maxLength, int maxDepth, boolean checkDisjointness,
+                       boolean useDataProperties) {
 		this.reasoner = reasoner;	
 		this.classes = classes;
 		this.properties = properties;
+		this.dataProperties = dataProperties;
 		this.maxLength = maxLength;
 		this.maxDepth = maxDepth;
 		this.checkDisjointness = checkDisjointness;
+		this.useDataProperties = useDataProperties;
 		initDefaultConfig();
 		init();
 	}
@@ -72,15 +62,19 @@ public class ALCOperator extends RefinementOperator {
 	
 	public ALCOperator(OWLReasoner reasoner, 
 			Set<OWLClass> classes, Set<OWLObjectProperty> properties,
+                       Set<OWLDataProperty> dataProperties,
 			int maxLength, int maxDepth, boolean checkDisjointness,
+                       boolean useDataProperties,
 			boolean useNegation, boolean useUniversalRestriction, 
 			boolean useDisjunction) {
 		this.reasoner = reasoner;	
 		this.classes = classes;
 		this.properties = properties;
+        this.dataProperties = dataProperties;
 		this.maxLength = maxLength;
 		this.maxDepth = maxDepth;
 		this.checkDisjointness = checkDisjointness;
+        this.useDataProperties = useDataProperties;
 		this.useNegation = useNegation;
 		this.useUniversalRestriction = useUniversalRestriction;
 		this.useDisjunction = useDisjunction;
@@ -94,11 +88,41 @@ public class ALCOperator extends RefinementOperator {
 		initClassHierachy();
 		mapRedundantClassesAndProperties();
 		initInstanceMap();
+		initDataPropertiesThresholds();
 	}
-	
-	
-	
-	private void initDefaultConfig() {
+
+
+
+    private void initDataPropertiesThresholds() {
+	    if (!useDataProperties) {
+	        return;
+        }
+        dataPropertyThresholdsMap = new HashMap<>();
+	    Set<OWLNamedIndividual> inds = reasoner.getRootOntology().getIndividualsInSignature();
+	    for (OWLDataProperty prop : dataProperties) {
+            List<Double> thresholds = dataPropertyThresholdsMap.get(prop);
+            if (thresholds == null) {
+                thresholds = new ArrayList<>();
+                dataPropertyThresholdsMap.put(prop, thresholds);
+            }
+            for (OWLNamedIndividual ind : inds) {
+                Set<OWLLiteral> dataPropertyValues = reasoner.getDataPropertyValues(ind, prop);
+                for (OWLLiteral lit : dataPropertyValues) {
+                    if (lit.isInteger()) {
+                        thresholds.add((double) lit.parseInteger());
+                    } else if (lit.isFloat()) {
+                        thresholds.add((double) lit.parseFloat());
+                    } else if (lit.isDouble()) {
+                        thresholds.add(lit.parseDouble());
+                    }
+                }
+            }
+            Collections.sort(thresholds);
+        }
+    }
+
+
+    private void initDefaultConfig() {
 		this.useNegation = false;
 		this.useUniversalRestriction = false;
 		this.useDisjunction = false;

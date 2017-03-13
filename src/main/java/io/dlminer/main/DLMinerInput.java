@@ -211,6 +211,18 @@ public class DLMinerInput {
 	 * The flag indicating whether the data is viewed under CWA
 	 */
 	private Boolean useClosedWorldAssumption;
+
+
+
+    /**
+     * The flag indicating whether data properties are used to generate concept expressions
+     */
+	private Boolean useDataProperties;
+
+	/**
+	 * The number of thresholds for expressions with data properties
+	 */
+	private Integer dataPropertyThresholdsNumber;
 	
 	
 	
@@ -652,7 +664,44 @@ public class DLMinerInput {
 	public void setUseClosedWorldAssumption(boolean useClosedWorldAssumption) {
 		this.useClosedWorldAssumption = useClosedWorldAssumption;
 	}
-	
+
+
+    /**
+     *
+     * @param useDataProperties the flag to use data properties
+     */
+    public void setUseDataProperties(boolean useDataProperties) {
+        this.useDataProperties = useDataProperties;
+    }
+
+
+    /**
+     *
+     * @return the flag to use data properties
+     */
+    public boolean isUseDataProperties() {
+        return useDataProperties;
+    }
+
+
+
+
+	/**
+	 *
+	 * @return the number of thresholds for expressions with data properties
+	 */
+	public Integer getDataPropertyThresholdsNumber() {
+		return dataPropertyThresholdsNumber;
+	}
+
+
+	/**
+	 *
+	 * @param dataPropertyThresholdsNumber the number of thresholds for expressions with data properties
+	 */
+	public void setDataPropertyThresholdsNumber(Integer dataPropertyThresholdsNumber) {
+		this.dataPropertyThresholdsNumber = dataPropertyThresholdsNumber;
+	}
 
 	
 	
@@ -699,6 +748,8 @@ public class DLMinerInput {
 		this.dlminerMode = DLMinerInputI.DEF_DLMINER_MODE;
 		this.useCleaning = DLMinerInputI.DEF_USE_CLEANING;
 		this.useClosedWorldAssumption = DLMinerInputI.DEF_USE_CWA;
+		this.useDataProperties = DLMinerInputI.DEF_USE_DATA_PROPERTIES;
+		this.dataPropertyThresholdsNumber = DLMinerInputI.DEF_DP_THRESHOLD_NUMBER;
 	}
 
 

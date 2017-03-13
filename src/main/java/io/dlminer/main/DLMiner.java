@@ -247,6 +247,7 @@ public class DLMiner {
         conceptBuilder.setCheckDisjointness(input.isUseDisjointness());
         conceptBuilder.setUseDisjunction(input.isUseDisjunction());
         conceptBuilder.setUseNegation(input.isUseNegation());
+        conceptBuilder.setUseDataProperties(input.isUseDataProperties());
         // check negations
         if (!handler.containsNegations()) {
         	conceptBuilder.setUseNegation(false);
@@ -257,6 +258,10 @@ public class DLMiner {
         	conceptBuilder.setUseUniversalRestriction(false);
         }
         conceptBuilder.init();
+        // check data properties
+        if (!handler.containsDataProperties()) {
+            conceptBuilder.setUseDataProperties(false);
+        }
         
         // if prediction
         if (input.getPositiveClass() != null) {
