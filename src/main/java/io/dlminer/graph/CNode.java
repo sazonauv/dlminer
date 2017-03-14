@@ -221,7 +221,9 @@ public abstract class CNode {
 			visits.add(n);
 			if (n.outEdges != null) {
 				for (CEdge e : n.outEdges) {
-					history.add(e.object);
+				    if (!(e instanceof DataEdge)) {
+                        history.add(e.object);
+                    }
 				}
 			}
 		}		
