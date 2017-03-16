@@ -3,26 +3,11 @@ package io.dlminer.ont;
 import java.util.LinkedList;
 import java.util.Set;
 
-import org.semanticweb.owlapi.model.OWLAxiom;
-import org.semanticweb.owlapi.model.OWLClassExpression;
-import org.semanticweb.owlapi.model.OWLObjectAllValuesFrom;
-import org.semanticweb.owlapi.model.OWLObjectComplementOf;
-import org.semanticweb.owlapi.model.OWLObjectExactCardinality;
-import org.semanticweb.owlapi.model.OWLObjectHasSelf;
-import org.semanticweb.owlapi.model.OWLObjectHasValue;
-import org.semanticweb.owlapi.model.OWLObjectIntersectionOf;
-import org.semanticweb.owlapi.model.OWLObjectMaxCardinality;
-import org.semanticweb.owlapi.model.OWLObjectMinCardinality;
-import org.semanticweb.owlapi.model.OWLObjectOneOf;
-import org.semanticweb.owlapi.model.OWLObjectPropertyExpression;
-import org.semanticweb.owlapi.model.OWLObjectSomeValuesFrom;
-import org.semanticweb.owlapi.model.OWLObjectUnionOf;
-import org.semanticweb.owlapi.model.OWLSubClassOfAxiom;
-import org.semanticweb.owlapi.model.OWLSubObjectPropertyOfAxiom;
-import org.semanticweb.owlapi.model.OWLSubPropertyChainOfAxiom;
+import org.semanticweb.owlapi.model.*;
 
 public class LengthMetric {
-	
+
+
 	
 	public static Integer length(OWLClassExpression expr) {
 		if (!expr.isAnonymous()) {
@@ -43,9 +28,11 @@ public class LengthMetric {
 
 	
 	private static Integer atomLength(OWLClassExpression expr) {
-		if (!expr.isAnonymous()) {
+		// a concept name
+        if (!expr.isAnonymous()) {
 			return 1;
 		}
+		// conjunctions and disjunctions
 		if (expr instanceof OWLObjectIntersectionOf) {
 			OWLObjectIntersectionOf intersect = (OWLObjectIntersectionOf)expr;			
 			return intersect.asConjunctSet().size() - 1;
@@ -54,6 +41,7 @@ public class LengthMetric {
 			OWLObjectUnionOf union = (OWLObjectUnionOf)expr;						
 			return union.asDisjunctSet().size() - 1;
 		}
+		// object property restrictions
 		if (expr instanceof OWLObjectSomeValuesFrom) {
 			return length(((OWLObjectSomeValuesFrom)expr).getProperty());
 		}
@@ -69,7 +57,25 @@ public class LengthMetric {
 		if (expr instanceof OWLObjectExactCardinality) {
 			return length(((OWLObjectExactCardinality)expr).getProperty());
 		}
-		if (expr instanceof OWLObjectComplementOf) {
+        // data property restrictions
+        if (expr instanceof OWLDataSomeValuesFrom) {
+            return length(((OWLDataSomeValuesFrom)expr).getProperty()) + 1;
+        }
+        if (expr instanceof OWLDataAllValuesFrom) {
+            return length(((OWLDataAllValuesFrom)expr).getProperty()) + 1;
+        }
+        if (expr instanceof OWLDataMaxCardinality) {
+            return length(((OWLDataMaxCardinality)expr).getProperty()) + 1;
+        }
+        if (expr instanceof OWLDataMinCardinality) {
+            return length(((OWLDataMinCardinality)expr).getProperty()) + 1;
+        }
+        if (expr instanceof OWLDataExactCardinality) {
+            return length(((OWLDataExactCardinality)expr).getProperty()) + 1;
+        }
+        // nominals
+		if (expr instanceof OWLObjectComplementOf
+                || expr instanceof  OWLDataComplementOf) {
 			return 1;
 		}
 		if (expr instanceof OWLObjectHasSelf) {
@@ -77,10 +83,16 @@ public class LengthMetric {
 		}
 		if (expr instanceof OWLObjectHasValue) {
 			return length(((OWLObjectHasValue)expr).getProperty()) + 1;
-		}		
+		}
+        if (expr instanceof OWLDataHasValue) {
+            return length(((OWLDataHasValue)expr).getProperty()) + 1;
+        }
 		if (expr instanceof OWLObjectOneOf) {
 			return ((OWLObjectOneOf)expr).getIndividuals().size();
 		}
+        if (expr instanceof OWLDataOneOf) {
+            return ((OWLDataOneOf)expr).getValues().size();
+        }
 		return 0;
 	}
 
@@ -104,7 +116,8 @@ public class LengthMetric {
 		length += length(axiom.getSuperProperty());
 		return length;
 	}
-	
+
+
 	// 1 if atomic, 2 if inverse
 	public static int length(OWLObjectPropertyExpression prop) {
 		if (prop.isAnonymous()) {
@@ -112,6 +125,15 @@ public class LengthMetric {
 		}		
 		return 1;
 	}
+
+
+    // 1 if atomic, 2 if inverse
+    public static int length(OWLDataPropertyExpression prop) {
+        if (prop.isAnonymous()) {
+            return 2;
+        }
+        return 1;
+    }
 
 
 	public static Integer length(OWLAxiom axiom) {		
