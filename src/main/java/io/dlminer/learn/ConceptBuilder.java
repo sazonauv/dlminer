@@ -1,7 +1,5 @@
 package io.dlminer.learn;
 
-import java.text.DecimalFormat;
-import java.text.NumberFormat;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -70,7 +68,7 @@ public class ConceptBuilder {
 	private Map<OWLObjectProperty, Set<List<OWLNamedIndividual>>> roleInstanceMap;
 	
 	// graph, reasoners
-	private Map<OWLNamedIndividual, ELNode> aboxGraph;
+	private Map<OWLNamedIndividual, ALCNode> aboxGraph;
 	private List<Expansion> expansions;	
 	private InstanceChecker instanceChecker;	
 	private OWLReasoner reasoner;
@@ -1017,8 +1015,8 @@ public class ConceptBuilder {
 		int posIntersect = instanceChecker.countIntersection(instances, posInstances);
 		List<Expansion> negInstances = nodeClusterMap.get(negativeNode);
 		int negIntersect = instanceChecker.countIntersection(instances, negInstances);
-		extension.coverage = getDescriptionQuality(posIntersect, negIntersect,
-				posInstances.size(), negInstances.size());
+		extension.coverage = getDescriptionQuality(posIntersect, negIntersect
+        );
 	}
 	
 	
@@ -1032,14 +1030,13 @@ public class ConceptBuilder {
 		int posIntersect = (int) HypothesisEvaluator.countIntersection(instances, posInstances);
 		Set<OWLNamedIndividual> negInstances = nodeInstanceMap.get(negativeNode);
 		int negIntersect = (int) HypothesisEvaluator.countIntersection(instances, negInstances);
-		extension.coverage = getDescriptionQuality(posIntersect, negIntersect,
-				posInstances.size(), negInstances.size());
+		extension.coverage = getDescriptionQuality(posIntersect, negIntersect
+        );
 	}
 	
 	
 	
-	private int getDescriptionQuality(int posIntersect, int negIntersect, 
-			int pos, int neg) {
+	private int getDescriptionQuality(int posIntersect, int negIntersect) {
 		if (posIntersect == 0 && negIntersect == 0) {
 			return 0;
 		}
@@ -1061,26 +1058,7 @@ public class ConceptBuilder {
 		Set<OWLClassExpression> disjs = new HashSet<>(5);
 		ALCNode node = new ALCNode(conjs, disjs);
 		double t1 = System.nanoTime();
-//		if (reasonerMode.equals(ReasonerMode.NORM)) {
-//			Set<OWLNamedIndividual> instances = null;
-//			if (cl.isOWLThing()) {
-//				instances = handler.getIndividuals();
-//			} else {
-//				try {
-//					if (reasoner.isSatisfiable(cl)) {
-//						instances = reasoner.getInstances(cl, false).getFlattened();
-//					}
-//				} catch (Exception e) {						
-//					Out.p(e + DLMinerOutputI.CONCEPT_BUILDING_ERROR);
-//				}
-//			}
-//			if (instances == null) {
-//				instances = new HashSet<>();
-//			}
-//			node.coverage = instances.size();
-//			nodeInstanceMap.put(node, instances);
-//		} else {
-		List<Expansion> instances = null;
+		List<Expansion> instances;
 		if (cl.isOWLThing()) {
 			instances = new ArrayList<>(instanceChecker.getClusterCenters());			
 		} else {
@@ -1157,7 +1135,7 @@ public class ConceptBuilder {
 	
 	
 		
-	private Map<OWLNamedIndividual, ELNode> buildABoxGraphFromAssertions() {		
+	private Map<OWLNamedIndividual, ALCNode> buildABoxGraphFromAssertions() {
 		Map<OWLNamedIndividual, Set<OWLClassAssertionAxiom>> indCAssMap = 
 				handler.createIndClassAssertionMap();
 		Map<OWLNamedIndividual, Set<OWLObjectPropertyAssertionAxiom>> indRAssMap = 
@@ -1165,7 +1143,7 @@ public class ConceptBuilder {
         Map<OWLNamedIndividual, Set<OWLDataPropertyAssertionAxiom>> indDRAssMap =
                 handler.createIndDataPropertyAssertionMap();
 		// create an ABox graph
-		Map<OWLNamedIndividual, ELNode> aboxMap = 
+		Map<OWLNamedIndividual, ALCNode> aboxMap =
 				new HashMap<>();
 		// create nodes
 		Set<OWLNamedIndividual> inds = handler.getIndividuals();
@@ -1177,13 +1155,13 @@ public class ConceptBuilder {
 			} else {
 				label = new HashSet<>(1);
 			}
-			ELNode node = new ELNode(label);
+            ALCNode node = new ALCNode(label);
 			aboxMap.put(ind, node);
 		}
 		// create data relations
         for (OWLNamedIndividual ind : indDRAssMap.keySet()) {
             Set<OWLDataPropertyAssertionAxiom> drfacts = indDRAssMap.get(ind);
-            ELNode subj = aboxMap.get(ind);
+            ALCNode subj = aboxMap.get(ind);
             for (OWLDataPropertyAssertionAxiom drfact : drfacts) {
                 EDataEdge edge = new EDataEdge(subj, drfact.getProperty(), drfact.getObject());
                 subj.addOutEdge(edge);
@@ -1218,10 +1196,10 @@ public class ConceptBuilder {
 		for (OWLNamedIndividual ind : indRAssMap.keySet()) {
 			Set<OWLClassAssertionAxiom> cfacts = indCAssMap.get(ind);
 			Set<OWLClassExpression> indLabel = handler.getExpressionsFromAssertions(cfacts);
-			Set<OWLObjectPropertyAssertionAxiom> rfacts = indRAssMap.get(ind);			
-			ELNode subj = aboxMap.get(ind);
+			Set<OWLObjectPropertyAssertionAxiom> rfacts = indRAssMap.get(ind);
+            ALCNode subj = aboxMap.get(ind);
 			for (OWLObjectPropertyAssertionAxiom rfact : rfacts) {
-				ELNode obj = aboxMap.get(rfact.getObject());
+                ALCNode obj = aboxMap.get(rfact.getObject());
 				SomeEdge edge = new SomeEdge(subj, rfact.getProperty(), obj);
 				List<CEdge> sEdges = subj.getOutEdges();				
 				subj.addOutEdge(edge);								
@@ -1240,7 +1218,7 @@ public class ConceptBuilder {
 					rangeLabel.addAll(rangeCls);
 					rangeLabel.remove(factory.getOWLThing());
 					if (!rangeLabel.isEmpty()) {
-						ELNode range = new ELNode(rangeLabel);
+                        ALCNode range = new ALCNode(rangeLabel);
 						OnlyEdge univEdge = new OnlyEdge(subj, prop, range);
 						if (sEdges != null) {
 							subj.addOutEdge(univEdge);	
@@ -1263,7 +1241,7 @@ public class ConceptBuilder {
 							if (rangeLabel.isEmpty()) {
 								continue;
 							}
-							ELNode range = new ELNode(rangeLabel);
+                            ALCNode range = new ALCNode(rangeLabel);
 							OnlyEdge univEdge = new OnlyEdge(subj, prop, range);
 							if (sEdges != null) {
 								subj.addOutEdge(univEdge);	
@@ -1277,14 +1255,13 @@ public class ConceptBuilder {
 	}
 	
 	
-	private Map<OWLNamedIndividual, ELNode> buildABoxGraphFromReasoner() {
+	private Map<OWLNamedIndividual, ALCNode> buildABoxGraphFromReasoner() {
 		Map<OWLNamedIndividual, Set<OWLClassExpression>> indCExprMap = 
 				handler.createIndClassExprMapInferred(classes, reasoner);
 		Map<OWLNamedIndividual, Set<OWLObjectPropertyAssertionAxiom>> indRAssMap = 
 				handler.createIndPropertyAssertionMapInferred(reasoner);		
 		// create an ABox graph
-		Map<OWLNamedIndividual, ELNode> aboxMap = 
-				new HashMap<>();
+		Map<OWLNamedIndividual, ALCNode> aboxMap = new HashMap<>();
 		// create nodes
 		Set<OWLNamedIndividual> inds = handler.getIndividuals();
 		for (OWLNamedIndividual ind : inds) {
@@ -1292,15 +1269,15 @@ public class ConceptBuilder {
 			if (label == null) {
 				label = new HashSet<>();
 			}
-			ELNode node = new ELNode(label);
+            ALCNode node = new ALCNode(label);
 			aboxMap.put(ind, node);
 		}
 		// create relations
 		for (OWLNamedIndividual ind : indRAssMap.keySet()) {
 			Set<OWLObjectPropertyAssertionAxiom> rfacts = indRAssMap.get(ind);
-			ELNode subj = aboxMap.get(ind);
+            ALCNode subj = aboxMap.get(ind);
 			for (OWLObjectPropertyAssertionAxiom rfact : rfacts) {
-				ELNode obj = aboxMap.get(rfact.getObject());
+                ALCNode obj = aboxMap.get(rfact.getObject());
 				SomeEdge edge = new SomeEdge(subj, rfact.getProperty(), obj);
 				subj.addOutEdge(edge);				
 			}
@@ -1336,58 +1313,17 @@ public class ConceptBuilder {
 	
 	
 	
-	private void debugBuildingConcepts(List<ELNode> expansions) {
-		Out.p("\n" + expansions.size() + " trees:");
-		List<ELNode> duplicates = new LinkedList<>();
-		Set<ELNode> unique = new HashSet<>();
-		for (ELNode n : expansions) {
-			ELNode node = n.normalise();			
-			if (!unique.contains(node)) {
-				unique.add(node);
-			} else {
-				duplicates.add(node);
-			}
-			Out.p(node + ", hash=" + node.hashCode());
-		}				
-		Out.p("\n" + duplicates.size() + " duplicates:");		
-		for (ELNode n : duplicates) {			
-			Out.p(n + ", hash=" + n.hashCode());			
-		}		
-		Out.p("\nEqual trees:");
-		for (ELNode n1 : unique) {
-			for (ELNode n2 : unique) {				
-				if (n1.equals(n2)) {
-					ELNode n3 = n1.multiply(n2);
-					Out.p("n1 = " + n1 + 
-							"\t norm(n1) = " + n1.normalise() + 
-							"\t n2 = " + n2 +  
-							"\t norm(n2) = " + n2.normalise() + 
-							"\t n3 := n1xn2 = " + n3 + 
-							"\t norm(n3) = " + n3.normalise() +
-							"\t equal(n3,n1) = " + n3.equals(n1) + 
-							"\t equal(n3,n2) = " + n3.equals(n2));						
-				}
-			}
-		}
-		NumberFormat formatter = new DecimalFormat("#0.00");
-		Out.p("\nSimilarity matrix:");
-		for (ELNode n1 : unique) {
-			for (ELNode n2 : unique) {			
-				Out.s(formatter.format(n1.similarity(n2)) + "\t");
-			}
-			Out.p("");
-		}
-	}
+
 
 
 	private List<Expansion> 
-		buildIndividualExpansions(Map<OWLNamedIndividual, ELNode> aboxMap) {
+		buildIndividualExpansions(Map<OWLNamedIndividual, ALCNode> aboxMap) {
 		List<Expansion> expansions = new ArrayList<>(aboxMap.size());
 		for (OWLNamedIndividual ind : aboxMap.keySet()) {			
 			// ind's node
-			ELNode node = aboxMap.get(ind);			
+            ALCNode node = aboxMap.get(ind);
 			// root
-			Expansion root = new Expansion(node.labels);
+			Expansion root = new Expansion(node.clabels);
 			root.individual = ind;
 			root.pointer = node;
 			root.depth = 0;
@@ -1407,8 +1343,8 @@ public class ConceptBuilder {
                             continue;
                         }
                         // process object properties
-                        ELNode obj = (ELNode) edge.object;
-						Expansion child = new Expansion(obj.labels);						
+                        ALCNode obj = (ALCNode) edge.object;
+						Expansion child = new Expansion(obj.clabels);
 						child.depth = current.depth + 1;
 						if (child.depth <= maxRoleDepth) {
 							child.pointer = obj;
@@ -1614,91 +1550,7 @@ public class ConceptBuilder {
 		return RchainSs;		
 	}
 	
-	
-	
-/*	private List<OWLClassExpression> generateCDs(Map<OWLClass, Set<OWLNamedIndividual>> posMap) {
-		
-		// get all individuals
-		Set<OWLNamedIndividual> inds = new HashSet<OWLNamedIndividual>();		
-		for (OWLClass cl : posMap.keySet()) {
-			inds.addAll(posMap.get(cl));
-		}
-		
-		// get points
-		List<OWLNamedIndividual> indList = new ArrayList<OWLNamedIndividual>(inds);
-		List<OWLClass> clList = new ArrayList<OWLClass>(posMap.keySet());
-		double[][] points = new double[indList.size()][clList.size()];
-		for (int j=0; j<points[0].length; j++) {
-			Set<OWLNamedIndividual> insts = posMap.get(clList.get(j));
-			for (int i=0; i<points.length; i++) {
-				if (insts.contains(indList.get(i))) {
-					points[i][j] = 1;
-				}
-			}
-		}
-		
-		// cluster individuals
-		Out.p("\nClustering individuals...");
-		int stop = 1;
-		int runs = 10;
-		int min = 1;
-		int max = clList.size();
-		int step = 1;
-		KMeans kmeans = new KMeans(points, stop, KMeans.RANDOM_SPREAD, KMeans.DIST_EUCLID);
-		int[][] hier = kmeans.clusterHierarchy(min, step, max, runs);
-		
-		// get clusters (unique)
-		Set<Set<Integer>> clusters = new HashSet<Set<Integer>>();
-		for (int i=0; i<hier.length; i++) {
-			Set<Integer> ids = new HashSet<Integer>();
-			for (int j=0; j<hier[0].length; j++) {
-				ids.add(hier[i][j]);
-			}
-			for (Integer id : ids) {
-				Set<Integer> cluster = new HashSet<Integer>();
-				for (int j=0; j<hier[0].length; j++) {
-					if (id == hier[i][j]) {
-						cluster.add(j);
-					}
-				}
-				clusters.add(cluster);
-			}
-		}
-		
-		// learn concepts
-		Out.p("\nLearning concept descriptions for " + clusters.size() + " clusters...");
-//		OWLAPIOntology ks = new OWLAPIOntology(handler.getOntology());
-//		OWLAPIReasoner reasoningService = new OWLAPIReasoner(ks);
-		OWLAPIReasoner reasoningService = new OWLAPIReasoner(reasoner);
-		if (!reasoningService.isInitialized()) {
-			try {
-				reasoningService.init();
-			} catch (ComponentInitException e) {			
-				e.printStackTrace();
-			}
-		}
-		int count = 0;
-		for (Set<Integer> cluster : clusters) {
-			SortedSet<OWLIndividual> positiveExamples = getClusterIndividuals(cluster, indList);
-			PosOnlyLP learningProblem = new PosOnlyLP(reasoningService, positiveExamples);
-			CELOE celoe = new CELOE(learningProblem, reasoningService);
-			try {
-				celoe.init();
-				celoe.start();
-			} catch (ComponentInitException e) {
-				e.printStackTrace();
-			} catch (Exception e) {
-				e.printStackTrace();
-			}			
-			OWLClassExpression best = celoe.getCurrentlyBestDescription();			
-			expressionInstanceMap.put(best, getClusterNamedIndividuals(cluster, indList));
-			count++;
-			Out.p(count + " descriptions learned");
-		}
-		
-		return new LinkedList<OWLClassExpression>(expressionInstanceMap.keySet());
-	}
-*/	
+
 	
 	private SortedSet<OWLIndividual> getClusterIndividuals(Set<Integer> cluster, List<OWLNamedIndividual> indList) {
 		SortedSet<OWLIndividual> inds = new TreeSet<>();

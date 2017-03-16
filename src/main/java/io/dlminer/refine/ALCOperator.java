@@ -9,15 +9,11 @@ import org.semanticweb.owlapi.reasoner.OWLReasoner;
 import io.dlminer.graph.ALCNode;
 import io.dlminer.graph.CEdge;
 import io.dlminer.graph.CNode;
-import io.dlminer.graph.ELNode;
 import io.dlminer.graph.OnlyEdge;
 import io.dlminer.graph.SomeEdge;
-import io.dlminer.learn.ClassPair;
-import io.dlminer.learn.PropertyPair;
 import io.dlminer.ont.LengthMetric;
 import io.dlminer.print.Out;
 import uk.ac.manchester.cs.owl.owlapi.OWLDataFactoryImpl;
-import uk.ac.manchester.cs.owl.owlapi.OWLOntologyManagerImpl;
 
 
 public class ALCOperator extends RefinementOperator {
@@ -100,11 +96,7 @@ public class ALCOperator extends RefinementOperator {
         dataPropertyThresholdsMap = new HashMap<>();
 	    Set<OWLNamedIndividual> inds = reasoner.getRootOntology().getIndividualsInSignature();
 	    for (OWLDataProperty prop : dataProperties) {
-            List<Double> thresholds = dataPropertyThresholdsMap.get(prop);
-            if (thresholds == null) {
-                thresholds = new ArrayList<>();
-                dataPropertyThresholdsMap.put(prop, thresholds);
-            }
+            List<Double> thresholds = new ArrayList<>();
             for (OWLNamedIndividual ind : inds) {
                 Set<OWLLiteral> dataPropertyValues = reasoner.getDataPropertyValues(ind, prop);
                 for (OWLLiteral lit : dataPropertyValues) {
@@ -118,6 +110,7 @@ public class ALCOperator extends RefinementOperator {
                 }
             }
             Collections.sort(thresholds);
+            dataPropertyThresholdsMap.put(prop, thresholds);
         }
     }
 
@@ -178,20 +171,6 @@ public class ALCOperator extends RefinementOperator {
 			}			
 		}
 		// reasoning: costly!
-//		Out.p("\nChecking negative instances");
-//		count = 0;
-//		for (OWLClass cl : classes) {
-//			OWLClassExpression negCl = negationMap.get(cl);
-//			Set<OWLNamedIndividual> negInsts = classInstanceMap.get(negCl);
-//			if (negInsts == null) {
-//				negInsts = new HashSet<>();
-//				classInstanceMap.put(negCl, negInsts);
-//			}
-//			Set<OWLNamedIndividual> insts = new HashSet<>(reasoner.getInstances(negCl, false).getFlattened());
-//			insts.remove(null);
-//			negInsts.addAll(insts);
-//			Out.p(++count + " / " + classes.size() + " classes are checked for negative instances");
-//		}
 	}
 	
 	

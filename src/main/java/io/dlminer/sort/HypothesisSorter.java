@@ -1,10 +1,8 @@
 package io.dlminer.sort;
 
 import io.dlminer.graph.Graph;
-import io.dlminer.graph.Node;
 import io.dlminer.learn.Hypothesis;
 import io.dlminer.learn.HypothesisEntry;
-import io.dlminer.ont.HypothesisReasoner;
 import io.dlminer.ont.OntologyHandler;
 import io.dlminer.ont.ReasonerLoader;
 import io.dlminer.ont.ReasonerName;
@@ -21,7 +19,6 @@ import java.util.Set;
 
 import org.semanticweb.owlapi.model.IRI;
 import org.semanticweb.owlapi.model.OWLAxiom;
-import org.semanticweb.owlapi.model.OWLDataFactory;
 import org.semanticweb.owlapi.model.OWLEntity;
 import org.semanticweb.owlapi.reasoner.InferenceType;
 import org.semanticweb.owlapi.reasoner.OWLReasoner;
@@ -53,11 +50,7 @@ public class HypothesisSorter {
 	private OntologyHandler handler;
 	private boolean isReasonerError;
 	
-	
-	// internal hypothesis reasoner
-	private HypothesisReasoner hypoReasoner;
-	
-	
+
 	
 	public HypothesisSorter(Map<String, HypothesisEntry> hypothesisIdToEntryMap) {
 		initHypotheses(hypothesisIdToEntryMap);		
@@ -92,11 +85,8 @@ public class HypothesisSorter {
 			idToHypothesisMap.put(hypothesis.id, hypothesis);
 		}
 	}
-	
-	
-	private void initHypothesisReasoner() {
-		hypoReasoner = new HypothesisReasoner(hypotheses);		
-	}
+
+
 
 	private void initReasoner() {
 		// create a handler		

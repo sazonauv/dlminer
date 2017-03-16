@@ -7,18 +7,17 @@ import java.util.Set;
 import org.semanticweb.owlapi.model.OWLClassExpression;
 import org.semanticweb.owlapi.model.OWLDataFactory;
 
-import org.semanticweb.owlapi.model.OWLLiteral;
 import uk.ac.manchester.cs.owl.owlapi.OWLDataFactoryImpl;
 
 public abstract class CNode {
 
 	protected static final String NULL_CONCEPT_ERROR = "Cannot use a successor with the NULL concept";
 	protected static final String WRONG_EDGE_TYPE_ERROR = "Edge type can be either existential or universal";
-	
-	
-	
-	
-	public OWLClassExpression concept;
+    protected static final String WRONG_LITERAL_TYPE_ERROR = "Literals can only be numeric for data property " +
+            "restrictions";
+
+
+    public OWLClassExpression concept;
 	
 	public Integer coverage;
 	
@@ -110,17 +109,7 @@ public abstract class CNode {
 	public abstract boolean isMoreSpecificThan(CNode node);
 
 
-	public static boolean isMoreSpecificThan(Object obj1, Object obj2) {
-	    if (obj1 instanceof CNode && obj2 instanceof CNode) {
-            CNode node1 = (CNode) obj1;
-            CNode node2 = (CNode) obj2;
-            return node1.isMoreSpecificThan(node2);
-        }
-        return obj1.equals(obj2);
-    }
 
-
-	
 	protected boolean isEqualTo(CNode node) {
 		if (concept != null && node.concept != null 
 				&& concept.equals(node.concept)) {
@@ -179,26 +168,14 @@ public abstract class CNode {
 	
 	public int depth() {
 		if (depth < 0) {
-			depth = depthCount();
+			depth = countDepth();
 		}
 		return depth;
 	}
 	
-	// recursion!
-	private int depthCount() {
-		if (outEdges == null) {
-			return 0;
-		} else {
-			int max = -1;
-			for (CEdge e : outEdges) {
-				int curr = e.object.depthCount();
-				if (max < curr) {
-					max = curr;
-				}
-			}
-			return max+1;
-		}		
-	}
+
+    protected abstract int countDepth();
+
 	
 	// labels number
 	public int length() {

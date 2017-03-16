@@ -9,13 +9,10 @@ import java.util.Set;
 import org.semanticweb.owlapi.model.*;
 import org.semanticweb.owlapi.reasoner.OWLReasoner;
 
-import io.dlminer.graph.ALCNode;
 import io.dlminer.graph.CEdge;
 import io.dlminer.graph.CNode;
-import io.dlminer.graph.ELNode;
 import io.dlminer.graph.SomeEdge;
 import io.dlminer.learn.ClassPair;
-import io.dlminer.learn.PropertyPair;
 import io.dlminer.print.Out;
 
 

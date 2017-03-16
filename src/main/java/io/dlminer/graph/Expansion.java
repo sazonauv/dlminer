@@ -1,18 +1,19 @@
 package io.dlminer.graph;
 
+import java.util.HashSet;
 import java.util.Set;
 
 import org.semanticweb.owlapi.model.OWLClassExpression;
 import org.semanticweb.owlapi.model.OWLNamedIndividual;
 
-public class Expansion extends ELNode {	
+public class Expansion extends ALCNode {
 
 	// not null only for expansions
 	public OWLNamedIndividual individual;	
 	public Integer depth;	
 
 	// points to the original ABox node
-	public ELNode pointer;
+	public ALCNode pointer;
 
 
 	public Expansion(Set<OWLClassExpression> label) {
@@ -24,6 +25,8 @@ public class Expansion extends ELNode {
 	@Override
 	public String toString() {
 		return super.toString();
-	}	
+	}
+
+
 
 }
