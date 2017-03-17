@@ -40,13 +40,13 @@ public interface DLMinerInputI {
 	/**
 	 * Default minPrecision
 	 */
-	Double DEF_MIN_PRECISION = 0.9;
+	Double DEF_MIN_PRECISION = 0.8;
 	
 	
 	/**
 	 * Default minConceptSupport
 	 */
-	Integer DEF_MIN_CONCEPT_SUPPORT = 10;
+	Integer DEF_MIN_CONCEPT_SUPPORT = 1;
 	
 	
 	
@@ -156,11 +156,6 @@ public interface DLMinerInputI {
     Boolean DEF_USE_DATA_PROPERTIES = true;
 
 
-	/**
-	 * Default number of thresholds for expressions with data properties
-	 */
-	Integer DEF_DP_THRESHOLD_NUMBER = 100;
-	
 		
 	
 	// ====================== error messages ======================
@@ -180,12 +175,6 @@ public interface DLMinerInputI {
 	String WRONG_MIN_PRECISION_ERR = "minPrecision can only be positive!";
 	String WRONG_MIN_CONCEPT_SUPPORT_ERR = "minConceptSupport can only be positive!";
 	
-	
-	// ontology errors
-	String NULL_ONTOLOGY_ERR = "ontology cannot be empty!";
-	String INCONSISTENT_ONTOLOGY_ERR = "your ontology is inconsistent! DL-Miner can only process consistent ontologies.";
-	String PARSING_ONTOLOGY_ERR = "your ontology cannot be parsed! check your file.";
-
 
 
 }

@@ -494,12 +494,18 @@ public class OntologyHandler {
 		Set<OWLAxiom> abox = getABoxAxioms();
 		return getObjectPropertiesInSignature(abox);
 	}
-	
-	// only classes and object properties
+
+    public Set<OWLDataProperty> getDataPropertiesInABox() {
+        Set<OWLAxiom> abox = getABoxAxioms();
+        return getDataPropertiesInSignature(abox);
+    }
+
+
 	public Set<OWLEntity> getABoxSignature() {
 		Set<OWLAxiom> abox = getABoxAxioms();
 		return getSignature(abox);
 	}
+
 	
 	// only classes and object properties
 	public Set<OWLEntity> getTBoxSignature() {
@@ -613,32 +619,18 @@ public class OntologyHandler {
 	
 	
 	
-	
-	
-	
-	// only classes and object properties
+
 	public static Set<OWLEntity> getSignature(Set<? extends OWLAxiom> axioms) {
 		Set<OWLEntity> sig = new HashSet<>();
 		for (OWLAxiom ax : axioms) {
 			sig.addAll(ax.getClassesInSignature());
 			sig.addAll(ax.getObjectPropertiesInSignature());
+            sig.addAll(ax.getDataPropertiesInSignature());
 		}
 		return sig;
 	}
-	
-	// only classes and object properties
-	public static Set<OWLEntity> getSignature(Set<OWLAxiom> axioms, Set<OWLAxiom> axioms2) {
-		Set<OWLEntity> sig = new HashSet<>();
-		for (OWLAxiom ax : axioms) {
-			sig.addAll(ax.getClassesInSignature());
-			sig.addAll(ax.getObjectPropertiesInSignature());
-		}
-		for (OWLAxiom ax : axioms2) {
-			sig.addAll(ax.getClassesInSignature());
-			sig.addAll(ax.getObjectPropertiesInSignature());
-		}
-		return sig;
-	}
+
+
 
 	public Set<OWLClass> getClassesInSignature() {
 		return ontology.getClassesInSignature();
@@ -647,7 +639,12 @@ public class OntologyHandler {
 	public Set<OWLObjectProperty> getObjectPropertiesInSignature() {
 		return ontology.getObjectPropertiesInSignature();
 	}
-	
+
+    public Set<OWLDataProperty> getDataPropertiesInSignature() {
+        return ontology.getDataPropertiesInSignature();
+    }
+
+
 	public static Set<OWLClass> getClassesInSignature(Set<OWLAxiom> axioms) {
 		Set<OWLClass> cls = new HashSet<>();
 		for (OWLAxiom ax : axioms) {
@@ -663,6 +660,15 @@ public class OntologyHandler {
 		}
 		return sig;
 	}
+
+    public static Set<OWLDataProperty> getDataPropertiesInSignature(Set<OWLAxiom> axioms) {
+        Set<OWLDataProperty> sig = new HashSet<>();
+        for (OWLAxiom ax : axioms) {
+            sig.addAll(ax.getDataPropertiesInSignature());
+        }
+        return sig;
+    }
+
 
 	public static Set<OWLAxiom> getClassAssertionsOfInds(
 			Set<OWLAxiom> axioms, Set<OWLNamedIndividual> con) {
@@ -1031,20 +1037,18 @@ public class OntologyHandler {
 	public void removeIrrelevantAxioms() {
 		Set<OWLAxiom> removals = new HashSet<>();
 		for (OWLAxiom ax : ontology.getLogicalAxioms()) {
-			if (ax.isOfType(AxiomType.DATA_PROPERTY_ASSERTION,
-					AxiomType.DATA_PROPERTY_DOMAIN,
-					AxiomType.DATA_PROPERTY_RANGE,
-					AxiomType.DATATYPE_DEFINITION,
-					AxiomType.DISJOINT_DATA_PROPERTIES,
-					AxiomType.EQUIVALENT_DATA_PROPERTIES,
-					AxiomType.FUNCTIONAL_DATA_PROPERTY,
-					AxiomType.NEGATIVE_DATA_PROPERTY_ASSERTION,
-					AxiomType.SUB_DATA_PROPERTY,
+			if (ax.isOfType(
+//			        AxiomType.DATA_PROPERTY_ASSERTION,
+//					AxiomType.DATA_PROPERTY_DOMAIN,
+//					AxiomType.DATA_PROPERTY_RANGE,
+//					AxiomType.DISJOINT_DATA_PROPERTIES,
+//					AxiomType.EQUIVALENT_DATA_PROPERTIES,
+//					AxiomType.FUNCTIONAL_DATA_PROPERTY,
+//					AxiomType.NEGATIVE_DATA_PROPERTY_ASSERTION,
+//					AxiomType.SUB_DATA_PROPERTY,
+                    AxiomType.DATATYPE_DEFINITION,
 					AxiomType.SWRL_RULE
 					)) {
-				removals.add(ax);
-			} else
-			if (ax.getDatatypesInSignature().size() > 0) {
 				removals.add(ax);
 			}
 		}
@@ -1414,7 +1418,9 @@ public class OntologyHandler {
 		Set<OWLEntity> aboxSig = getABoxSignature();
 		Out.p("\nABox signature size: " + aboxSig.size() + 
 				" including " + getClassesInABox().size() + " classes, " + 
-				getObjectPropertiesInABox().size() + " roles");	
+				getObjectPropertiesInABox().size() + " object properties, " +
+                getDataPropertiesInABox().size() + " data properties"
+        );
 		OntologyHandler moduleHandler = null;		
 		if (aboxSig.size() > 0) {
 			Set<OWLAxiom> module = OntologyHandler.extractModule(ontology, aboxSig, moduleType);
@@ -1424,12 +1430,10 @@ public class OntologyHandler {
 		}		
 		return moduleHandler;
 	}
-	
-	
-	
-	
-	
-	public static OntologyHandler extractBotDataModule(InputStream inputStream) {
+
+
+
+    public static OntologyHandler extractBotDataModule(InputStream inputStream) {
 		return extractDataModule(inputStream, ModuleType.BOT);
 	}
 	

@@ -27,8 +27,9 @@ public abstract class RefinementOperator implements Operator {
 	protected OWLReasoner reasoner;
 	
 	protected OWLDataFactory factory;
-	
-	protected boolean checkDisjointness;
+
+	protected OperatorConfig config;
+
 	
 
 	// handling redundancy	
@@ -72,7 +73,7 @@ public abstract class RefinementOperator implements Operator {
 			subCls.remove(factory.getOWLNothing());
 			subClassMap.put(cl, subCls);			
 			// check disjoint classes if necessary
-			if (checkDisjointness) {
+			if (config.checkDisjointness) {
 				Set<OWLClass> disjCls = new HashSet<>(reasoner.getDisjointClasses(cl).getFlattened());
 				disjCls.remove(factory.getOWLNothing());
 				disjClassMap.put(cl, disjCls);
@@ -105,7 +106,7 @@ public abstract class RefinementOperator implements Operator {
 			subProps.remove(factory.getOWLTopObjectProperty());
 			subPropertyMap.put(prop, subProps);
 			// check disjoint properties
-			if (checkDisjointness) {
+			if (config.checkDisjointness) {
 				Set<OWLObjectPropertyExpression> disjProps = 
 						new HashSet<>(reasoner.getDisjointObjectProperties(prop).getFlattened());
 				disjProps.remove(factory.getOWLBottomObjectProperty());

@@ -749,7 +749,6 @@ public class DLMinerInput {
 		this.useCleaning = DLMinerInputI.DEF_USE_CLEANING;
 		this.useClosedWorldAssumption = DLMinerInputI.DEF_USE_CWA;
 		this.useDataProperties = DLMinerInputI.DEF_USE_DATA_PROPERTIES;
-		this.dataPropertyThresholdsNumber = DLMinerInputI.DEF_DP_THRESHOLD_NUMBER;
 	}
 
 

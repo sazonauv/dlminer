@@ -10,6 +10,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import io.dlminer.refine.OperatorConfig;
 import org.coode.owlapi.turtle.TurtleOntologyFormat;
 import org.semanticweb.owlapi.io.OWLFunctionalSyntaxOntologyFormat;
 import org.semanticweb.owlapi.io.OWLXMLOntologyFormat;
@@ -196,6 +197,7 @@ public class DLMiner {
         Out.p("\tABox size = " + handler.getABoxAxioms().size());
         Out.p("\tnumber of classes = " + handler.getClassesInSignature().size());
         Out.p("\tnumber of object properties = " + handler.getObjectPropertiesInSignature().size());
+        Out.p("\tnumber of data properties = " + handler.getDataPropertiesInSignature().size());
         Out.p("\tnumber of individuals = " + handler.getIndividuals().size());
         long end = System.currentTimeMillis();
         double ontologyParsingTime = (double) (end - start) / 1e3;
@@ -217,7 +219,8 @@ public class DLMiner {
         	reasoner.flush();
         }        
         reasoner.precomputeInferences(InferenceType.CLASS_HIERARCHY,
-        		InferenceType.OBJECT_PROPERTY_HIERARCHY);
+        		InferenceType.OBJECT_PROPERTY_HIERARCHY,
+                InferenceType.DATA_PROPERTY_HIERARCHY);
         handler.removeUnsatClasses(reasoner);
         handler.removeTautologies(reasoner);
         reasoner.flush();        
@@ -239,29 +242,38 @@ public class DLMiner {
         
         
         
-        Out.p("\nInitialising the concept builder");    
-        ConceptBuilder conceptBuilder = new ConceptBuilder(
-        		handler, reasoner,
-                input.getMaxRoleDepth(), input.getMinConceptSupport(),
-                input.getLogic());
-        conceptBuilder.setCheckDisjointness(input.isUseDisjointness());
-        conceptBuilder.setUseDisjunction(input.isUseDisjunction());
-        conceptBuilder.setUseNegation(input.isUseNegation());
-        conceptBuilder.setUseDataProperties(input.isUseDataProperties());
+        Out.p("\nInitialising the concept builder");
+        // config
+        OperatorConfig config = new OperatorConfig();
+        config.maxLength = input.getMaxConceptLength();
+        config.maxDepth = input.getMaxRoleDepth();
+        config.checkDisjointness = input.isUseDisjointness();
+        config.useDisjunction = input.isUseDisjunction();
+        config.useNegation = input.isUseNegation();
+        config.useUniversalRestriction = input.isUseUniversalRestriction();
+        config.useDataProperties = input.isUseDataProperties();
+        // check disjunctions
+        if (input.getLogic().equals(Logic.EL)) {
+            config.useDisjunction = false;
+        }
         // check negations
-        if (!handler.containsNegations()) {
-        	conceptBuilder.setUseNegation(false);
+        if (input.getLogic().equals(Logic.EL) || !handler.containsNegations()) {
+            config.useNegation = false;
         }
-        conceptBuilder.setUseUniversalRestriction(input.isUseUniversalRestriction());
         // check universals
-        if (!handler.containsUniversals() && !handler.containsMaxRestrictions()) {
-        	conceptBuilder.setUseUniversalRestriction(false);
+        if (input.getLogic().equals(Logic.EL) ||
+                (!handler.containsUniversals() && !handler.containsMaxRestrictions())) {
+            config.useUniversalRestriction = false;
         }
-        conceptBuilder.init();
         // check data properties
         if (!handler.containsDataProperties()) {
-            conceptBuilder.setUseDataProperties(false);
+            config.useDataProperties = false;
         }
+
+        // builder
+        ConceptBuilder conceptBuilder = new ConceptBuilder(handler, reasoner,
+                input.getMinConceptSupport(), input.getBeamSize(), config);
+        conceptBuilder.init();
         
         // if prediction
         if (input.getPositiveClass() != null) {
@@ -345,7 +357,6 @@ public class DLMiner {
     private Collection<Hypothesis> buildHypotheses(OWLReasoner reasoner,
                                                    ConceptBuilder conceptBuilder,
                                                    AxiomBuilder axiomBuilder) {
-                
         // initialise parameters
         Set<Hypothesis> hypotheses = new HashSet<>();
         double roleBuildingTime = 0;
@@ -381,8 +392,7 @@ public class DLMiner {
     	Out.p("\nBuilding at most " + maxConceptNumber 
     			+ " concepts of length at most " + input.getMaxConceptLength());        	
     	start = System.currentTimeMillis();
-    	conceptBuilder.buildConcepts(input.getMaxConceptLength(), 
-    			input.getBeamSize(), maxConceptNumber);
+    	conceptBuilder.buildConcepts(maxConceptNumber);
     	end = System.currentTimeMillis();
     	conceptBuildingTime += (double)(end - start) / 1e3;
     	hypothesesBuildingTime += (double)(end - start) / 1e3;

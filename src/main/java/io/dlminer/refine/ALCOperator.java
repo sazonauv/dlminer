@@ -13,19 +13,8 @@ import uk.ac.manchester.cs.owl.owlapi.OWLDataFactoryImpl;
 
 
 public class ALCOperator extends RefinementOperator {
-	
-	// length restriction
-	private int maxLength;
-	// depth restriction
-	private int maxDepth;
-	
-		
-	// configuration
-	private boolean useNegation;
-	private boolean useUniversalRestriction;
-	private boolean useDisjunction;
-	private boolean useDataProperties;
-	
+
+
 	// structures
 	private Map<OWLClassExpression, Set<OWLClassExpression>> classHierarchy;
 	private Map<OWLClassExpression, OWLClassExpression> negationMap;
@@ -33,43 +22,14 @@ public class ALCOperator extends RefinementOperator {
 	private Map<OWLDataProperty, List<Double>> dataPropertyThresholdsMap;
 	
 	
-	public ALCOperator(OWLReasoner reasoner, 
-			Set<OWLClass> classes, Set<OWLObjectProperty> properties,
-                       Set<OWLDataProperty> dataProperties,
-			int maxLength, int maxDepth, boolean checkDisjointness,
-                       boolean useDataProperties) {
-		this.reasoner = reasoner;	
-		this.classes = classes;
-		this.properties = properties;
-		this.dataProperties = dataProperties;
-		this.maxLength = maxLength;
-		this.maxDepth = maxDepth;
-		this.checkDisjointness = checkDisjointness;
-		this.useDataProperties = useDataProperties;
-		initDefaultConfig();
-		init();
-	}
-	
-	
-	
-	public ALCOperator(OWLReasoner reasoner, 
-			Set<OWLClass> classes, Set<OWLObjectProperty> properties,
-                       Set<OWLDataProperty> dataProperties,
-			int maxLength, int maxDepth, boolean checkDisjointness,
-                       boolean useDataProperties,
-			boolean useNegation, boolean useUniversalRestriction, 
-			boolean useDisjunction) {
+
+	public ALCOperator(OWLReasoner reasoner, Set<OWLClass> classes, Set<OWLObjectProperty> properties,
+                       Set<OWLDataProperty> dataProperties, OperatorConfig config) {
 		this.reasoner = reasoner;	
 		this.classes = classes;
 		this.properties = properties;
         this.dataProperties = dataProperties;
-		this.maxLength = maxLength;
-		this.maxDepth = maxDepth;
-		this.checkDisjointness = checkDisjointness;
-        this.useDataProperties = useDataProperties;
-		this.useNegation = useNegation;
-		this.useUniversalRestriction = useUniversalRestriction;
-		this.useDisjunction = useDisjunction;
+        this.config = config;
 		init();
 	}
 	
@@ -86,37 +46,32 @@ public class ALCOperator extends RefinementOperator {
 
 
     private void initDataPropertiesThresholds() {
-	    if (!useDataProperties) {
+	    if (!config.useDataProperties) {
 	        return;
         }
         dataPropertyThresholdsMap = new HashMap<>();
 	    Set<OWLNamedIndividual> inds = reasoner.getRootOntology().getIndividualsInSignature();
 	    for (OWLDataProperty prop : dataProperties) {
-            List<Double> thresholds = new ArrayList<>();
+            Set<Double> thrSet = new HashSet<>();
             for (OWLNamedIndividual ind : inds) {
                 Set<OWLLiteral> dataPropertyValues = reasoner.getDataPropertyValues(ind, prop);
                 for (OWLLiteral lit : dataPropertyValues) {
                     if (lit.isInteger()) {
-                        thresholds.add((double) lit.parseInteger());
+                        thrSet.add((double) lit.parseInteger());
                     } else if (lit.isFloat()) {
-                        thresholds.add((double) lit.parseFloat());
+                        thrSet.add((double) lit.parseFloat());
                     } else if (lit.isDouble()) {
-                        thresholds.add(lit.parseDouble());
+                        thrSet.add(lit.parseDouble());
                     }
                 }
             }
-            Collections.sort(thresholds);
-            dataPropertyThresholdsMap.put(prop, thresholds);
+            List<Double> thrList = new ArrayList<>(thrSet);
+            Collections.sort(thrList);
+            dataPropertyThresholdsMap.put(prop, thrList);
         }
     }
 
 
-    private void initDefaultConfig() {
-		this.useNegation = false;
-		this.useUniversalRestriction = false;
-		this.useDisjunction = false;
-	}
-	
 	
 	private void initInstanceMap() {
 		classInstanceMap = new HashMap<>();		
@@ -143,7 +98,7 @@ public class ALCOperator extends RefinementOperator {
 			Out.p(++count + " / " + classes.size() + " classes are checked for instances");
 		}
 		// told negative assertions
-		if (!useNegation) {
+		if (!config.useNegation) {
 			return;
 		}		
 		Set<OWLAxiom> aboxAxioms = reasoner.getRootOntology().getABoxAxioms(true);
@@ -172,7 +127,7 @@ public class ALCOperator extends RefinementOperator {
 	
 		
 	private void initNegationMap() {
-		if (!useNegation) {
+		if (!config.useNegation) {
 			return;
 		}
 		negationMap = new HashMap<>();
@@ -250,7 +205,7 @@ public class ALCOperator extends RefinementOperator {
 
 	public Set<ALCNode> refine(ALCNode current) {
 		Set<ALCNode> extensions = new HashSet<>();
-		if (current.length() > maxLength || current.depth() > maxDepth) {
+		if (current.length() > config.maxLength || current.depth() > config.maxDepth) {
 			return extensions;
 		}
 		// traverse
@@ -267,10 +222,10 @@ public class ALCOperator extends RefinementOperator {
 	
 	private Set<ALCNode> refineNode(ALCNode node, ALCNode current) {
 		Set<ALCNode> extensions = new HashSet<>();
-		if (current.length() > maxLength) {
+		if (current.length() > config.maxLength) {
 			return extensions;
 		}
-		if (current.depthOf(node) > maxDepth) {
+		if (current.depthOf(node) > config.maxDepth) {
 			return extensions;
 		}
         // refine labels
@@ -282,13 +237,13 @@ public class ALCOperator extends RefinementOperator {
 			}
 		}
 		// universal restrictions
-		if (useUniversalRestriction) {			
+		if (config.useUniversalRestriction) {
 			for (OWLObjectProperty prop : properties) {				
 				extensions.add(getUniversal(node, current, prop));				
 			}
 		}
         // data properties
-        if (useDataProperties) {
+        if (config.useDataProperties) {
             // refine data property values
             extensions.addAll(refineDataPropertyValues(node, current));
             // add data property edges
@@ -446,7 +401,7 @@ public class ALCOperator extends RefinementOperator {
 	private Set<ALCNode> refineLabelsNonempty(ALCNode node, ALCNode current) {
 		// specialise classes
 		Set<ALCNode> extensions = specialiseLabels(node, current);		
-		if (current.length() <= maxLength - 2) {
+		if (current.length() <= config.maxLength - 2) {
 			// add classes
 			extensions.addAll(extendLabels(node, current));
 		}		
@@ -808,7 +763,7 @@ public class ALCOperator extends RefinementOperator {
 	private Set<Set<OWLClassExpression>> generateDisjunctionsFor(
 			OWLClassExpression expr, int length) {
 		Set<Set<OWLClassExpression>> disjs = new HashSet<>();
-		int len = maxLength - length;
+		int len = config.maxLength - length;
 		if (len <= 0) {
 			return disjs;			
 		}
@@ -828,7 +783,7 @@ public class ALCOperator extends RefinementOperator {
 			return disjs;
 		}
 		// only negations
-		if (useNegation) {
+		if (config.useNegation) {
 			for (OWLClassExpression mgc : mgcs) {
 				if (!classes.contains(mgc)) {
 					Set<OWLClassExpression> disj = new HashSet<>();
@@ -838,7 +793,7 @@ public class ALCOperator extends RefinementOperator {
 			}
 		}
 		// if disjunctions are not needed
-		if (!useDisjunction || len == 2) {
+		if (!config.useDisjunction || len == 2) {
 			return disjs;
 		}		
 		// get all combinations		
@@ -912,17 +867,6 @@ public class ALCOperator extends RefinementOperator {
 
 
 
-	public int getMaxLength() {
-		return maxLength;
-	}
-
-
-
-	public void setMaxLength(int maxLength) {
-		this.maxLength = maxLength;
-	}
-
-
 	
 	public boolean isRedundantNode(ALCNode node) {
 		LinkedList<CNode> childs = node.traverse();	
@@ -979,32 +923,6 @@ public class ALCOperator extends RefinementOperator {
 				|| isRedundantWithPropertyRanges(expr, node);
 	}
 	
-	
-	
-	/**
-	 * @return the useNegation
-	 */
-	public boolean isUseNegation() {
-		return useNegation;
-	}
-
-
-
-	/**
-	 * @return the useUniversalRestriction
-	 */
-	public boolean isUseUniversalRestriction() {
-		return useUniversalRestriction;
-	}
-
-
-
-	/**
-	 * @return the useDisjunction
-	 */
-	public boolean isUseDisjunction() {
-		return useDisjunction;
-	}
 
 
 

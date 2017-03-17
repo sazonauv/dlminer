@@ -15,6 +15,7 @@ import java.util.SortedSet;
 import java.util.TreeSet;
 
 import io.dlminer.graph.*;
+import io.dlminer.refine.OperatorConfig;
 import org.semanticweb.owlapi.model.*;
 import org.semanticweb.owlapi.reasoner.OWLReasoner;
 
@@ -22,7 +23,6 @@ import io.dlminer.main.DLMinerOutputI;
 import io.dlminer.ont.DepthMetric;
 import io.dlminer.ont.InstanceChecker;
 import io.dlminer.ont.LengthMetric;
-import io.dlminer.ont.Logic;
 import io.dlminer.ont.OWLObjectPropertyChain;
 import io.dlminer.ont.OntologyHandler;
 import io.dlminer.print.Out;
@@ -74,26 +74,14 @@ public class ConceptBuilder {
 	private OWLReasoner reasoner;
 		
 	// parameters
-	private int maxRoleDepth;
-	
 	private int minSupport;
-	
-	private int maxConceptLength;
 	
 	private int maxConceptNumber;
 	
 	private int beamSize;
-	
-	
-	private boolean checkDisjointness;	
-	private boolean useDisjunction;
-	private boolean useNegation;
-	private boolean useUniversalRestriction;
-	private boolean useDataProperties;
-	
-	
-	private Logic logic;		
-	
+
+    private OperatorConfig config;
+
 	private ALCOperator operator;
 	
 	
@@ -106,24 +94,17 @@ public class ConceptBuilder {
 		
 		
 	public ConceptBuilder(OntologyHandler handler, OWLReasoner reasoner,
-			int roleDepth, int minSupport, 
-			Logic logic) {
-		initAttributes(handler, reasoner, roleDepth, minSupport, logic);				
+                          int minSupport, Integer beamSize, OperatorConfig config) {
+        this.handler = handler;
+        factory = handler.getDataFactory();
+        this.reasoner = reasoner;
+        signature = handler.getSignature();
+        signature.addAll(reasoner.getRootOntology().getSignature());
+        this.minSupport = minSupport;
+        this.beamSize = beamSize;
+        this.config = config;
 	}
-			
-		
-	
-	private void initAttributes(OntologyHandler handler, OWLReasoner reasoner,
-			int roleDepth, int minSupport, Logic logic) {
-		this.handler = handler;
-		factory = handler.getDataFactory();
-		this.reasoner = reasoner;		
-		signature = handler.getSignature();
-		signature.addAll(reasoner.getRootOntology().getSignature());
-		this.maxRoleDepth = roleDepth;
-		this.minSupport = minSupport;
-		this.logic = logic;		
-	}
+
 
 		
 	public void init() {
@@ -177,14 +158,7 @@ public class ConceptBuilder {
 		Set<OWLClass> cls = new HashSet<>(classes);
 		Set<OWLObjectProperty> props = new HashSet<>(properties);
         Set<OWLDataProperty> dataProps = new HashSet<>(dataProperties);
-		if (logic.equals(Logic.EL)) {	
-			operator = new ALCOperator(reasoner, cls, props, dataProps,
-					maxConceptLength, maxRoleDepth, checkDisjointness, useDataProperties);
-		} else {
-			operator = new ALCOperator(reasoner, cls, props, dataProps,
-					maxConceptLength, maxRoleDepth, checkDisjointness, useDataProperties,
-					useNegation, useUniversalRestriction, useDisjunction);
-		}
+        operator = new ALCOperator(reasoner, cls, props, dataProps, config);
 	}
 
 
@@ -205,12 +179,8 @@ public class ConceptBuilder {
 	}
 
 
-	public void buildConcepts(int maxConceptLength, 
-			int beamSize, int maxConceptNumber) {
-		this.maxConceptLength = maxConceptLength;		
-		this.beamSize = beamSize;
+	public void buildConcepts(int maxConceptNumber) {
 		this.maxConceptNumber = maxConceptNumber;
-		operator.setMaxLength(maxConceptLength);		
 		// build expressions		
 		buildClassExpressions();
 		buildClassDefinitions();
@@ -593,7 +563,7 @@ public class ConceptBuilder {
 	
 	
 	private void buildRoleExpressions() {
-		if (maxRoleDepth > 0) {
+		if (config.maxDepth > 0) {
 			if (!languageRoleMap.containsKey(Language.R)) {
 				buildRoleExpressionForLanguage(properties, Language.R);
 			}
@@ -647,8 +617,8 @@ public class ConceptBuilder {
 				// evaluate extensions
 				for (OWLClassExpression extension : extensions) {
 					try {
-						if (DepthMetric.depth(extension) <= maxRoleDepth
-								&& LengthMetric.length(extension) <= maxConceptLength
+						if (DepthMetric.depth(extension) <= config.maxDepth
+								&& LengthMetric.length(extension) <= config.maxLength
 								&& !processed.contains(extension)
 								&& !isEquivalentTo(extension, current)) {
 							Set<OWLNamedIndividual> instances = null;
@@ -959,8 +929,8 @@ public class ConceptBuilder {
 			// evaluate extensions			
 			for (ALCNode extension : extensions) {
 				OWLClassExpression concept = extension.getConcept();				
-				if (extension.depth() <= maxRoleDepth
-						&& extension.length() <= maxConceptLength
+				if (extension.depth() <= config.maxDepth
+						&& extension.length() <= config.maxLength
 						&& !processed.contains(extension)) {
 					// if prediction
 					if (positiveClass != null && negativeClass != null) {
@@ -1346,7 +1316,7 @@ public class ConceptBuilder {
                         ALCNode obj = (ALCNode) edge.object;
 						Expansion child = new Expansion(obj.clabels);
 						child.depth = current.depth + 1;
-						if (child.depth <= maxRoleDepth) {
+						if (child.depth <= config.maxDepth) {
 							child.pointer = obj;
 							CEdge newEdge;
 							if (edge instanceof SomeEdge) {
@@ -2034,52 +2004,6 @@ public class ConceptBuilder {
 	public double getTimeByExpression(OWLClassExpression expr) {
 		return expressionTimeMap.get(expr);
 	}
-
-
-
-	/**
-	 * @param checkDisjointness the checkDisjointness to set
-	 */
-	public void setCheckDisjointness(boolean checkDisjointness) {
-		this.checkDisjointness = checkDisjointness;
-	}
-
-
-
-	/**
-	 * @param useDisjunction the useDisjunction to set
-	 */
-	public void setUseDisjunction(boolean useDisjunction) {
-		this.useDisjunction = useDisjunction;
-	}
-
-
-
-	/**
-	 * @param useNegation the useNegation to set
-	 */
-	public void setUseNegation(boolean useNegation) {
-		this.useNegation = useNegation;
-	}
-
-
-
-	/**
-	 * @param useUniversalRestriction the useUniversalRestriction to set
-	 */
-	public void setUseUniversalRestriction(boolean useUniversalRestriction) {
-		this.useUniversalRestriction = useUniversalRestriction;
-	}
-
-
-    /**
-     *
-     * @param useDataProperties the flag to use data properties
-     */
-    public void setUseDataProperties(boolean useDataProperties) {
-        this.useDataProperties = useDataProperties;
-    }
-
 
 
 	public void retainClassDefinitions(Set<Hypothesis> hypotheses) {

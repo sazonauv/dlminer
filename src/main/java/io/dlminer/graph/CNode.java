@@ -42,6 +42,7 @@ public abstract class CNode {
 			if (outEdges == null) {
 				outEdges = new LinkedList<>();
 			}
+			// OWLLiteral as an object causes an error
 			return outEdges.add(edge) && edge.object.addInEdge(edge);
 		} else {
 			return false;
