@@ -3,14 +3,10 @@ package io.dlminer.refine;
 import java.util.*;
 
 
+import io.dlminer.graph.*;
 import org.semanticweb.owlapi.model.*;
 import org.semanticweb.owlapi.reasoner.OWLReasoner;
 
-import io.dlminer.graph.ALCNode;
-import io.dlminer.graph.CEdge;
-import io.dlminer.graph.CNode;
-import io.dlminer.graph.OnlyEdge;
-import io.dlminer.graph.SomeEdge;
 import io.dlminer.ont.LengthMetric;
 import io.dlminer.print.Out;
 import uk.ac.manchester.cs.owl.owlapi.OWLDataFactoryImpl;
@@ -270,16 +266,15 @@ public class ALCOperator extends RefinementOperator {
 	
 	
 	private Set<ALCNode> refineNode(ALCNode node, ALCNode current) {
-		Set<ALCNode> extensions = new HashSet<>();		
-		// refine labels
-		extensions.addAll(refineLabels(node, current));
-		if (current.length() >= maxLength) {
+		Set<ALCNode> extensions = new HashSet<>();
+		if (current.length() > maxLength) {
 			return extensions;
 		}
-		// extend edges
-		if (current.depthOf(node) >= maxDepth) {
+		if (current.depthOf(node) > maxDepth) {
 			return extensions;
 		}
+        // refine labels
+        extensions.addAll(refineLabels(node, current));
 		// existential restrictions
 		for (OWLObjectProperty prop : properties) {
 			if (!isRedundantExistentialForAddition(prop, node)) {
@@ -292,12 +287,113 @@ public class ALCOperator extends RefinementOperator {
 				extensions.add(getUniversal(node, current, prop));				
 			}
 		}
+        // data properties
+        if (useDataProperties) {
+            // refine data property values
+            extensions.addAll(refineDataPropertyValues(node, current));
+            // add data property edges
+            for (OWLDataProperty prop : dataProperties) {
+                if (hasThresholds(prop)) {
+                    extensions.add(getDataRestriction(node, current, prop, true));
+                    extensions.add(getDataRestriction(node, current, prop, false));
+                }
+            }
+        }
 		return extensions;
 	}
-	
-	
-	
-	private boolean isRedundantExistentialForAddition(
+
+
+
+	private boolean hasThresholds(OWLDataProperty prop) {
+        List<Double> thresholds = dataPropertyThresholdsMap.get(prop);
+        return thresholds != null && !thresholds.isEmpty();
+    }
+
+
+
+    private ALCNode getDataRestriction(ALCNode node, ALCNode current,
+                                       OWLDataProperty prop, boolean isLess) {
+        // clone the root
+        ALCNode extension = current.clone();
+        // find the equal node
+        ALCNode equal = (ALCNode) extension.find(node);
+        // refine the equal node
+        DataEdge edge;
+        List<Double> thresholds = dataPropertyThresholdsMap.get(prop);
+        if (isLess) {
+            // get last
+            OWLLiteral obj = factory.getOWLLiteral(thresholds.get(thresholds.size() - 1));
+            edge = new LDataEdge(equal, prop, obj);
+        } else {
+            // get first
+            OWLLiteral obj = factory.getOWLLiteral(thresholds.get(0));
+            edge = new GDataEdge(equal, prop, obj);
+        }
+        equal.addOutEdge(edge);
+        return extension;
+    }
+
+
+
+    private Set<ALCNode> refineDataPropertyValues(ALCNode node, ALCNode current) {
+        Set<ALCNode> extensions = new HashSet<>();
+	    if (node.getOutEdges() == null) {
+	        return extensions;
+        }
+        for (CEdge e : node.getOutEdges()) {
+            ALCNode extension = null;
+	        if (e instanceof DataEdge) {
+                extension = refineDataPropertyValue((DataEdge)e, node, current);
+            }
+	        if (extension != null) {
+                extensions.add(extension);
+            }
+        }
+        return extensions;
+    }
+
+
+
+    private ALCNode refineDataPropertyValue(DataEdge e, ALCNode node, ALCNode current) {
+	    if (!(e instanceof GDataEdge || e instanceof LDataEdge)) {
+	        return null;
+        }
+        // clone the root
+        ALCNode extension = current.clone();
+        // find the equal node
+        ALCNode equal = (ALCNode) extension.find(node);
+        // refine the equal node
+        DataEdge edge = null;
+        List<Double> thresholds = dataPropertyThresholdsMap.get(e.label);
+        int index = thresholds.indexOf(e.object);
+        if (e instanceof GDataEdge) {
+            // if last
+            if (index == thresholds.size() - 1) {
+                return null;
+            }
+            // get next
+            OWLLiteral obj = factory.getOWLLiteral(thresholds.get(index + 1));
+            edge = new GDataEdge(equal, e.label, obj);
+        }
+        if (e instanceof LDataEdge) {
+            // if first
+            if (index == 0) {
+                return null;
+            }
+            // get previous
+            OWLLiteral obj = factory.getOWLLiteral(thresholds.get(index - 1));
+            edge = new LDataEdge(equal, e.label, obj);
+        }
+        if (edge == null) {
+            return null;
+        }
+        equal.addOutEdge(edge);
+        return extension;
+    }
+
+
+
+    private boolean isRedundantExistentialForAddition(
 			OWLObjectProperty prop, ALCNode node) {
 		return isDisjointWithPropertyDomains(prop, node);
 	}
@@ -349,13 +445,6 @@ public class ALCOperator extends RefinementOperator {
 	
 	private Set<ALCNode> refineLabelsNonempty(ALCNode node, ALCNode current) {
 		// specialise classes
-		OWLClassExpression concept = node.getConcept();
-		if (concept.toString().contains("#Movie")
-				&& concept.toString().contains("#Genre")
-				&& concept.toString().contains("#Director")
-				) {
-			Out.p("\nFOUND: " + concept);
-		}
 		Set<ALCNode> extensions = specialiseLabels(node, current);		
 		if (current.length() <= maxLength - 2) {
 			// add classes
@@ -689,8 +778,8 @@ public class ALCOperator extends RefinementOperator {
 		// find the equal node
 		ALCNode equal = (ALCNode) extension.find(node);
 		// extend the equal node
-		Set<OWLClassExpression> l1 = new HashSet<OWLClassExpression>(2);
-		Set<OWLClassExpression> l2 = new HashSet<OWLClassExpression>(2);
+		Set<OWLClassExpression> l1 = new HashSet<>(2);
+		Set<OWLClassExpression> l2 = new HashSet<>(2);
 		ALCNode empty = new ALCNode(l1, l2);
 		SomeEdge edge = new SomeEdge(equal, prop, empty);
 		equal.addOutEdge(edge);
@@ -706,8 +795,8 @@ public class ALCOperator extends RefinementOperator {
 		// find the equal node
 		ALCNode equal = (ALCNode) extension.find(node);
 		// extend the equal node
-		Set<OWLClassExpression> l1 = new HashSet<OWLClassExpression>(2);
-		Set<OWLClassExpression> l2 = new HashSet<OWLClassExpression>(2);
+		Set<OWLClassExpression> l1 = new HashSet<>(2);
+		Set<OWLClassExpression> l2 = new HashSet<>(2);
 		ALCNode empty = new ALCNode(l1, l2);
 		OnlyEdge edge = new OnlyEdge(equal, prop, empty);
 		equal.addOutEdge(edge);

@@ -198,6 +198,7 @@ public abstract class CNode {
 			visits.add(n);
 			if (n.outEdges != null) {
 				for (CEdge e : n.outEdges) {
+				    // exclude literals
 				    if (!(e instanceof DataEdge)) {
                         history.add(e.object);
                     }

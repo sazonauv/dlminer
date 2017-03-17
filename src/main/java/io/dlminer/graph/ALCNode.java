@@ -136,6 +136,15 @@ public class ALCNode extends CNode {
 				if (e instanceof OnlyEdge) {
 					hash += 1;
 				}
+                if (e instanceof EDataEdge) {
+                    hash += 2;
+                }
+                if (e instanceof GDataEdge) {
+                    hash += 3;
+                }
+                if (e instanceof LDataEdge) {
+                    hash += 4;
+                }
 			}		
 		}
 		return hash;
@@ -149,16 +158,31 @@ public class ALCNode extends CNode {
 		ALCNode node = new ALCNode(new HashSet<>(clabels), new HashSet<>(dlabels));
 		if (outEdges != null) {
 			for (CEdge e : outEdges) {
-				ALCNode child = ((ALCNode)e.object).clone();
-				CEdge edge = null;
-				if (e instanceof SomeEdge) {
-					edge = new SomeEdge(node, e.label, child);
-				} else if (e instanceof OnlyEdge) {
-					edge = new OnlyEdge(node, e.label, child);
-				}
-				if (edge != null) {
-					node.addOutEdge(edge);
-				}
+                CEdge edge = null;
+			    if (e instanceof DataEdge) {
+                    DataEdge de = (DataEdge) e;
+			        if (de instanceof EDataEdge) {
+			            edge = new EDataEdge(node, de.label, de.object);
+                    }
+                    if (de instanceof GDataEdge) {
+                        edge = new GDataEdge(node, de.label, de.object);
+                    }
+                    if (de instanceof LDataEdge) {
+                        edge = new LDataEdge(node, de.label, de.object);
+                    }
+                } else {
+                    ALCNode child = ((ALCNode) e.object).clone();
+                    if (e instanceof SomeEdge) {
+                        edge = new SomeEdge(node, e.label, child);
+                    }
+                    if (e instanceof OnlyEdge) {
+                        edge = new OnlyEdge(node, e.label, child);
+                    }
+
+                }
+                if (edge != null) {
+                    node.addOutEdge(edge);
+                }
 			}
 		}		
 		return node;
