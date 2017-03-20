@@ -42,7 +42,10 @@ public abstract class CNode {
 			if (outEdges == null) {
 				outEdges = new LinkedList<>();
 			}
-			// OWLLiteral as an object causes an error
+            // OWLLiteral as an object: only add to outgoing edges
+			if (edge instanceof DataEdge) {
+			    return outEdges.add(edge);
+            }
 			return outEdges.add(edge) && edge.object.addInEdge(edge);
 		} else {
 			return false;
@@ -108,6 +111,22 @@ public abstract class CNode {
 	
 	
 	public abstract boolean isMoreSpecificThan(CNode node);
+
+
+
+    protected static boolean isMoreSpecificThan(CEdge e1, CEdge e2) {
+        if (e1.label.equals(e2.label)
+                && e1 instanceof SomeEdge == e2 instanceof SomeEdge
+                && e1 instanceof OnlyEdge == e2 instanceof OnlyEdge) {
+            if (e1 instanceof DataEdge) {
+                return DataEdge.isMoreSpecificThan((DataEdge) e1, (DataEdge) e2);
+            } else {
+                // recursion
+                return e1.object.isMoreSpecificThan(e2.object);
+            }
+        }
+        return false;
+    }
 
 
 

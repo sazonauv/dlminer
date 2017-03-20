@@ -10,12 +10,8 @@ import org.semanticweb.owlapi.model.OWLObjectPropertyExpression;
  */
 public abstract class DataEdge extends CEdge {
 
-    public OWLDataPropertyExpression label;
-    public OWLLiteral object;
 
-
-
-    protected void init(CNode subject, OWLDataPropertyExpression label, OWLLiteral object) {
+    protected void init(ALCNode subject, OWLDataPropertyExpression label, LiteralNode object) {
         this.subject = subject;
         this.label = label;
         this.object = object;
@@ -23,34 +19,34 @@ public abstract class DataEdge extends CEdge {
 
 
 
-    protected static boolean isMoreSpecificThan(CEdge e1, CEdge e2) {
-        if (e1 instanceof DataEdge && e2 instanceof DataEdge) {
-            OWLLiteral lit1 = (OWLLiteral) e1.object;
-            OWLLiteral lit2 = (OWLLiteral) e2.object;
-            // parse literals
-            Double val1 = parseNumber(lit1);
-            Double val2 = parseNumber(lit2);
-            if (val1 == null || val2 == null) {
-                return false;
-            }
-            // compare the values
-            if (e1 instanceof EDataEdge) {
-                if (e2 instanceof EDataEdge) {
-                    return val1 == val2;
-                } else if (e2 instanceof GDataEdge) {
-                    return val1 >= val2;
-                } else if (e2 instanceof LDataEdge) {
-                    return val1 <= val2;
-                }
-            }
-            if (e1 instanceof GDataEdge
-                    && e2 instanceof GDataEdge) {
+    protected static boolean isMoreSpecificThan(DataEdge e1, DataEdge e2) {
+        LiteralNode n1 = (LiteralNode) e1.object;
+        LiteralNode n2 = (LiteralNode) e2.object;
+        OWLLiteral lit1 = n1.literal;
+        OWLLiteral lit2 = n2.literal;
+        // parse literals
+        Double val1 = parseNumber(lit1);
+        Double val2 = parseNumber(lit2);
+        if (val1 == null || val2 == null) {
+            return false;
+        }
+        // compare the values
+        if (e1 instanceof EDataEdge) {
+            if (e2 instanceof EDataEdge) {
+                return val1 == val2;
+            } else if (e2 instanceof GDataEdge) {
                 return val1 >= val2;
-            }
-            if (e1 instanceof LDataEdge
-                    && e2 instanceof LDataEdge) {
+            } else if (e2 instanceof LDataEdge) {
                 return val1 <= val2;
             }
+        }
+        if (e1 instanceof GDataEdge
+                && e2 instanceof GDataEdge) {
+            return val1 >= val2;
+        }
+        if (e1 instanceof LDataEdge
+                && e2 instanceof LDataEdge) {
+            return val1 <= val2;
         }
         return false;
     }

@@ -4,7 +4,7 @@ import org.semanticweb.owlapi.model.OWLObjectPropertyExpression;
 
 public class SomeEdge extends CEdge {
 
-	public SomeEdge(CNode subject, OWLObjectPropertyExpression label, CNode object) {
+	public SomeEdge(ALCNode subject, OWLObjectPropertyExpression label, ALCNode object) {
 		init(subject, label, object);
 	}	
 

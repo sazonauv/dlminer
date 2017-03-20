@@ -40,13 +40,13 @@ public interface DLMinerInputI {
 	/**
 	 * Default minPrecision
 	 */
-	Double DEF_MIN_PRECISION = 0.8;
+	Double DEF_MIN_PRECISION = 0.9;
 	
 	
 	/**
 	 * Default minConceptSupport
 	 */
-	Integer DEF_MIN_CONCEPT_SUPPORT = 1;
+	Integer DEF_MIN_CONCEPT_SUPPORT = 10;
 	
 	
 	

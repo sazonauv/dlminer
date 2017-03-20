@@ -277,11 +277,13 @@ public class ALCOperator extends RefinementOperator {
         List<Double> thresholds = dataPropertyThresholdsMap.get(prop);
         if (isLess) {
             // get last
-            OWLLiteral obj = factory.getOWLLiteral(thresholds.get(thresholds.size() - 1));
+            OWLLiteral lit = factory.getOWLLiteral(thresholds.get(thresholds.size() - 1));
+            LiteralNode obj = new LiteralNode(lit);
             edge = new LDataEdge(equal, prop, obj);
         } else {
             // get first
-            OWLLiteral obj = factory.getOWLLiteral(thresholds.get(0));
+            OWLLiteral lit = factory.getOWLLiteral(thresholds.get(0));
+            LiteralNode obj = new LiteralNode(lit);
             edge = new GDataEdge(equal, prop, obj);
         }
         equal.addOutEdge(edge);
@@ -320,15 +322,19 @@ public class ALCOperator extends RefinementOperator {
         // refine the equal node
         DataEdge edge = null;
         List<Double> thresholds = dataPropertyThresholdsMap.get(e.label);
-        int index = thresholds.indexOf(e.object);
+        LiteralNode ln = (LiteralNode) e.object;
+        double val = ln.literal.parseDouble();
+        int index = thresholds.indexOf(val);
         if (e instanceof GDataEdge) {
             // if last
             if (index == thresholds.size() - 1) {
                 return null;
             }
             // get next
-            OWLLiteral obj = factory.getOWLLiteral(thresholds.get(index + 1));
-            edge = new GDataEdge(equal, e.label, obj);
+            OWLLiteral lit = factory.getOWLLiteral(thresholds.get(index + 1));
+            LiteralNode obj = new LiteralNode(lit);
+            OWLDataPropertyExpression dp = (OWLDataPropertyExpression) e.label;
+            edge = new GDataEdge(equal, dp, obj);
         }
         if (e instanceof LDataEdge) {
             // if first
@@ -336,8 +342,10 @@ public class ALCOperator extends RefinementOperator {
                 return null;
             }
             // get previous
-            OWLLiteral obj = factory.getOWLLiteral(thresholds.get(index - 1));
-            edge = new LDataEdge(equal, e.label, obj);
+            OWLLiteral lit = factory.getOWLLiteral(thresholds.get(index - 1));
+            LiteralNode obj = new LiteralNode(lit);
+            OWLDataPropertyExpression dp = (OWLDataPropertyExpression) e.label;
+            edge = new LDataEdge(equal, dp, obj);
         }
         if (edge == null) {
             return null;

@@ -95,15 +95,10 @@ public class ALCNode extends CNode {
 		for (CEdge e2 : edges) {
 			boolean found = false;
 			for (CEdge e1 : outEdges) {
-				if (e2.label.equals(e1.label)
-						&& e2 instanceof SomeEdge == e1 instanceof SomeEdge
-                        && e2 instanceof OnlyEdge == e1 instanceof OnlyEdge) {
-				    if (DataEdge.isMoreSpecificThan(e2, e1)
-                            || isMoreSpecificThan(e1.object, e2.object)) {
-                        found = true;
-                        break;
-                    }
-				}
+                if (isMoreSpecificThan(e1, e2)) {
+                    found = true;
+                    break;
+                }
 			}
 			if (!found) {
 				return false;
@@ -114,20 +109,8 @@ public class ALCNode extends CNode {
 
 
 
-    public static boolean isMoreSpecificThan(Object obj1, Object obj2) {
-        if (obj1 instanceof ALCNode && obj2 instanceof ALCNode) {
-            ALCNode node1 = (ALCNode) obj1;
-            ALCNode node2 = (ALCNode) obj2;
-            return node1.isMoreSpecificThan(node2);
-        }
-        return obj1.equals(obj2);
-    }
 
-	
-	
-
-	
-	@Override
+    @Override
 	protected int hash(int hash) {
 		hash += clabels.hashCode() + dlabels.hashCode();		
 		if (outEdges != null) {			
@@ -161,22 +144,25 @@ public class ALCNode extends CNode {
                 CEdge edge = null;
 			    if (e instanceof DataEdge) {
                     DataEdge de = (DataEdge) e;
+                    OWLDataPropertyExpression dp = (OWLDataPropertyExpression) de.label;
+                    LiteralNode obj = (LiteralNode) de.object;
 			        if (de instanceof EDataEdge) {
-			            edge = new EDataEdge(node, de.label, de.object);
+			            edge = new EDataEdge(node, dp, obj);
                     }
                     if (de instanceof GDataEdge) {
-                        edge = new GDataEdge(node, de.label, de.object);
+                        edge = new GDataEdge(node, dp, obj);
                     }
                     if (de instanceof LDataEdge) {
-                        edge = new LDataEdge(node, de.label, de.object);
+                        edge = new LDataEdge(node, dp, obj);
                     }
                 } else {
                     ALCNode child = ((ALCNode) e.object).clone();
+                    OWLObjectPropertyExpression op = (OWLObjectPropertyExpression) e.label;
                     if (e instanceof SomeEdge) {
-                        edge = new SomeEdge(node, e.label, child);
+                        edge = new SomeEdge(node, op, child);
                     }
                     if (e instanceof OnlyEdge) {
-                        edge = new OnlyEdge(node, e.label, child);
+                        edge = new OnlyEdge(node, op, child);
                     }
 
                 }
@@ -250,15 +236,11 @@ public class ALCNode extends CNode {
 				count -= 2;
 			}
 			// count objects
-			for (CEdge e : outEdges) {
-			    if (e instanceof DataEdge) {
-			        count += 1;
-                    // call recursion on each edge
-                } else {
-                    count = e.object.countLength(count);
-                }
-			}		
-		}
+            for (CEdge e : outEdges) {
+                // call recursion on each edge
+                count = e.object.countLength(count);
+            }
+        }
 		return count;
 	}
 
@@ -292,8 +274,9 @@ public class ALCNode extends CNode {
 			    // process data properties
                 if (e instanceof DataEdge) {
                     DataEdge de = (DataEdge) e;
-                    OWLDataPropertyExpression prop = de.label;
-                    OWLLiteral lit = de.object;
+                    OWLDataPropertyExpression prop = (OWLDataPropertyExpression) de.label;
+                    LiteralNode n = (LiteralNode) de.object;
+                    OWLLiteral lit = n.literal;
                     Double val = DataEdge.parseNumber(lit);
                     if (val == null) {
                         throw new IllegalArgumentException(WRONG_LITERAL_TYPE_ERROR);
@@ -317,11 +300,12 @@ public class ALCNode extends CNode {
                     if (e.object.concept == null) {
                         throw new IllegalArgumentException(NULL_CONCEPT_ERROR);
                     } else {
+                        OWLObjectPropertyExpression prop = (OWLObjectPropertyExpression) e.label;
                         OWLClassExpression expr;
                         if (e instanceof SomeEdge) {
-                            expr = factory.getOWLObjectSomeValuesFrom(e.label, e.object.concept);
+                            expr = factory.getOWLObjectSomeValuesFrom(prop, e.object.concept);
                         } else if (e instanceof OnlyEdge) {
-                            expr = factory.getOWLObjectAllValuesFrom(e.label, e.object.concept);
+                            expr = factory.getOWLObjectAllValuesFrom(prop, e.object.concept);
                         } else {
                             throw new IllegalArgumentException(WRONG_EDGE_TYPE_ERROR);
                         }
@@ -437,7 +421,7 @@ public class ALCNode extends CNode {
                             && e1 instanceof OnlyEdge == e2 instanceof OnlyEdge
                             && e1.label.equals(e2.label)
                             && !duplicates.contains(e1)
-                            && isMoreSpecificThan(e1.object, e2.object)) {
+                            && isMoreSpecificThan(e1, e2)) {
                         duplicates.add(e2);
                     }
                 }

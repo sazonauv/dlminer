@@ -9,7 +9,7 @@ import org.semanticweb.owlapi.model.OWLLiteral;
  */
 public class LDataEdge extends DataEdge {
 
-    public LDataEdge(CNode subject, OWLDataPropertyExpression label, OWLLiteral object) {
+    public LDataEdge(ALCNode subject, OWLDataPropertyExpression label, LiteralNode object) {
         init(subject, label, object);
     }
 

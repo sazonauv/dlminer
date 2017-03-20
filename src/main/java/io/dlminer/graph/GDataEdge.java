@@ -8,7 +8,7 @@ import org.semanticweb.owlapi.model.OWLLiteral;
  */
 public class GDataEdge extends DataEdge {
 
-    public GDataEdge(CNode subject, OWLDataPropertyExpression label, OWLLiteral object) {
+    public GDataEdge(ALCNode subject, OWLDataPropertyExpression label, LiteralNode object) {
         init(subject, label, object);
     }
 

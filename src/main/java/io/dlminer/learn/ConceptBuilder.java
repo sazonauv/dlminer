@@ -1133,7 +1133,8 @@ public class ConceptBuilder {
             Set<OWLDataPropertyAssertionAxiom> drfacts = indDRAssMap.get(ind);
             ALCNode subj = aboxMap.get(ind);
             for (OWLDataPropertyAssertionAxiom drfact : drfacts) {
-                EDataEdge edge = new EDataEdge(subj, drfact.getProperty(), drfact.getObject());
+                LiteralNode obj = new LiteralNode(drfact.getObject());
+                EDataEdge edge = new EDataEdge(subj, drfact.getProperty(), obj);
                 subj.addOutEdge(edge);
             }
         }
@@ -1305,28 +1306,31 @@ public class ConceptBuilder {
 				LinkedList<CEdge> edges = current.pointer.getOutEdges();
 				if (edges != null) {					
 					for (CEdge edge : edges) {
-						// process a data property
 						if (edge instanceof EDataEdge) {
-                            EDataEdge dataEdge = (EDataEdge) edge;
-                            EDataEdge newEdge = new EDataEdge(current, dataEdge.label, dataEdge.object);
+                            // process a data property
+                            EDataEdge de = (EDataEdge) edge;
+                            OWLDataPropertyExpression dp = (OWLDataPropertyExpression) de.label;
+                            LiteralNode ln = (LiteralNode) de.object;
+                            EDataEdge newEdge = new EDataEdge(current, dp, ln);
                             current.addOutEdge(newEdge);
-                            continue;
+                        } else {
+                            // process object properties
+                            ALCNode obj = (ALCNode) edge.object;
+                            Expansion child = new Expansion(obj.clabels);
+                            child.depth = current.depth + 1;
+                            if (child.depth <= config.maxDepth) {
+                                child.pointer = obj;
+                                CEdge newEdge;
+                                OWLObjectPropertyExpression op = (OWLObjectPropertyExpression) edge.label;
+                                if (edge instanceof SomeEdge) {
+                                    newEdge = new SomeEdge(current, op, child);
+                                } else {
+                                    newEdge = new OnlyEdge(current, op, child);
+                                }
+                                current.addOutEdge(newEdge);
+                                remainNodes.add(child);
+                            }
                         }
-                        // process object properties
-                        ALCNode obj = (ALCNode) edge.object;
-						Expansion child = new Expansion(obj.clabels);
-						child.depth = current.depth + 1;
-						if (child.depth <= config.maxDepth) {
-							child.pointer = obj;
-							CEdge newEdge;
-							if (edge instanceof SomeEdge) {
-								newEdge = new SomeEdge(current, edge.label, child);
-							} else {
-								newEdge = new OnlyEdge(current, edge.label, child);
-							}
-							current.addOutEdge(newEdge);
-							remainNodes.add(child);
-						}
 					}
 				}
 			}			
