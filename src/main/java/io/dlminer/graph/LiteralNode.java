@@ -48,7 +48,7 @@ public class LiteralNode extends CNode {
 
     @Override
     protected int countLength(int count) {
-        return 1;
+        return ++count;
     }
 
     @Override

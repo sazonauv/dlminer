@@ -222,35 +222,42 @@ public class ALCOperator extends RefinementOperator {
 	
 	private Set<ALCNode> refineNode(ALCNode node, ALCNode current) {
 		Set<ALCNode> extensions = new HashSet<>();
-		if (current.length() > config.maxLength) {
-			return extensions;
-		}
-		if (current.depthOf(node) > config.maxDepth) {
-			return extensions;
-		}
+        if (current.length() > config.maxLength || current.depth() > config.maxDepth) {
+            return extensions;
+        }
+        int length = current.isOWLThing() ? 0 : current.length();
         // refine labels
         extensions.addAll(refineLabels(node, current));
-		// existential restrictions
-		for (OWLObjectProperty prop : properties) {
-			if (!isRedundantExistentialForAddition(prop, node)) {
-				extensions.add(getExistential(node, current, prop));
-			}
-		}
-		// universal restrictions
-		if (config.useUniversalRestriction) {
-			for (OWLObjectProperty prop : properties) {				
-				extensions.add(getUniversal(node, current, prop));				
-			}
-		}
-        // data properties
+        // add object property restrictions
+        if (length <= config.maxLength - 2) {
+            // existential restrictions
+            for (OWLObjectProperty prop : properties) {
+                if (!isRedundantExistential(prop, node)) {
+                    extensions.add(getExistential(node, current, prop));
+                }
+            }
+            // universal restrictions
+            if (config.useUniversalRestriction) {
+                for (OWLObjectProperty prop : properties) {
+                    extensions.add(getUniversal(node, current, prop));
+                }
+            }
+        }
+        // refine data properties
         if (config.useDataProperties) {
             // refine data property values
             extensions.addAll(refineDataPropertyValues(node, current));
             // add data property edges
-            for (OWLDataProperty prop : dataProperties) {
-                if (hasThresholds(prop)) {
-                    extensions.add(getDataRestriction(node, current, prop, true));
-                    extensions.add(getDataRestriction(node, current, prop, false));
+            if (length <= config.maxLength - 2) {
+                for (OWLDataProperty prop : dataProperties) {
+                    if (hasThresholds(prop)) {
+                        if (!isRedundantDataRestriction(node, prop, true)) {
+                            extensions.add(getDataRestriction(node, current, prop, true));
+                        }
+                        if (!isRedundantDataRestriction(node, prop, false)) {
+                            extensions.add(getDataRestriction(node, current, prop, false));
+                        }
+                    }
                 }
             }
         }
@@ -258,8 +265,26 @@ public class ALCOperator extends RefinementOperator {
 	}
 
 
+    private boolean isRedundantDataRestriction(ALCNode node,
+                                               OWLDataProperty prop, boolean isLess) {
+        if (node.getOutEdges() == null) {
+            return false;
+        }
+        for (CEdge e : node.getOutEdges()) {
+            if (e.label.equals(prop)) {
+                if (isLess && e instanceof LDataEdge) {
+                    return true;
+                }
+                if (!isLess && e instanceof GDataEdge) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
 
-	private boolean hasThresholds(OWLDataProperty prop) {
+
+    private boolean hasThresholds(OWLDataProperty prop) {
         List<Double> thresholds = dataPropertyThresholdsMap.get(prop);
         return thresholds != null && !thresholds.isEmpty();
     }
@@ -318,45 +343,43 @@ public class ALCOperator extends RefinementOperator {
         // clone the root
         ALCNode extension = current.clone();
         // find the equal node
-        ALCNode equal = (ALCNode) extension.find(node);
-        // refine the equal node
-        DataEdge edge = null;
+        ALCNode eqNode = (ALCNode) extension.find(node);
+        // find the equal edge
+        CEdge eqEdge = null;
+        for (CEdge edge : eqNode.getOutEdges()) {
+            if (edge.equals(e) && edge.object.equals(e.object)) {
+                eqEdge = edge;
+            }
+        }
+        // refine the equal edge
         List<Double> thresholds = dataPropertyThresholdsMap.get(e.label);
-        LiteralNode ln = (LiteralNode) e.object;
+        LiteralNode ln = (LiteralNode) eqEdge.object;
         double val = ln.literal.parseDouble();
         int index = thresholds.indexOf(val);
-        if (e instanceof GDataEdge) {
+        if (eqEdge instanceof GDataEdge) {
             // if last
             if (index == thresholds.size() - 1) {
                 return null;
             }
             // get next
             OWLLiteral lit = factory.getOWLLiteral(thresholds.get(index + 1));
-            LiteralNode obj = new LiteralNode(lit);
-            OWLDataPropertyExpression dp = (OWLDataPropertyExpression) e.label;
-            edge = new GDataEdge(equal, dp, obj);
+            eqEdge.object = new LiteralNode(lit);
         }
-        if (e instanceof LDataEdge) {
+        if (eqEdge instanceof LDataEdge) {
             // if first
             if (index == 0) {
                 return null;
             }
             // get previous
             OWLLiteral lit = factory.getOWLLiteral(thresholds.get(index - 1));
-            LiteralNode obj = new LiteralNode(lit);
-            OWLDataPropertyExpression dp = (OWLDataPropertyExpression) e.label;
-            edge = new LDataEdge(equal, dp, obj);
+            eqEdge.object = new LiteralNode(lit);
         }
-        if (edge == null) {
-            return null;
-        }
-        equal.addOutEdge(edge);
         return extension;
     }
 
 
 
-    private boolean isRedundantExistentialForAddition(
+    private boolean isRedundantExistential(
 			OWLObjectProperty prop, ALCNode node) {
 		return isDisjointWithPropertyDomains(prop, node);
 	}
@@ -908,13 +931,11 @@ public class ALCOperator extends RefinementOperator {
 			return false;
 		}		
 		for (CEdge e1 : node.getOutEdges()) {
-			boolean isEx1 = e1 instanceof SomeEdge;
 			for (CEdge e2 : node.getOutEdges()) {
-				if (!e1.equals(e2) && 
-						e1.label.equals(e2.label)
-						&& (isEx1 == e2 instanceof SomeEdge)
-						&& (e1.object.isMoreSpecificThan(e2.object)
-							|| e2.object.isMoreSpecificThan(e1.object))) {
+			    if (e1.equals(e2)) {
+			        continue;
+                }
+				if (CNode.isMoreSpecificThan(e1, e2) || CNode.isMoreSpecificThan(e2, e1)) {
 					return true;
 				}
 			}

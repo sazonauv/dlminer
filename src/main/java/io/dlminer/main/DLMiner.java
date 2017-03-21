@@ -403,7 +403,7 @@ public class DLMiner {
     	Out.p("\n" + classInstMap.size() + " concepts are built");
 
         // debug
-//        Out.printClassesMS(conceptBuilder.getExpressionClassMap().keySet());
+        Out.printClassesMS(conceptBuilder.getExpressionClassMap().keySet());
 
     	// build hypotheses
     	Out.p("\nBuilding hypotheses of length at most " + 2*input.getMaxConceptLength());
@@ -776,14 +776,6 @@ public class DLMiner {
 				OWLAnnotationProperty annProp = factory.getOWLAnnotationProperty(
 						IRI.create(iri.toString() + Out.IRI_SEPARATOR + "precision"));
 				OWLLiteral value = factory.getOWLLiteral(h.precision);
-				OWLAnnotation annot = 							
-						factory.getOWLAnnotation(annProp, value);
-				annots.add(annot);
-			}
-			if (h.recall != null) {
-				OWLAnnotationProperty annProp = factory.getOWLAnnotationProperty(
-						IRI.create(iri.toString() + Out.IRI_SEPARATOR + "recall"));
-				OWLLiteral value = factory.getOWLLiteral(h.recall);
 				OWLAnnotation annot = 							
 						factory.getOWLAnnotation(annProp, value);
 				annots.add(annot);

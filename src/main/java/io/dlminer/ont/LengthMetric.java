@@ -119,21 +119,12 @@ public class LengthMetric {
 
 
 	// 1 if atomic, 2 if inverse
-	public static int length(OWLObjectPropertyExpression prop) {
+	public static int length(OWLPropertyExpression prop) {
 		if (prop.isAnonymous()) {
 			return 2;
 		}		
 		return 1;
 	}
-
-
-    // 1 if atomic, 2 if inverse
-    public static int length(OWLDataPropertyExpression prop) {
-        if (prop.isAnonymous()) {
-            return 2;
-        }
-        return 1;
-    }
 
 
 	public static Integer length(OWLAxiom axiom) {		

@@ -114,7 +114,10 @@ public abstract class CNode {
 
 
 
-    protected static boolean isMoreSpecificThan(CEdge e1, CEdge e2) {
+    public static boolean isMoreSpecificThan(CEdge e1, CEdge e2) {
+        if (e1.equals(e2)) {
+            return true;
+        }
         if (e1.label.equals(e2.label)
                 && e1 instanceof SomeEdge == e2 instanceof SomeEdge
                 && e1 instanceof OnlyEdge == e2 instanceof OnlyEdge) {

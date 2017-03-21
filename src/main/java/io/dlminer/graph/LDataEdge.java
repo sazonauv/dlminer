@@ -13,4 +13,17 @@ public class LDataEdge extends DataEdge {
         init(subject, label, object);
     }
 
+
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj) {
+            return true;
+        }
+        if (!(obj instanceof LDataEdge)) {
+            return false;
+        }
+        LDataEdge edge = (LDataEdge) obj;
+        return label.equals(edge.label);
+    }
+
 }

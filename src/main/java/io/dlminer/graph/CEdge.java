@@ -22,9 +22,28 @@ public abstract class CEdge {
 	}
 
 
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj) {
+            return true;
+        }
+        if (!(obj instanceof CEdge)) {
+            return false;
+        }
+        CEdge edge = (CEdge) obj;
+        return label.equals(edge.label);
+    }
 
-	
-	@Override
+
+    @Override
+    public int hashCode() {
+        return label.hashCode();
+    }
+
+
+
+
+    @Override
 	public String toString() {
 		return subject + " " + label + " " + object;
 	}

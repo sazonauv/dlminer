@@ -12,4 +12,18 @@ public class EDataEdge extends DataEdge {
         init(subject, label, object);
     }
 
+
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj) {
+            return true;
+        }
+        if (!(obj instanceof EDataEdge)) {
+            return false;
+        }
+        EDataEdge edge = (EDataEdge) obj;
+        return label.equals(edge.label);
+    }
+
+
 }

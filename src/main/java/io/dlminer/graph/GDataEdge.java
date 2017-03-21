@@ -12,4 +12,18 @@ public class GDataEdge extends DataEdge {
         init(subject, label, object);
     }
 
+
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj) {
+            return true;
+        }
+        if (!(obj instanceof GDataEdge)) {
+            return false;
+        }
+        GDataEdge edge = (GDataEdge) obj;
+        return label.equals(edge.label);
+    }
+
+
 }
