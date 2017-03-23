@@ -335,6 +335,15 @@ public class ALCNode extends CNode {
 	}
 
 
+    public boolean isAtomic() {
+	    if (outEdges == null && clabels.size() == 1) {
+	        return true;
+        }
+        return false;
+    }
+
+
+
 
 	public boolean containsUniversal() {
 		if (outEdges == null) {
