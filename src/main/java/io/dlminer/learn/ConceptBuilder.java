@@ -118,7 +118,7 @@ public class ConceptBuilder {
 		handler.materialise(operator);				
 		// initialise the instance checker
 		Out.p("\nInitialising the instance checker");
-		initInstanceChecker();
+        instanceChecker = new InstanceChecker(operator, handler);
 		// initialise expansions
 		buildExpansions();
 	}
@@ -249,20 +249,6 @@ public class ConceptBuilder {
 	
 	
 	
-	
-	
-	
-	
-	
-	
-	private void initInstanceChecker() {		
-		instanceChecker = new InstanceChecker(handler);		
-	}
-
-
-
-
-
 
 	private void buildForLanguages(List<Language> languages) {
 		for (Language lang : languages) {
@@ -597,60 +583,6 @@ public class ConceptBuilder {
 	}
 
 
-	private void buildRefinements(LearnerOperator operator) {
-		// root
-		OWLClassExpression root = factory.getOWLThing();
-		expressionInstanceMap.put(root, handler.getIndividuals());
-		// loop
-		LinkedList<OWLClassExpression> candidates = new LinkedList<>();
-		Set<OWLClassExpression> processed = new HashSet<>();
-		candidates.add(root);
-		processed.add(root);
-		int iters = 0;
-		loop:
-			while (!candidates.isEmpty()) {
-				OWLClassExpression current = candidates.pollFirst();
-				// generate all extensions of length+2
-				Set<OWLClassExpression> extensions = operator.refine(current);
-				// beam
-				List<OWLClassExpression> beam = new LinkedList<>();
-				// evaluate extensions
-				for (OWLClassExpression extension : extensions) {
-					try {
-						if (DepthMetric.depth(extension) <= config.maxDepth
-								&& LengthMetric.length(extension) <= config.maxLength
-								&& !processed.contains(extension)
-								&& !isEquivalentTo(extension, current)) {
-							Set<OWLNamedIndividual> instances = null;
-							instances = reasoner.getInstances(extension, false).getFlattened();
-							if (instances != null && instances.size() >= minSupport) {
-								beam.add(extension);
-								expressionInstanceMap.put(extension, instances);
-							}
-						}
-					} catch (Exception e) {
-						Out.p(e + DLMinerOutputI.CONCEPT_BUILDING_ERROR);
-					}
-				}
-				processed.addAll(extensions);
-				// find beam concepts and add them to candidates
-				Collections.sort(beam, new ConceptLengthComparator(SortingOrder.ASC));
-				if (beam.size() <= beamSize) {
-					candidates.addAll(beam);
-				} else {
-					candidates.addAll(beam.subList(0, beamSize));
-				}
-				// debug
-				Out.p("iterations=" + (++iters)
-						+ " concepts=" + expressionInstanceMap.size()
-						+ " candidates=" + candidates.size()
-						+ " extensions=" + extensions.size()
-						+ " current=" + current);
-			}
-		Out.p("\nDL-Refinement has terminated");
-	}
-
-
 
 
 	private boolean isEquivalentTo(OWLClassExpression cl1,
@@ -661,46 +593,6 @@ public class ConceptBuilder {
 	}
 
 
-//	private void buildStartClasses(Language... startLanguages) {
-//		startClasses = new HashSet<OWLClassExpression>(classes);
-//		for (Language lang : startLanguages) {
-//			initStartLanguage(lang);
-//		}
-//	}
-//
-//
-//	private void buildStartClasses() {
-//		startClasses = new HashSet<OWLClassExpression>();
-//		Map<OWLClassExpression, Set<OWLNamedIndividual>>
-//			clasIndMap = instanceChecker.getClasIndMap();
-//		for (OWLClassExpression cl : clasIndMap.keySet()) {
-//			if (clasIndMap.get(cl).size() >= minSupport) {
-//				startClasses.add(cl);
-//			}
-//		}
-//	}
-
-
-	private void initStartLanguage(Language lang) {
-		if (!lang.equals(Language.A)
-				&& !lang.equals(Language.R)
-				&& !lang.equals(Language.INV_R)
-				&& !lang.equals(Language.R_CHAIN_S)
-				&& !lang.equals(Language.INV_R_CHAIN_S)) {
-//			Out.p("\nInitialising start class expressions");
-			buildForLanguage(lang);
-//			for (OWLClass cl : languageClassMap.get(lang)) {
-//				startClasses.add(classExpressionMap.get(cl));
-//			}
-			// initialise the reasoner on complex class expressions if necessary
-//			addDefinitions(lang, handler);
-//			reasoner.flush();
-//			reasoner.precomputeInferences(InferenceType.CLASS_HIERARCHY,
-//					InferenceType.OBJECT_PROPERTY_HIERARCHY,
-//					InferenceType.CLASS_ASSERTIONS,
-//					InferenceType.OBJECT_PROPERTY_ASSERTIONS);
-		}
-	}
 
 
 
@@ -940,7 +832,7 @@ public class ConceptBuilder {
 						}
 					}
 					double t1 = System.nanoTime();					
-					List<Expansion> instances = InstanceChecker.getInstances(extension, currentInstances);					
+					List<Expansion> instances = instanceChecker.getInstances(extension, currentInstances);
 					extension.coverage = instanceChecker.countAllInstances(instances);
 //					updateCoverage(extension, instances);
 					if (extension.coverage >= minSupport) {
@@ -1028,12 +920,7 @@ public class ConceptBuilder {
 		Set<OWLClassExpression> disjs = new HashSet<>(5);
 		ALCNode node = new ALCNode(conjs, disjs);
 		double t1 = System.nanoTime();
-		List<Expansion> instances;
-		if (cl.isOWLThing()) {
-			instances = new ArrayList<>(instanceChecker.getClusterCenters());			
-		} else {
-			instances = instanceChecker.getInstances(node);			
-		}
+		List<Expansion> instances = instanceChecker.getInstances(node);
 		node.coverage = instanceChecker.countAllInstances(instances);
 		nodeClusterMap.put(node, instances);
 //		}
