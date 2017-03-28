@@ -115,20 +115,15 @@ public abstract class CNode {
 
 
     public static boolean isMoreSpecificThan(CEdge e1, CEdge e2) {
-        if (e1.equals(e2)) {
-            return true;
+        if (!e1.equals(e2)) {
+            return false;
         }
-        if (e1.label.equals(e2.label)
-                && e1 instanceof SomeEdge == e2 instanceof SomeEdge
-                && e1 instanceof OnlyEdge == e2 instanceof OnlyEdge) {
-            if (e1 instanceof DataEdge) {
-                return DataEdge.isMoreSpecificThan((DataEdge) e1, (DataEdge) e2);
-            } else {
-                // recursion
-                return e1.object.isMoreSpecificThan(e2.object);
-            }
+        if (e1 instanceof DataEdge) {
+            return DataEdge.isMoreSpecificThan((DataEdge) e1, (DataEdge) e2);
+        } else {
+            // recursion
+            return e1.object.isMoreSpecificThan(e2.object);
         }
-        return false;
     }
 
 
@@ -165,6 +160,7 @@ public abstract class CNode {
 		return "(cover=" + coverage
 		+ "; length=" + length()
 		+ "; depth=" + depth()
+        + "; concept=" + concept
 		+ ")";
 	}
 

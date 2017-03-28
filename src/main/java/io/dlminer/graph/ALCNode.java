@@ -80,9 +80,7 @@ public class ALCNode extends CNode {
 		for (CEdge e2 : edges) {
 			boolean found = false;
 			for (CEdge e1 : outEdges) {
-				if (e2.label.equals(e1.label)
-						&& e2 instanceof SomeEdge == e1 instanceof SomeEdge
-                        && e2 instanceof OnlyEdge == e1 instanceof OnlyEdge) {
+				if (e2.equals(e1)) {
 					found = true;
 					break;					
 				}				
@@ -112,21 +110,21 @@ public class ALCNode extends CNode {
 
     @Override
 	protected int hash(int hash) {
-		hash += clabels.hashCode() + dlabels.hashCode();		
+		hash += clabels.hashCode() + 2*dlabels.hashCode();
 		if (outEdges != null) {			
 			for (CEdge e : outEdges) {
-				hash = e.label.hashCode() + e.object.hash(hash);
+				hash = e.hashCode() + e.object.hash(hash);
 				if (e instanceof OnlyEdge) {
-					hash += 1;
+					hash += 3;
 				}
                 if (e instanceof EDataEdge) {
-                    hash += 2;
+                    hash += 7;
                 }
                 if (e instanceof GDataEdge) {
-                    hash += 3;
+                    hash += 11;
                 }
                 if (e instanceof LDataEdge) {
-                    hash += 4;
+                    hash += 17;
                 }
 			}		
 		}

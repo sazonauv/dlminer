@@ -403,7 +403,7 @@ public class DLMiner {
     	Out.p("\n" + classInstMap.size() + " concepts are built");
 
         // debug
-        Out.printClassesMS(conceptBuilder.getExpressionClassMap().keySet());
+//        Out.printClassesMS(conceptBuilder.getExpressionClassMap().keySet());
 
     	// build hypotheses
     	Out.p("\nBuilding hypotheses of length at most " + 2*input.getMaxConceptLength());

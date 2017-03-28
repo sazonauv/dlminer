@@ -862,7 +862,7 @@ public class ConceptBuilder {
 					+ " concepts=" + nodeClusterMap.size()
 					+ " candidates=" + candidates.size()
 					+ " extensions=" + extensions.size()
-					+ " current=" + current);			
+					+ " current=" + current);
 		}		
 		Out.p("\nDL-Apriori has terminated");		
 	}
@@ -913,17 +913,16 @@ public class ConceptBuilder {
 
 
 	private ALCNode processNode(OWLClass cl) {
-		Set<OWLClassExpression> conjs = new HashSet<>(5);
+		Set<OWLClassExpression> conjs = new HashSet<>(2);
 		if (!cl.isOWLThing()) {
 			conjs.add(cl);
 		}
-		Set<OWLClassExpression> disjs = new HashSet<>(5);
+		Set<OWLClassExpression> disjs = new HashSet<>(2);
 		ALCNode node = new ALCNode(conjs, disjs);
 		double t1 = System.nanoTime();
 		List<Expansion> instances = instanceChecker.getInstances(node);
 		node.coverage = instanceChecker.countAllInstances(instances);
 		nodeClusterMap.put(node, instances);
-//		}
 		double t2 = System.nanoTime();
 		double time = (t2 - t1)/1e9;		
 		expressionTimeMap.put(node.getConcept(), time);
@@ -1000,13 +999,12 @@ public class ConceptBuilder {
         Map<OWLNamedIndividual, Set<OWLDataPropertyAssertionAxiom>> indDRAssMap =
                 handler.createIndDataPropertyAssertionMap();
 		// create an ABox graph
-		Map<OWLNamedIndividual, ALCNode> aboxMap =
-				new HashMap<>();
+		Map<OWLNamedIndividual, ALCNode> aboxMap = new HashMap<>();
 		// create nodes
 		Set<OWLNamedIndividual> inds = handler.getIndividuals();
 		for (OWLNamedIndividual ind : inds) {
 			Set<OWLClassAssertionAxiom> cfacts = indCAssMap.get(ind);
-			Set<OWLClassExpression> label = null;
+			Set<OWLClassExpression> label;
 			if (cfacts != null) {
 				label = handler.getExpressionsFromAssertions(cfacts);
 			} else {
@@ -1015,6 +1013,9 @@ public class ConceptBuilder {
             ALCNode node = new ALCNode(label);
 			aboxMap.put(ind, node);
 		}
+		if (config.maxDepth <= 0 || config.maxLength <= 1) {
+		    return aboxMap;
+        }
 		// create data relations
         for (OWLNamedIndividual ind : indDRAssMap.keySet()) {
             Set<OWLDataPropertyAssertionAxiom> drfacts = indDRAssMap.get(ind);
@@ -1047,7 +1048,7 @@ public class ConceptBuilder {
 				}
 			}
 		}
-		// create relations
+		// create object relations
 		Map<OWLObjectProperty, Set<OWLClass>> propRangeMap = operator.getPropRangeMap();
 		Map<OWLClass, Set<OWLClass>> eqClMap = operator.getEquivClassMap();
 		Map<OWLClass, Set<OWLClass>> supClMap = operator.getSuperClassMap();
@@ -1058,6 +1059,7 @@ public class ConceptBuilder {
             ALCNode subj = aboxMap.get(ind);
 			for (OWLObjectPropertyAssertionAxiom rfact : rfacts) {
                 ALCNode obj = aboxMap.get(rfact.getObject());
+                // add existentials
 				SomeEdge edge = new SomeEdge(subj, rfact.getProperty(), obj);
 				List<CEdge> sEdges = subj.getOutEdges();				
 				subj.addOutEdge(edge);								
@@ -1112,66 +1114,6 @@ public class ConceptBuilder {
 		return aboxMap;
 	}
 	
-	
-	private Map<OWLNamedIndividual, ALCNode> buildABoxGraphFromReasoner() {
-		Map<OWLNamedIndividual, Set<OWLClassExpression>> indCExprMap = 
-				handler.createIndClassExprMapInferred(classes, reasoner);
-		Map<OWLNamedIndividual, Set<OWLObjectPropertyAssertionAxiom>> indRAssMap = 
-				handler.createIndPropertyAssertionMapInferred(reasoner);		
-		// create an ABox graph
-		Map<OWLNamedIndividual, ALCNode> aboxMap = new HashMap<>();
-		// create nodes
-		Set<OWLNamedIndividual> inds = handler.getIndividuals();
-		for (OWLNamedIndividual ind : inds) {
-			Set<OWLClassExpression> label = indCExprMap.get(ind);
-			if (label == null) {
-				label = new HashSet<>();
-			}
-            ALCNode node = new ALCNode(label);
-			aboxMap.put(ind, node);
-		}
-		// create relations
-		for (OWLNamedIndividual ind : indRAssMap.keySet()) {
-			Set<OWLObjectPropertyAssertionAxiom> rfacts = indRAssMap.get(ind);
-            ALCNode subj = aboxMap.get(ind);
-			for (OWLObjectPropertyAssertionAxiom rfact : rfacts) {
-                ALCNode obj = aboxMap.get(rfact.getObject());
-				SomeEdge edge = new SomeEdge(subj, rfact.getProperty(), obj);
-				subj.addOutEdge(edge);				
-			}
-		}
-		return aboxMap;
-	}
-	
-	
-		
-	
-	
-
-
-	/**
-	 * @return mapping of individuals to their concepts
-	 */
-	public Map<OWLNamedIndividual, Set<OWLClassExpression>> 
-		createIndClassExprMapInferred() {
-		Map<OWLNamedIndividual, Set<OWLClassExpression>> map = new HashMap<>();		
-		for (OWLClassExpression expr : classes) {			
-			Set<OWLNamedIndividual> insts = reasoner.getInstances(expr, false).getFlattened();
-			for (OWLNamedIndividual inst : insts) {
-				Set<OWLClassExpression> exprs = map.get(inst);
-				if (exprs == null) {
-					exprs = new HashSet<>();
-					map.put(inst, exprs);
-				}
-				exprs.add(expr);
-			}			
-		}	
-		return map;
-	}
-	
-	
-	
-
 
 
 	private List<Expansion> 
@@ -1194,7 +1136,7 @@ public class ConceptBuilder {
 				if (edges != null) {					
 					for (CEdge edge : edges) {
 						if (edge instanceof EDataEdge) {
-                            // process a data property
+                            // process data properties
                             EDataEdge de = (EDataEdge) edge;
                             OWLDataPropertyExpression dp = (OWLDataPropertyExpression) de.label;
                             LiteralNode ln = (LiteralNode) de.object;
@@ -1223,7 +1165,6 @@ public class ConceptBuilder {
 			}			
 			// add
 			expansions.add(root);
-//			Out.p(root);
 		}
 		Out.p(expansions.size() + " expansions are built");
 		return expansions;

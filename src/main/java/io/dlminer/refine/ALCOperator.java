@@ -125,7 +125,7 @@ public class ALCOperator extends RefinementOperator {
 	}
 	
 	
-		
+
 	private void initNegationMap() {
 		if (!config.useNegation) {
 			return;
@@ -420,7 +420,6 @@ public class ALCOperator extends RefinementOperator {
 
 
 	private Set<ALCNode> refineLabels(ALCNode node, ALCNode current) {
-		// owl:Thing
 		if (node.clabels.isEmpty() && node.dlabels.isEmpty()) {
 			return refineLabelsEmpty(node, current);
 		}
@@ -714,8 +713,14 @@ public class ALCOperator extends RefinementOperator {
 
 	private Set<ALCNode> refineLabelsEmpty(ALCNode node, ALCNode current) {		
 		// get disjunctions that satisfy the maximal length
-		Set<Set<OWLClassExpression>> disjs = generateDisjunctionsFor(
-				factory.getOWLThing(), current.length()-1);
+        int currentLength;
+        if (node.isOWLThing()) {
+            currentLength = current.length()-1;
+        } else {
+            currentLength = current.length();
+        }
+		Set<Set<OWLClassExpression>> disjs =
+                generateDisjunctionsFor(factory.getOWLThing(), currentLength);
 		if (disjs.isEmpty()) {
 			return new HashSet<>();
 		}
@@ -792,10 +797,10 @@ public class ALCOperator extends RefinementOperator {
 
 
 	private Set<Set<OWLClassExpression>> generateDisjunctionsFor(
-			OWLClassExpression expr, int length) {
+			OWLClassExpression expr, int currentLength) {
 		Set<Set<OWLClassExpression>> disjs = new HashSet<>();
-		int len = config.maxLength - length;
-		if (len <= 0) {
+		int lengthToFill = config.maxLength - currentLength;
+		if (lengthToFill <= 0) {
 			return disjs;			
 		}
 		Set<OWLClassExpression> mgcs = classHierarchy.get(expr);		
@@ -810,7 +815,7 @@ public class ALCOperator extends RefinementOperator {
 				disjs.add(disj);
 			}
 		}
-		if (len == 1) {
+		if (lengthToFill == 1) {
 			return disjs;
 		}
 		// only negations
@@ -824,11 +829,11 @@ public class ALCOperator extends RefinementOperator {
 			}
 		}
 		// if disjunctions are not needed
-		if (!config.useDisjunction || len == 2) {
+		if (!config.useDisjunction || lengthToFill == 2) {
 			return disjs;
 		}		
 		// get all combinations		
-		return generateCombinations(mgcs, len);
+		return generateCombinations(mgcs, lengthToFill);
 	}
 
 

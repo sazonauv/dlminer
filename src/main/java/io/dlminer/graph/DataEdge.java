@@ -22,6 +22,9 @@ public abstract class DataEdge extends CEdge {
     protected static boolean isMoreSpecificThan(DataEdge e1, DataEdge e2) {
         LiteralNode n1 = (LiteralNode) e1.object;
         LiteralNode n2 = (LiteralNode) e2.object;
+        if (n1.equals(n2)) {
+            return true;
+        }
         OWLLiteral lit1 = n1.literal;
         OWLLiteral lit2 = n2.literal;
         // parse literals
