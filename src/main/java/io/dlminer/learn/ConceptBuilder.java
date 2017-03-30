@@ -19,16 +19,11 @@ import io.dlminer.refine.OperatorConfig;
 import org.semanticweb.owlapi.model.*;
 import org.semanticweb.owlapi.reasoner.OWLReasoner;
 
-import io.dlminer.main.DLMinerOutputI;
-import io.dlminer.ont.DepthMetric;
 import io.dlminer.ont.InstanceChecker;
-import io.dlminer.ont.LengthMetric;
 import io.dlminer.ont.OWLObjectPropertyChain;
 import io.dlminer.ont.OntologyHandler;
 import io.dlminer.print.Out;
 import io.dlminer.refine.ALCOperator;
-import io.dlminer.refine.LearnerOperator;
-import io.dlminer.sort.ConceptLengthComparator;
 import io.dlminer.sort.NodeLengthComparator;
 import io.dlminer.sort.SortingOrder;
 
@@ -1021,7 +1016,7 @@ public class ConceptBuilder {
             Set<OWLDataPropertyAssertionAxiom> drfacts = indDRAssMap.get(ind);
             ALCNode subj = aboxMap.get(ind);
             for (OWLDataPropertyAssertionAxiom drfact : drfacts) {
-                LiteralNode obj = new LiteralNode(drfact.getObject());
+                NumericNode obj = new NumericNode(drfact.getObject());
                 EDataEdge edge = new EDataEdge(subj, drfact.getProperty(), obj);
                 subj.addOutEdge(edge);
             }
@@ -1139,7 +1134,7 @@ public class ConceptBuilder {
                             // process data properties
                             EDataEdge de = (EDataEdge) edge;
                             OWLDataPropertyExpression dp = (OWLDataPropertyExpression) de.label;
-                            LiteralNode ln = (LiteralNode) de.object;
+                            NumericNode ln = (NumericNode) de.object;
                             EDataEdge newEdge = new EDataEdge(current, dp, ln);
                             current.addOutEdge(newEdge);
                         } else {

@@ -12,9 +12,8 @@ import uk.ac.manchester.cs.owl.owlapi.OWLDataFactoryImpl;
 public abstract class CNode {
 
 	protected static final String NULL_CONCEPT_ERROR = "Cannot use a successor with the NULL concept";
-	protected static final String WRONG_EDGE_TYPE_ERROR = "Edge type can be either existential or universal";
-    protected static final String WRONG_LITERAL_TYPE_ERROR = "Literals can only be numeric for data property " +
-            "restrictions";
+	protected static final String WRONG_EDGE_TYPE_ERROR = "Edge type can be either existential, universal, or " +
+            "data min/max restriction";
 
 
     public OWLClassExpression concept;
@@ -115,7 +114,7 @@ public abstract class CNode {
 
 
     public static boolean isMoreSpecificThan(CEdge e1, CEdge e2) {
-        if (!e1.equals(e2)) {
+        if (!e1.label.equals(e2.label)) {
             return false;
         }
         if (e1 instanceof DataEdge) {

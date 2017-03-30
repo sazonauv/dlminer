@@ -6,12 +6,12 @@ import org.semanticweb.owlapi.model.OWLLiteral;
 /**
  * Created by slava on 20/03/17.
  */
-public class LiteralNode extends CNode {
+public class NumericNode extends CNode {
 
-    public OWLLiteral literal;
+    public double value;
 
-    public LiteralNode(OWLLiteral literal) {
-        this.literal = literal;
+    public NumericNode(double value) {
+        this.value = value;
     }
 
     @Override
@@ -24,21 +24,21 @@ public class LiteralNode extends CNode {
         if (this == obj) {
             return true;
         }
-        if (!(obj instanceof LiteralNode)) {
+        if (!(obj instanceof NumericNode)) {
             return false;
         }
-        LiteralNode node = (LiteralNode) obj;
-        return literal.equals(node.literal);
+        NumericNode node = (NumericNode) obj;
+        return value == node.value;
     }
 
     @Override
     protected int hash(int hash) {
-        return literal.hashCode();
+        return Double.hashCode(value);
     }
 
     @Override
     public CNode clone() {
-        return new LiteralNode(literal);
+        return new NumericNode(value);
     }
 
     @Override

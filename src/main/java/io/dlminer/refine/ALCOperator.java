@@ -303,12 +303,12 @@ public class ALCOperator extends RefinementOperator {
         if (isLess) {
             // get last
             OWLLiteral lit = factory.getOWLLiteral(thresholds.get(thresholds.size() - 1));
-            LiteralNode obj = new LiteralNode(lit);
+            NumericNode obj = new NumericNode(lit);
             edge = new LDataEdge(equal, prop, obj);
         } else {
             // get first
             OWLLiteral lit = factory.getOWLLiteral(thresholds.get(0));
-            LiteralNode obj = new LiteralNode(lit);
+            NumericNode obj = new NumericNode(lit);
             edge = new GDataEdge(equal, prop, obj);
         }
         equal.addOutEdge(edge);
@@ -353,8 +353,8 @@ public class ALCOperator extends RefinementOperator {
         }
         // refine the equal edge
         List<Double> thresholds = dataPropertyThresholdsMap.get(e.label);
-        LiteralNode ln = (LiteralNode) eqEdge.object;
-        double val = ln.literal.parseDouble();
+        NumericNode ln = (NumericNode) eqEdge.object;
+        double val = ln.value.parseDouble();
         int index = thresholds.indexOf(val);
         if (eqEdge instanceof GDataEdge) {
             // if last
@@ -363,7 +363,7 @@ public class ALCOperator extends RefinementOperator {
             }
             // get next
             OWLLiteral lit = factory.getOWLLiteral(thresholds.get(index + 1));
-            eqEdge.object = new LiteralNode(lit);
+            eqEdge.object = new NumericNode(lit);
         }
         if (eqEdge instanceof LDataEdge) {
             // if first
@@ -372,7 +372,7 @@ public class ALCOperator extends RefinementOperator {
             }
             // get previous
             OWLLiteral lit = factory.getOWLLiteral(thresholds.get(index - 1));
-            eqEdge.object = new LiteralNode(lit);
+            eqEdge.object = new NumericNode(lit);
         }
         return extension;
     }

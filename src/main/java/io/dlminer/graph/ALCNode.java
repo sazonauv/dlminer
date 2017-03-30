@@ -80,7 +80,7 @@ public class ALCNode extends CNode {
 		for (CEdge e2 : edges) {
 			boolean found = false;
 			for (CEdge e1 : outEdges) {
-				if (e2.equals(e1)) {
+				if (e2.label.equals(e1.label)) {
 					found = true;
 					break;					
 				}				
@@ -143,7 +143,7 @@ public class ALCNode extends CNode {
 			    if (e instanceof DataEdge) {
                     DataEdge de = (DataEdge) e;
                     OWLDataPropertyExpression dp = (OWLDataPropertyExpression) de.label;
-                    LiteralNode obj = (LiteralNode) de.object;
+                    NumericNode obj = (NumericNode) de.object;
 			        if (de instanceof EDataEdge) {
 			            edge = new EDataEdge(node, dp, obj);
                     }
@@ -273,16 +273,10 @@ public class ALCNode extends CNode {
                 if (e instanceof DataEdge) {
                     DataEdge de = (DataEdge) e;
                     OWLDataPropertyExpression prop = (OWLDataPropertyExpression) de.label;
-                    LiteralNode n = (LiteralNode) de.object;
-                    OWLLiteral lit = n.literal;
-                    Double val = DataEdge.parseNumber(lit);
-                    if (val == null) {
-                        throw new IllegalArgumentException(WRONG_LITERAL_TYPE_ERROR);
-                    }
+                    NumericNode n = (NumericNode) de.object;
+                    double val = n.value;
                     OWLDataRange range;
-                    if (e instanceof EDataEdge) {
-                        range = factory.getOWLDataOneOf(lit);
-                    } else if (e instanceof GDataEdge) {
+                    if (e instanceof GDataEdge) {
                         range = factory.getOWLDatatypeMinInclusiveRestriction(val);
                     } else if (e instanceof LDataEdge) {
                         range = factory.getOWLDatatypeMaxInclusiveRestriction(val);
