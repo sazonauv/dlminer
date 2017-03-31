@@ -23,14 +23,9 @@ public abstract class DataEdge extends CEdge {
         if (n1.equals(n2)) {
             return true;
         }
-        OWLLiteral lit1 = n1.value;
-        OWLLiteral lit2 = n2.value;
         // parse literals
-        Double val1 = parseNumber(lit1);
-        Double val2 = parseNumber(lit2);
-        if (val1 == null || val2 == null) {
-            return false;
-        }
+        double val1 = n1.value;
+        double val2 = n2.value;
         // compare the values
         if (e1 instanceof EDataEdge) {
             if (e2 instanceof EDataEdge) {
@@ -53,7 +48,7 @@ public abstract class DataEdge extends CEdge {
     }
 
 
-    protected static Double parseNumber(OWLLiteral literal) {
+    public static Double parseNumber(OWLLiteral literal) {
         if (literal.isInteger()) {
             return (double) literal.parseInteger();
         } else if (literal.isFloat()) {
@@ -64,6 +59,7 @@ public abstract class DataEdge extends CEdge {
             return null;
         }
     }
+
 
 
 

@@ -302,13 +302,13 @@ public class ALCOperator extends RefinementOperator {
         List<Double> thresholds = dataPropertyThresholdsMap.get(prop);
         if (isLess) {
             // get last
-            OWLLiteral lit = factory.getOWLLiteral(thresholds.get(thresholds.size() - 1));
-            NumericNode obj = new NumericNode(lit);
+            double value = thresholds.get(thresholds.size() - 1);
+            NumericNode obj = new NumericNode(value);
             edge = new LDataEdge(equal, prop, obj);
         } else {
             // get first
-            OWLLiteral lit = factory.getOWLLiteral(thresholds.get(0));
-            NumericNode obj = new NumericNode(lit);
+            double value = thresholds.get(0);
+            NumericNode obj = new NumericNode(value);
             edge = new GDataEdge(equal, prop, obj);
         }
         equal.addOutEdge(edge);
@@ -354,7 +354,7 @@ public class ALCOperator extends RefinementOperator {
         // refine the equal edge
         List<Double> thresholds = dataPropertyThresholdsMap.get(e.label);
         NumericNode ln = (NumericNode) eqEdge.object;
-        double val = ln.value.parseDouble();
+        double val = ln.value;
         int index = thresholds.indexOf(val);
         if (eqEdge instanceof GDataEdge) {
             // if last
@@ -362,8 +362,7 @@ public class ALCOperator extends RefinementOperator {
                 return null;
             }
             // get next
-            OWLLiteral lit = factory.getOWLLiteral(thresholds.get(index + 1));
-            eqEdge.object = new NumericNode(lit);
+            eqEdge.object = new NumericNode(thresholds.get(index + 1));
         }
         if (eqEdge instanceof LDataEdge) {
             // if first
@@ -371,8 +370,7 @@ public class ALCOperator extends RefinementOperator {
                 return null;
             }
             // get previous
-            OWLLiteral lit = factory.getOWLLiteral(thresholds.get(index - 1));
-            eqEdge.object = new NumericNode(lit);
+            eqEdge.object = new NumericNode(thresholds.get(index - 1));
         }
         return extension;
     }

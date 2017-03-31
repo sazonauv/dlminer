@@ -29,7 +29,7 @@ public class DLMinerTest {
             e.printStackTrace();
         }
         DLMinerInput input = new DLMinerInput(ontologyFile);
-        input.setMaxConceptLength(2);
+        input.setMaxConceptLength(5);
         input.setMinConceptSupport(100);
         input.setMinPrecision(0.9);
         input.setUseCleaning(true);

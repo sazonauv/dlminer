@@ -1016,7 +1016,11 @@ public class ConceptBuilder {
             Set<OWLDataPropertyAssertionAxiom> drfacts = indDRAssMap.get(ind);
             ALCNode subj = aboxMap.get(ind);
             for (OWLDataPropertyAssertionAxiom drfact : drfacts) {
-                NumericNode obj = new NumericNode(drfact.getObject());
+                Double value = DataEdge.parseNumber(drfact.getObject());
+                if (value == null) {
+                    continue;
+                }
+                NumericNode obj = new NumericNode(value);
                 EDataEdge edge = new EDataEdge(subj, drfact.getProperty(), obj);
                 subj.addOutEdge(edge);
             }
