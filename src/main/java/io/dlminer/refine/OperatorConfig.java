@@ -10,6 +10,8 @@ public class OperatorConfig {
     public int maxLength;
     // depth restriction
     public int maxDepth;
+    // instance number limit
+    public int minSupport;
 
     // configuration
     public boolean useNegation;

@@ -336,6 +336,25 @@ public class ALCNode extends CNode {
 
 
 
+    public boolean isDataValueRestriction() {
+	    if (outEdges == null || outEdges.size() != 1
+                || !clabels.isEmpty() || !dlabels.isEmpty()) {
+	        return false;
+        }
+        CEdge de = null;
+	    for (CEdge e : outEdges) {
+	        if (e instanceof DataEdge) {
+	            de = e;
+            }
+        }
+        if (de == null) {
+	        return false;
+        }
+        return true;
+    }
+
+
+
 
 	public boolean containsUniversal() {
 		if (outEdges == null) {

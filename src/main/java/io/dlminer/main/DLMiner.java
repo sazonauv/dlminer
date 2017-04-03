@@ -247,6 +247,7 @@ public class DLMiner {
         OperatorConfig config = new OperatorConfig();
         config.maxLength = input.getMaxConceptLength();
         config.maxDepth = input.getMaxRoleDepth();
+        config.minSupport = input.getMinConceptSupport();
         config.checkDisjointness = input.isUseDisjointness();
         config.useDisjunction = input.isUseDisjunction();
         config.useNegation = input.isUseNegation();

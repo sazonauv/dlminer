@@ -19,7 +19,9 @@ public class ALCOperator extends RefinementOperator {
 	private Map<OWLClassExpression, Set<OWLClassExpression>> classHierarchy;
 	private Map<OWLClassExpression, OWLClassExpression> negationMap;
 	private Map<OWLClassExpression, Set<OWLNamedIndividual>> classInstanceMap;
-	private Map<OWLDataProperty, List<Double>> dataPropertyThresholdsMap;
+
+    private Map<OWLDataProperty, List<Double>> dataPropertyThresholdsMap;
+    private Map<OWLDataProperty, Map<Double, Set<OWLNamedIndividual>>> dataPropertyInstancesMap;
 	
 	
 
@@ -50,18 +52,31 @@ public class ALCOperator extends RefinementOperator {
 	        return;
         }
         dataPropertyThresholdsMap = new HashMap<>();
+        dataPropertyInstancesMap = new HashMap<>();
 	    Set<OWLNamedIndividual> inds = reasoner.getRootOntology().getIndividualsInSignature();
 	    for (OWLDataProperty prop : dataProperties) {
             Set<Double> thrSet = new HashSet<>();
+            Map<Double, Set<OWLNamedIndividual>> instMap = new HashMap<>();
+            dataPropertyInstancesMap.put(prop, instMap);
             for (OWLNamedIndividual ind : inds) {
                 Set<OWLLiteral> dataPropertyValues = reasoner.getDataPropertyValues(ind, prop);
                 for (OWLLiteral lit : dataPropertyValues) {
+                    Double value = null;
                     if (lit.isInteger()) {
-                        thrSet.add((double) lit.parseInteger());
+                        value = (double) lit.parseInteger();
                     } else if (lit.isFloat()) {
-                        thrSet.add((double) lit.parseFloat());
+                        value = (double) lit.parseFloat();
                     } else if (lit.isDouble()) {
-                        thrSet.add(lit.parseDouble());
+                        value = lit.parseDouble();
+                    }
+                    if (value != null) {
+                        thrSet.add(value);
+                        Set<OWLNamedIndividual> insts = instMap.get(value);
+                        if (insts == null) {
+                            insts = new HashSet<>();
+                            instMap.put(value, insts);
+                        }
+                        insts.add(ind);
                     }
                 }
             }
@@ -454,10 +469,11 @@ public class ALCOperator extends RefinementOperator {
 		}
 		return extensions;
 	}
-	
-	
-	
-	private ALCNode getConjunction(OWLClassExpression expr, 
+
+
+
+
+    private ALCNode getConjunction(OWLClassExpression expr,
 			ALCNode node, ALCNode current) {					
 		// clone the root
 		ALCNode extension = current.clone();					
@@ -623,20 +639,30 @@ public class ALCOperator extends RefinementOperator {
 
 
 	
-	private boolean isRedundantConjunctionForSpecialisation(OWLClassExpression expr, 
-			ALCNode node) {
+	private boolean isRedundantConjunctionForSpecialisation(OWLClassExpression expr, ALCNode node) {
 		return isDisjointWithClassExpressions(expr, node.clabels)
+                || isInsufficientConjunctionForNode(expr, node)
 				|| isDisjointWithPropertyDomains(expr, node)
 				|| isDisjointWithPropertyRanges(expr, node);
 	}
 	
 	
 	
-	private boolean isRedundantConjunctionForAddition(OWLClassExpression expr, 
-			ALCNode node) {
+	private boolean isRedundantConjunctionForAddition(OWLClassExpression expr, ALCNode node) {
 		return isRedundantWithClassExpressions(expr, node.clabels)				
 				|| isRedundantConjunctionForSpecialisation(expr, node);
 	}
+
+
+    private boolean isInsufficientConjunctionForNode(OWLClassExpression expr, ALCNode node) {
+	    // top level
+	    if (node.getInEdges() == null || node.getInEdges().isEmpty()) {
+	        if (classInstanceMap.get(expr).size() < config.minSupport) {
+	            return true;
+            }
+        }
+        return false;
+    }
 	
 	
 	
@@ -1008,6 +1034,16 @@ public class ALCOperator extends RefinementOperator {
 			OWLObjectPropertyExpression property) {
 		return invPropertyMap.get(property);
 	}
+
+
+
+    public Map<OWLDataProperty, List<Double>> getDataPropertyThresholdsMap() {
+        return dataPropertyThresholdsMap;
+    }
+
+    public Map<OWLDataProperty, Map<Double, Set<OWLNamedIndividual>>> getDataPropertyInstancesMap() {
+        return dataPropertyInstancesMap;
+    }
 	
 
 }
