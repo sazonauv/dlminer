@@ -945,19 +945,24 @@ public class ConceptBuilder {
 		// find all instances
 		Out.p("\nGathering all instances");
 		instanceChecker.addInstancesForClusters(nodeClusterMap, nodeExpansionMap);
+		int count = 0;
 		for (ALCNode expr : nodeExpansionMap.keySet()) {
-			OWLClassExpression conc = expr.getConcept();
-			if (expressionInstanceMap.containsKey(conc)) {
+			OWLClassExpression concept = expr.getConcept();
+			if (expressionInstanceMap.containsKey(concept)) {
 				continue;
 			}
 			List<Expansion> expansions = nodeExpansionMap.get(expr);
 			if (expansions != null) {
-				Set<OWLNamedIndividual> inds = new HashSet<>();
+				Set<OWLNamedIndividual> instances = new HashSet<>();
 				for (Expansion expansion : expansions) {
-					inds.add(expansion.individual);
+					instances.add(expansion.individual);
 				}
-				expressionInstanceMap.put(conc, inds);
+				expressionInstanceMap.put(concept, instances);
 			}
+			// debug
+			if (++count % 100 == 0) {
+			    Out.p(count + "/" + nodeExpansionMap.keySet().size() + " concepts are assigned instances");
+            }
 		}		
 	}
 

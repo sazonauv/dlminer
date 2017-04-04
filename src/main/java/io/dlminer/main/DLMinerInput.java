@@ -2,7 +2,6 @@ package io.dlminer.main;
 
 import io.dlminer.ont.Logic;
 import io.dlminer.ont.OntologyFormat;
-import io.dlminer.ont.ReasonerMode;
 import io.dlminer.ont.ReasonerName;
 
 import java.io.File;
@@ -11,7 +10,6 @@ import java.io.FileNotFoundException;
 import java.io.InputStream;
 
 import org.semanticweb.owlapi.model.OWLClass;
-import org.semanticweb.owlapi.reasoner.OWLReasoner;
 
 /**
  * @author Slava Sazonau
@@ -219,10 +217,11 @@ public class DLMinerInput {
      */
 	private Boolean useDataProperties;
 
-	/**
+
+    /**
 	 * The number of thresholds for expressions with data properties
 	 */
-	private Integer dataPropertyThresholdsNumber;
+	private Integer dataThresholdsNumber;
 	
 	
 	
@@ -690,17 +689,17 @@ public class DLMinerInput {
 	 *
 	 * @return the number of thresholds for expressions with data properties
 	 */
-	public Integer getDataPropertyThresholdsNumber() {
-		return dataPropertyThresholdsNumber;
+	public Integer getDataThresholdsNumber() {
+		return dataThresholdsNumber;
 	}
 
 
 	/**
 	 *
-	 * @param dataPropertyThresholdsNumber the number of thresholds for expressions with data properties
+	 * @param dataThresholdsNumber the number of thresholds for expressions with data properties
 	 */
-	public void setDataPropertyThresholdsNumber(Integer dataPropertyThresholdsNumber) {
-		this.dataPropertyThresholdsNumber = dataPropertyThresholdsNumber;
+	public void setDataThresholdsNumber(Integer dataThresholdsNumber) {
+		this.dataThresholdsNumber = dataThresholdsNumber;
 	}
 
 	
@@ -749,6 +748,7 @@ public class DLMinerInput {
 		this.useCleaning = DLMinerInputI.DEF_USE_CLEANING;
 		this.useClosedWorldAssumption = DLMinerInputI.DEF_USE_CWA;
 		this.useDataProperties = DLMinerInputI.DEF_USE_DATA_PROPERTIES;
+		this.dataThresholdsNumber = DLMinerInputI.DEF_DATA_THRESHOLDS_NUMBER;
 	}
 
 

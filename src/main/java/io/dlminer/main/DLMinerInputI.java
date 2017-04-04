@@ -156,6 +156,12 @@ public interface DLMinerInputI {
     Boolean DEF_USE_DATA_PROPERTIES = true;
 
 
+    /**
+     * Default number of thresholds for data properties
+     */
+    Integer DEF_DATA_THRESHOLDS_NUMBER = 100;
+
+
 		
 	
 	// ====================== error messages ======================

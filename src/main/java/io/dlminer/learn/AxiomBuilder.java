@@ -148,8 +148,7 @@ public class AxiomBuilder {
 	
 	
 	// sort roles by the number of instances descending
-	private Map<OWLObjectProperty, Set<List<OWLNamedIndividual>>>
-	sortRolesByInstanceNumber(
+	private Map<OWLObjectProperty, Set<List<OWLNamedIndividual>>> sortRolesByInstanceNumber(
 			Map<OWLObjectProperty, Set<List<OWLNamedIndividual>>> roleInstMap,
 			SortingOrder order) {		
 		List<MapSetEntry<OWLObjectProperty, List<OWLNamedIndividual>>> entryList = new LinkedList<>();
@@ -167,8 +166,8 @@ public class AxiomBuilder {
 	}
 
 
-	public Set<Hypothesis> generateInitialClassAxioms() {
-		Set<Hypothesis> hypos = new HashSet<>();
+	public Set<Hypothesis> generateInitialClassAxioms(int maxHypothesesNumber) {
+		Set<Hypothesis> hypotheses = new HashSet<>();
 		Map<OWLClass, Set<OWLNamedIndividual>> classInstanceMap = conceptBuilder.getClassInstanceMap();
 		Set<OWLClass> sortCls = sortConceptsByInstanceNumber(classInstanceMap, SortingOrder.DESC).keySet();
 		List<OWLClass> cls = new LinkedList<>(sortCls);
@@ -178,6 +177,7 @@ public class AxiomBuilder {
 		Out.p(total + " axioms to check");
 		// if KBC
 		if (dlminerMode.equals(DLMinerMode.KBC)) {
+		    loop:
 			for (int length = 1; length <= 2*maxLength; length++) {
 				for (OWLClass cl2 : cls) {
 					OWLClassExpression expr2 = conceptBuilder.getExpressionByClass(cl2);				
@@ -197,13 +197,13 @@ public class AxiomBuilder {
 						Hypothesis h = generateClassAxiom(cl1, cl2);
 						// debug
 						if (classAxioms.size() % 1e3 == 0) {
-							Out.p(classAxioms.size() + " / " + total + " axioms checked; " + hypos.size() + " axioms added");
+							Out.p(classAxioms.size() + " / " + total + " axioms checked; " + hypotheses.size() + " axioms added");
 						}
 						if (h == null) {
 							continue;
 						}
 						// add a hypothesis
-						hypos.add(h);
+						hypotheses.add(h);
 						// handle redundancy
 						if (h.precision >= minPrecision) {						
 							try {
@@ -219,7 +219,11 @@ public class AxiomBuilder {
 								hypothesisReasoner.flush();
 								Out.p(e + DLMinerOutputI.AXIOM_BUILDING_ERROR);
 							}
-						}						
+						}
+						// check if the limit is exceeded
+                        if (hypotheses.size() >= maxHypothesesNumber) {
+                            break loop;
+                        }
 					}
 				}
 			}
@@ -227,6 +231,7 @@ public class AxiomBuilder {
 		// if CDL or NORM
 		else {		
 			int count = 0;
+			loop:
 			for (OWLClass cl2 : cls) {
 				OWLClassExpression expr2 = conceptBuilder.getExpressionByClass(cl2);
 				for (OWLClass cl1 : cls) {					
@@ -235,7 +240,7 @@ public class AxiomBuilder {
 					}
 					// debug
 					if (++count % 1e5 == 0) {
-						Out.p(count + " / " + total + " axioms checked; " + hypos.size() + " axioms added");
+						Out.p(count + " / " + total + " axioms checked; " + hypotheses.size() + " axioms added");
 					}
 					OWLClassExpression expr1 = conceptBuilder.getExpressionByClass(cl1);
 					if (dlminerMode.equals(DLMinerMode.CDL) 
@@ -256,12 +261,16 @@ public class AxiomBuilder {
 						continue;
 					}
 					// add a hypothesis
-					hypos.add(h);					 
+					hypotheses.add(h);
+                    // check if the limit is exceeded
+                    if (hypotheses.size() >= maxHypothesesNumber) {
+                        break loop;
+                    }
 				}
 			}			
 		}		
-		Out.p("\n" + hypos.size() + " class axioms are added");
-		return hypos;
+		Out.p("\n" + hypotheses.size() + " class axioms are added");
+		return hypotheses;
 	}
 	
 	

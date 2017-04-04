@@ -20,8 +20,8 @@ public class OperatorConfig {
     public boolean useDataProperties;
     public boolean checkDisjointness;
 
-
-
+    // number of thresholds for data properties
+    public int dataThresholdsNumber;
 
 
 

@@ -42,12 +42,12 @@ public class ALCOperator extends RefinementOperator {
 		initClassHierachy();
 		mapRedundantClassesAndProperties();
 		initInstanceMap();
-		initDataPropertiesThresholds();
+		initDataPropertyThresholds();
 	}
 
 
 
-    private void initDataPropertiesThresholds() {
+    private void initDataPropertyThresholds() {
 	    if (!config.useDataProperties) {
 	        return;
         }
@@ -83,6 +83,69 @@ public class ALCOperator extends RefinementOperator {
             List<Double> thrList = new ArrayList<>(thrSet);
             Collections.sort(thrList);
             dataPropertyThresholdsMap.put(prop, thrList);
+        }
+        // approximate thresholds
+        roundThresholds();
+    }
+
+
+
+    private void roundThresholds() {
+        int thrNumber = config.dataThresholdsNumber;
+        for (OWLDataProperty prop : dataProperties) {
+            List<Double> thrList = dataPropertyThresholdsMap.get(prop);
+            if (thrList == null || thrList.size() <= thrNumber) {
+                continue;
+            }
+            Map<Double, Set<OWLNamedIndividual>> instMap = dataPropertyInstancesMap.get(prop);
+            // select intermediate thresholds
+            List<Double> newThrList = new ArrayList<>();
+            Map<Double, Set<OWLNamedIndividual>> newInstMap = new HashMap<>();
+            double first = thrList.get(0);
+            double last = thrList.get(thrList.size()-1);
+            double step = (last - first) / thrNumber;
+            double current = first;
+            newThrList.add(first);
+            for (int i=0; i<thrNumber; i++) {
+                current += step;
+                // find the closest threshold
+                double prevClosest = newThrList.get(i);
+                int startIndex = thrList.indexOf(prevClosest);
+                double closest = thrList.get(startIndex);
+                int closestIndex = startIndex;
+                for (int j=startIndex+1; j<thrList.size(); j++) {
+                    double thr = thrList.get(j);
+                    if (Math.abs(thr - current) < Math.abs(closest - current)) {
+                        closest = thr;
+                        closestIndex = j;
+                    } else {
+                        break;
+                    }
+                }
+                newThrList.add(closest);
+                // gather instances
+                Set<OWLNamedIndividual> prevInstances = newInstMap.get(prevClosest);
+                if (prevInstances == null) {
+                    prevInstances = new HashSet<>(instMap.get(prevClosest));
+                    newInstMap.put(prevClosest, prevInstances);
+                }
+                Set<OWLNamedIndividual> currInstances = newInstMap.get(closest);
+                if (currInstances == null) {
+                    currInstances = new HashSet<>(instMap.get(closest));
+                    newInstMap.put(closest, currInstances);
+                }
+                for (int j=startIndex+1; j<closestIndex; j++) {
+                    double thr = thrList.get(j);
+                    if (Math.abs(thr - prevClosest) < Math.abs(thr - closest)) {
+                        prevInstances.addAll(instMap.get(thr));
+                    } else {
+                        currInstances.addAll(instMap.get(thr));
+                    }
+                }
+            }
+            // set new values
+            dataPropertyThresholdsMap.put(prop, newThrList);
+            dataPropertyInstancesMap.put(prop, newInstMap);
         }
     }
 

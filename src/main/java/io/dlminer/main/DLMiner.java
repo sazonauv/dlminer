@@ -253,6 +253,7 @@ public class DLMiner {
         config.useNegation = input.isUseNegation();
         config.useUniversalRestriction = input.isUseUniversalRestriction();
         config.useDataProperties = input.isUseDataProperties();
+        config.dataThresholdsNumber = input.getDataThresholdsNumber();
         // check disjunctions
         if (input.getLogic().equals(Logic.EL)) {
             config.useDisjunction = false;
@@ -409,7 +410,8 @@ public class DLMiner {
     	// build hypotheses
     	Out.p("\nBuilding hypotheses of length at most " + 2*input.getMaxConceptLength());
     	start = System.currentTimeMillis();        	
-    	Set<Hypothesis> classAxioms = axiomBuilder.generateInitialClassAxioms();
+    	Set<Hypothesis> classAxioms = axiomBuilder.generateInitialClassAxioms(
+    	        input.getMaxHypothesesNumber());
     	end = System.currentTimeMillis();
     	hypothesesBuildingTime += (double)(end - start) / 1e3;
     	
