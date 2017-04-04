@@ -222,6 +222,13 @@ public class DLMinerInput {
 	 * The number of thresholds for expressions with data properties
 	 */
 	private Integer dataThresholdsNumber;
+
+
+
+    /**
+     * The flag indicating if complex measures should used
+     */
+	private Boolean useComplexMeasures;
 	
 	
 	
@@ -702,6 +709,15 @@ public class DLMinerInput {
 		this.dataThresholdsNumber = dataThresholdsNumber;
 	}
 
+
+
+    public boolean isUseComplexMeasures() {
+        return useComplexMeasures;
+    }
+
+    public void setUseComplexMeasures(boolean useComplexMeasures) {
+        this.useComplexMeasures = useComplexMeasures;
+    }
 	
 	
 	// ====================== constructors ======================
@@ -749,6 +765,7 @@ public class DLMinerInput {
 		this.useClosedWorldAssumption = DLMinerInputI.DEF_USE_CWA;
 		this.useDataProperties = DLMinerInputI.DEF_USE_DATA_PROPERTIES;
 		this.dataThresholdsNumber = DLMinerInputI.DEF_DATA_THRESHOLDS_NUMBER;
+		this.useComplexMeasures = DLMinerInputI.DEF_USE_COMPLEX_MEASURES;
 	}
 
 

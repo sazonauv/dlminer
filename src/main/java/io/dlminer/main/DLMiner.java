@@ -284,7 +284,6 @@ public class DLMiner {
         if (input.getNegativeClass() != null) {
         	conceptBuilder.setNegativeClass(input.getNegativeClass());        	
         }
-        
 
         Out.p("\nInitialising the axiom builder");
         // setting the seed signature
@@ -310,18 +309,10 @@ public class DLMiner {
         Collection<Hypothesis> hypotheses = buildHypotheses(
         		reasoner, conceptBuilder, axiomBuilder);
 
-        // initialise the evaluator
-        Out.p("\nInitialising the evaluator");
-        HypothesisEvaluator evaluator = new HypothesisEvaluator(
-        		handler, reasoner, conceptBuilder,
-        		input.isUseConsistency());
-        
-                                
         // create the output
         output = new DLMinerOutput();
         output.setHypotheses(hypotheses);
         output.setOntology(handler.getOntology());
-        output.setEvaluator(evaluator);        
         stats.setConceptsNumber(conceptBuilder.getClassInstanceMap().size());
         stats.setRolesNumber(conceptBuilder.getRoleInstanceMap().size());
         stats.setHypothesesNumber(hypotheses.size());
@@ -350,7 +341,19 @@ public class DLMiner {
         	stats.setMaxNovelty(HypothesisEvaluator.calculateMaxNovelty(hypotheses));
         } else {
             throw new DLMinerException(DLMinerOutputI.EMPTY_OUTPUT_ERROR);
-        }        
+        }
+
+        // if profound evaluation is requested
+        if (input.isUseComplexMeasures()) {
+            // initialise the evaluator
+            Out.p("\nInitialising the evaluator");
+            HypothesisEvaluator evaluator = new HypothesisEvaluator(
+                    handler, reasoner, conceptBuilder,
+                    input.isUseConsistency());
+            evaluator.evaluateConsistency(hypotheses, stats);
+            evaluator.evaluateMainMeasures(hypotheses, stats);
+            evaluator.evaluateComplexMeasures(hypotheses, stats);
+        }
     }
     
     

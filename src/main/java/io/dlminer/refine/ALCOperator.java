@@ -22,8 +22,8 @@ public class ALCOperator extends RefinementOperator {
 
     private Map<OWLDataProperty, List<Double>> dataPropertyThresholdsMap;
     private Map<OWLDataProperty, Map<Double, Set<OWLNamedIndividual>>> dataPropertyInstancesMap;
-	
-	
+    private Map<OWLDataProperty, Integer> dataPropertyStepMap;
+
 
 	public ALCOperator(OWLReasoner reasoner, Set<OWLClass> classes, Set<OWLObjectProperty> properties,
                        Set<OWLDataProperty> dataProperties, OperatorConfig config) {
@@ -53,6 +53,7 @@ public class ALCOperator extends RefinementOperator {
         }
         dataPropertyThresholdsMap = new HashMap<>();
         dataPropertyInstancesMap = new HashMap<>();
+        dataPropertyStepMap = new HashMap<>();
 	    Set<OWLNamedIndividual> inds = reasoner.getRootOntology().getIndividualsInSignature();
 	    for (OWLDataProperty prop : dataProperties) {
             Set<Double> thrSet = new HashSet<>();
@@ -83,69 +84,9 @@ public class ALCOperator extends RefinementOperator {
             List<Double> thrList = new ArrayList<>(thrSet);
             Collections.sort(thrList);
             dataPropertyThresholdsMap.put(prop, thrList);
-        }
-        // approximate thresholds
-        roundThresholds();
-    }
-
-
-
-    private void roundThresholds() {
-        int thrNumber = config.dataThresholdsNumber;
-        for (OWLDataProperty prop : dataProperties) {
-            List<Double> thrList = dataPropertyThresholdsMap.get(prop);
-            if (thrList == null || thrList.size() <= thrNumber) {
-                continue;
-            }
-            Map<Double, Set<OWLNamedIndividual>> instMap = dataPropertyInstancesMap.get(prop);
-            // select intermediate thresholds
-            List<Double> newThrList = new ArrayList<>();
-            Map<Double, Set<OWLNamedIndividual>> newInstMap = new HashMap<>();
-            double first = thrList.get(0);
-            double last = thrList.get(thrList.size()-1);
-            double step = (last - first) / thrNumber;
-            double current = first;
-            newThrList.add(first);
-            for (int i=0; i<thrNumber; i++) {
-                current += step;
-                // find the closest threshold
-                double prevClosest = newThrList.get(i);
-                int startIndex = thrList.indexOf(prevClosest);
-                double closest = thrList.get(startIndex);
-                int closestIndex = startIndex;
-                for (int j=startIndex+1; j<thrList.size(); j++) {
-                    double thr = thrList.get(j);
-                    if (Math.abs(thr - current) < Math.abs(closest - current)) {
-                        closest = thr;
-                        closestIndex = j;
-                    } else {
-                        break;
-                    }
-                }
-                newThrList.add(closest);
-                // gather instances
-                Set<OWLNamedIndividual> prevInstances = newInstMap.get(prevClosest);
-                if (prevInstances == null) {
-                    prevInstances = new HashSet<>(instMap.get(prevClosest));
-                    newInstMap.put(prevClosest, prevInstances);
-                }
-                Set<OWLNamedIndividual> currInstances = newInstMap.get(closest);
-                if (currInstances == null) {
-                    currInstances = new HashSet<>(instMap.get(closest));
-                    newInstMap.put(closest, currInstances);
-                }
-                for (int j=startIndex+1; j<closestIndex; j++) {
-                    double thr = thrList.get(j);
-                    if (Math.abs(thr - prevClosest) < Math.abs(thr - closest)) {
-                        prevInstances.addAll(instMap.get(thr));
-                    } else {
-                        currInstances.addAll(instMap.get(thr));
-                    }
-                }
-            }
-            // set new values
-            dataPropertyThresholdsMap.put(prop, newThrList);
-            dataPropertyInstancesMap.put(prop, newInstMap);
+            int step = thrList.size() / config.dataThresholdsNumber;
+            step = (step <= 0) ? 1 : 0;
+            dataPropertyStepMap.put(prop, step);
         }
     }
 
@@ -434,21 +375,22 @@ public class ALCOperator extends RefinementOperator {
         NumericNode ln = (NumericNode) eqEdge.object;
         double val = ln.value;
         int index = thresholds.indexOf(val);
+        int step = dataPropertyStepMap.get(e.label);
         if (eqEdge instanceof GDataEdge) {
             // if last
-            if (index == thresholds.size() - 1) {
+            if (index + step >= thresholds.size()) {
                 return null;
             }
             // get next
-            eqEdge.object = new NumericNode(thresholds.get(index + 1));
+            eqEdge.object = new NumericNode(thresholds.get(index + step));
         }
         if (eqEdge instanceof LDataEdge) {
             // if first
-            if (index == 0) {
+            if (index - step < 0) {
                 return null;
             }
             // get previous
-            eqEdge.object = new NumericNode(thresholds.get(index - 1));
+            eqEdge.object = new NumericNode(thresholds.get(index - step));
         }
         return extension;
     }
@@ -1104,9 +1046,13 @@ public class ALCOperator extends RefinementOperator {
         return dataPropertyThresholdsMap;
     }
 
+
     public Map<OWLDataProperty, Map<Double, Set<OWLNamedIndividual>>> getDataPropertyInstancesMap() {
         return dataPropertyInstancesMap;
     }
-	
 
+
+    public Map<OWLDataProperty, Integer> getDataPropertyStepMap() {
+        return dataPropertyStepMap;
+    }
 }

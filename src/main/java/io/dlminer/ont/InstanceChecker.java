@@ -14,8 +14,11 @@ public class InstanceChecker {
 	private Map<OWLClassExpression, Set<OWLNamedIndividual>> classInstanceMap;
     private Map<OWLClassExpression, List<Expansion>> classExpansionMap;
     private Map<OWLObjectPropertyExpression, Map<OWLNamedIndividual, Set<OWLNamedIndividual>>> propInstanceMap;
+
+    // data properties
     private Map<OWLDataProperty, List<Double>> dataPropertyThresholdsMap;
     private Map<OWLDataProperty, Map<Double, Set<OWLNamedIndividual>>> dataPropertyInstancesMap;
+    private Map<OWLDataProperty, Integer> dataPropertyStepMap;
 
     // clusters of identical trees
 	private Map<Expansion, List<Expansion>> expansionClusterMap;
@@ -26,9 +29,10 @@ public class InstanceChecker {
 		
 	public InstanceChecker(ALCOperator operator, OntologyHandler handler) {
 		classInstanceMap = operator.getClassInstanceMap();
+        classExpansionMap = new HashMap<>();
         dataPropertyThresholdsMap = operator.getDataPropertyThresholdsMap();
         dataPropertyInstancesMap = operator.getDataPropertyInstancesMap();
-        classExpansionMap = new HashMap<>();
+        dataPropertyStepMap = operator.getDataPropertyStepMap();
         factory = handler.getDataFactory();
         initPropMaps(handler);
 	}
@@ -191,16 +195,21 @@ public class InstanceChecker {
         List<Double> thresholds = dataPropertyThresholdsMap.get(de.label);
         Map<Double, Set<OWLNamedIndividual>> instMap = dataPropertyInstancesMap.get(de.label);
         double value = ((NumericNode) de.object).value;
+        int step = dataPropertyStepMap.get(de.label);
         int index = thresholds.indexOf(value);
-        int prevIndex = -1;
+        int prevIndex;
+        int start = -1;
+        int end = -1;
         if (de instanceof GDataEdge) {
             // first
             if (index == 0) {
                 return getInstancesOfOWLThing();
             }
             // refinements increase index
-            prevIndex = index - 1;
-
+            prevIndex = index - step;
+            prevIndex = (prevIndex < 0) ? 0 : prevIndex;
+            start = prevIndex;
+            end = index - 1;
         }
         if (de instanceof LDataEdge) {
             // last
@@ -208,15 +217,20 @@ public class InstanceChecker {
                 return getInstancesOfOWLThing();
             }
             // refinements decrease index
-            prevIndex = index + 1;
+            prevIndex = index + step;
+            prevIndex = (prevIndex >= thresholds.size()) ? thresholds.size()-1 : prevIndex;
+            start = index + 1;
+            end = prevIndex;
         }
-        // remove
+        // remove non-instances
         List<Expansion> instances = new LinkedList<>(suspects);
-        Set<OWLNamedIndividual> removals = instMap.get(thresholds.get(prevIndex));
-        for (OWLNamedIndividual rem : removals) {
-            Expansion exp = individualClusterMap.get(rem);
-            if (exp != null) {
-                instances.remove(exp);
+        for (int i=start; i<=end; i++) {
+            Set<OWLNamedIndividual> removals = instMap.get(thresholds.get(i));
+            for (OWLNamedIndividual rem : removals) {
+                Expansion exp = individualClusterMap.get(rem);
+                if (exp != null) {
+                    instances.remove(exp);
+                }
             }
         }
         classExpansionMap.put(dataRestriction, instances);
@@ -260,7 +274,8 @@ public class InstanceChecker {
 	
 	public void addInstancesForClusters(Map<ALCNode, List<Expansion>> nodeClusterMap, 
 			Map<ALCNode, List<Expansion>> nodeExpansionMap) {
-		// gather all instances		
+		// gather all instances
+        int count = 0;
 		for (ALCNode expr : nodeClusterMap.keySet()) {
 			if (nodeExpansionMap.containsKey(expr)) {
 				continue;
@@ -271,6 +286,11 @@ public class InstanceChecker {
 				allInstances.addAll(expansionClusterMap.get(inst));
 			}
 			nodeExpansionMap.put(expr, allInstances);
+            // debug
+            if (++count % 100 == 0) {
+                Out.p(count + "/" + nodeClusterMap.keySet().size()
+                        + " concepts are assigned instances as nodes");
+            }
 		}
 	}
 

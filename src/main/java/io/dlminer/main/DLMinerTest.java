@@ -33,6 +33,7 @@ public class DLMinerTest {
         input.setMinConceptSupport(1000);
         input.setMinPrecision(0.9);
         input.setUseCleaning(true);
+        input.setDlminerMode(DLMinerMode.CDL);
         DLMiner miner = new DLMiner(input);
 		try {
 			miner.run();			

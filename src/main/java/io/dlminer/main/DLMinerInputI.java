@@ -162,6 +162,11 @@ public interface DLMinerInputI {
     Integer DEF_DATA_THRESHOLDS_NUMBER = 100;
 
 
+    /**
+     * Default flag for using computationally complex measures
+     */
+    Boolean DEF_USE_COMPLEX_MEASURES = false;
+
 		
 	
 	// ====================== error messages ======================

@@ -945,26 +945,33 @@ public class ConceptBuilder {
 		// find all instances
 		Out.p("\nGathering all instances");
 		instanceChecker.addInstancesForClusters(nodeClusterMap, nodeExpansionMap);
-		int count = 0;
-		for (ALCNode expr : nodeExpansionMap.keySet()) {
-			OWLClassExpression concept = expr.getConcept();
-			if (expressionInstanceMap.containsKey(concept)) {
-				continue;
-			}
-			List<Expansion> expansions = nodeExpansionMap.get(expr);
-			if (expansions != null) {
-				Set<OWLNamedIndividual> instances = new HashSet<>();
-				for (Expansion expansion : expansions) {
-					instances.add(expansion.individual);
-				}
-				expressionInstanceMap.put(concept, instances);
-			}
-			// debug
-			if (++count % 100 == 0) {
-			    Out.p(count + "/" + nodeExpansionMap.keySet().size() + " concepts are assigned instances");
-            }
-		}		
+        Out.p("\nReplacing nodes with individuals");
+        replaceNodesWithIndividuals();
 	}
+
+
+	private void replaceNodesWithIndividuals() {
+        int count = 0;
+        for (ALCNode expr : nodeExpansionMap.keySet()) {
+            OWLClassExpression concept = expr.getConcept();
+            if (expressionInstanceMap.containsKey(concept)) {
+                continue;
+            }
+            List<Expansion> expansions = nodeExpansionMap.get(expr);
+            if (expansions != null) {
+                Set<OWLNamedIndividual> instances = new HashSet<>();
+                for (Expansion expansion : expansions) {
+                    instances.add(expansion.individual);
+                }
+                expressionInstanceMap.put(concept, instances);
+            }
+            // debug
+            if (++count % 100 == 0) {
+                Out.p(count + "/" + nodeExpansionMap.keySet().size()
+                        + " concepts are assigned instances as individuals");
+            }
+        }
+    }
 
 
 	public void generateAndMapDataConcepts() {
