@@ -427,6 +427,9 @@ public class DLMiner {
     		HypothesisCleaner cleaner = new HypothesisCleaner(
     				conceptBuilder, classAxioms, reasoner);
     		cleanClassAxioms = cleaner.cleanSeparately();
+    		if (input.isUseDataProperties()) {
+                cleanClassAxioms = cleaner.cleanDataRestrictions(cleanClassAxioms);
+            }
     	}
     	end = System.currentTimeMillis();
     	hypothesesCleaningTime += (double)(end - start) / 1e3;

@@ -1,9 +1,6 @@
 package io.dlminer.learn;
 
-import io.dlminer.ont.LengthMetric;
-import io.dlminer.ont.OntologyHandler;
-import io.dlminer.ont.ReasonerLoader;
-import io.dlminer.ont.ReasonerName;
+import io.dlminer.ont.*;
 import io.dlminer.print.Out;
 import io.dlminer.sort.AbstractComparator;
 import io.dlminer.sort.AxiomLengthComparator;
@@ -104,9 +101,8 @@ public class HypothesisCleaner extends AxiomCleaner {
 		Set<Hypothesis> cleanHypos = new HashSet<>();
 		int count = 0;
 		for (Hypothesis h : hypotheses) {
-			count++;
 			// debug
-			if (count % 10000 == 0) {
+			if (++count % 1e4 == 0) {
 				Out.p(count + " / " + hypotheses.size() + " hypotheses are cleaned");
 			}
 			Hypothesis cleanHypo = cleanHypothesis(h);
@@ -115,11 +111,40 @@ public class HypothesisCleaner extends AxiomCleaner {
 				cleanHypos.add(cleanHypo);
 			}
 		}
-		// remove duplicates		
 		Out.p("\n" + cleanHypos.size() + " / " + 
 				hypotheses.size() + " unique by equals() hypotheses");		
 		return cleanHypos;
 	}
+
+
+
+    public Set<Hypothesis> cleanDataRestrictions(Set<Hypothesis> hypos) {
+	    // check if there are any data restrictions
+        boolean hasDataRestrictions = false;
+        for (Hypothesis h : hypos) {
+            if (AxiomMetric.containsDataRestrictions(h.axioms)) {
+                hasDataRestrictions = true;
+                break;
+            }
+        }
+        if (!hasDataRestrictions) {
+            return hypos;
+        }
+        Set<Hypothesis> cleanHypos = new HashSet<>();
+        int count = 0;
+        for (Hypothesis h : hypos) {
+            // debug
+            if (++count % 1e4 == 0) {
+                Out.p(count + " / " + hypos.size() + " hypotheses are cleaned");
+            }
+            // TODO
+
+
+        }
+        Out.p("\n" + cleanHypos.size() + " / " +
+                hypos.size() + " have most specific data restrictions");
+        return cleanHypos;
+    }
 	
 	
 	

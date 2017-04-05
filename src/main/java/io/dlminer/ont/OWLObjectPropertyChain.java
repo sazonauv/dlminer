@@ -100,12 +100,10 @@ public class OWLObjectPropertyChain extends OWLObjectPropertyExpressionImpl {
 
 	@Override
 	public void accept(OWLPropertyExpressionVisitor visitor) {
-		// TODO Auto-generated method stub		
 	}
 
 	@Override
 	public <O> O accept(OWLPropertyExpressionVisitorEx<O> visitor) {
-		// TODO Auto-generated method stub
 		return null;
 	}
 
@@ -134,56 +132,47 @@ public class OWLObjectPropertyChain extends OWLObjectPropertyExpressionImpl {
 
 	@Override
 	public void accept(OWLObjectVisitor visitor) {
-		// TODO Auto-generated method stub		
 	}
 
 	@Override
 	public <O> O accept(OWLObjectVisitorEx<O> visitor) {
-		// TODO Auto-generated method stub
 		return null;
 	}
 
 	protected Set<? extends OWLSubPropertyAxiom<OWLObjectPropertyExpression>> getSubPropertyAxiomsForRHS(
 			OWLOntology ont) {
-		// TODO Auto-generated method stub
 		return null;
 	}
 
 	@Override
 	protected int compareObjectOfSameType(OWLObject object) {
-		// TODO Auto-generated method stub
 		return 0;
 	}
 
 
 	@Override
 	public OWLObjectPropertyExpression getInverseProperty() {
-		// TODO Auto-generated method stub
 		return null;
 	}
 
 
 	@Override
 	public OWLObjectProperty getNamedProperty() {
-		// TODO Auto-generated method stub
 		return null;
 	}
 
 
 	public void addSignatureEntitiesToSet(Set<OWLEntity> entities) {
-		// TODO Auto-generated method stub
 		
 	}
 
 
 	public void addAnonymousIndividualsToSet(Set<OWLAnonymousIndividual> anons) {
-		// TODO Auto-generated method stub
 		
 	}
 
 
 	protected int index() {
-		// TODO Auto-generated method stub
 		return 0;
 	}
 		

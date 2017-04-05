@@ -1487,12 +1487,9 @@ public class OntologyHandler {
 			if (ax.isOfType(AxiomType.DISJOINT_CLASSES)) {
 				return true;
 			}
-			Set<OWLClassExpression> nests = ax.getNestedClassExpressions();
-			for (OWLClassExpression nest : nests) {
-				if (nest instanceof OWLObjectComplementOf) {
-					return true;
-				}
-			}
+			if (AxiomMetric.containsNegations(ax)) {
+			    return true;
+            }
 		}		
 		return false;
 	}
@@ -1508,12 +1505,9 @@ public class OntologyHandler {
 			if (ax.isOfType(AxiomType.OBJECT_PROPERTY_RANGE)) {
 				return true;
 			}
-			Set<OWLClassExpression> nests = ax.getNestedClassExpressions();
-			for (OWLClassExpression nest : nests) {
-				if (nest instanceof OWLObjectAllValuesFrom) {
-					return true;
-				}
-			}
+			if (AxiomMetric.containsUniversals(ax)) {
+			    return true;
+            }
 		}		
 		return false;
 	}
@@ -1528,12 +1522,9 @@ public class OntologyHandler {
 	
 	public static boolean containsMaxRestrictions(Set<? extends OWLAxiom> axioms) {
 		for (OWLAxiom ax : axioms) {			
-			Set<OWLClassExpression> nests = ax.getNestedClassExpressions();
-			for (OWLClassExpression nest : nests) {
-				if (nest instanceof OWLObjectMaxCardinality) {
-					return true;
-				}
-			}
+			if (AxiomMetric.containsMaxRestrictions(ax)) {
+			    return true;
+            }
 		}		
 		return false;
 	}
@@ -1549,12 +1540,9 @@ public class OntologyHandler {
 	
 	public static boolean containsDisjunctions(Set<? extends OWLAxiom> axioms) {
 		for (OWLAxiom ax : axioms) {			
-			Set<OWLClassExpression> nests = ax.getNestedClassExpressions();
-			for (OWLClassExpression nest : nests) {
-				if (nest instanceof OWLObjectUnionOf) {
-					return true;
-				}
-			}
+			if (AxiomMetric.containsDisjunctions(ax)) {
+			    return true;
+            }
 		}		
 		return false;
 	}

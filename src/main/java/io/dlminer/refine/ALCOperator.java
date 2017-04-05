@@ -85,7 +85,7 @@ public class ALCOperator extends RefinementOperator {
             Collections.sort(thrList);
             dataPropertyThresholdsMap.put(prop, thrList);
             int step = thrList.size() / config.dataThresholdsNumber;
-            step = (step <= 0) ? 1 : 0;
+            step = (step <= 0) ? 1 : step;
             dataPropertyStepMap.put(prop, step);
         }
     }

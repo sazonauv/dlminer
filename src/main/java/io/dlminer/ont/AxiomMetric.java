@@ -2,15 +2,43 @@ package io.dlminer.ont;
 
 import java.util.Set;
 
-import org.semanticweb.owlapi.model.OWLAxiom;
-import org.semanticweb.owlapi.model.OWLClassExpression;
-import org.semanticweb.owlapi.model.OWLObjectAllValuesFrom;
-import org.semanticweb.owlapi.model.OWLObjectComplementOf;
-import org.semanticweb.owlapi.model.OWLObjectIntersectionOf;
-import org.semanticweb.owlapi.model.OWLObjectSomeValuesFrom;
-import org.semanticweb.owlapi.model.OWLObjectUnionOf;
+import org.semanticweb.owlapi.model.*;
 
 public class AxiomMetric {
+
+
+    public static boolean containsDataRestrictions(Set<OWLAxiom> axioms) {
+        return countDataRestrictions(axioms) > 0;
+    }
+
+    public static boolean containsDataRestrictions(OWLAxiom axiom) {
+        return countDataRestrictions(axiom) > 0;
+    }
+
+
+    public static int countDataRestrictions(Set<OWLAxiom> axioms) {
+        int count = 0;
+        for (OWLAxiom ax : axioms) {
+            count += countDataRestrictions(ax);
+        }
+        return count;
+    }
+
+    public static int countDataRestrictions(OWLAxiom axiom) {
+        int count = 0;
+        for (OWLClassExpression expr : axiom.getNestedClassExpressions()) {
+            if (expr instanceof OWLDataSomeValuesFrom) {
+                count++;
+            }
+        }
+        return count;
+    }
+
+
+    public static boolean containsConjunctions(Set<OWLAxiom> axioms) {
+        return countConjunctions(axioms) > 0;
+    }
+
 	
 	public static int countConjunctions(Set<OWLAxiom> axioms) {
 		int count = 0;
@@ -29,8 +57,18 @@ public class AxiomMetric {
 		}		
 		return count;
 	}
-	
-	
+
+
+
+    public static boolean containsDisjunctions(Set<OWLAxiom> axioms) {
+        return countDisjunctions(axioms) > 0;
+    }
+
+    public static boolean containsDisjunctions(OWLAxiom axiom) {
+        return countDisjunctions(axiom) > 0;
+    }
+
+
 	public static int countDisjunctions(Set<OWLAxiom> axioms) {
 		int count = 0;
 		for (OWLAxiom ax : axioms) {
@@ -49,7 +87,16 @@ public class AxiomMetric {
 		}		
 		return count;
 	}
-	
+
+
+
+    public static boolean containsNegations(Set<OWLAxiom> axioms) {
+        return countNegations(axioms) > 0;
+    }
+
+    public static boolean containsNegations(OWLAxiom axiom) {
+        return countNegations(axiom) > 0;
+    }
 	
 	public static int countNegations(Set<OWLAxiom> axioms) {
 		int count = 0;
@@ -80,7 +127,13 @@ public class AxiomMetric {
 		}		
 		return count;
 	}
-	
+
+
+
+    public static boolean containsExistentials(Set<OWLAxiom> axioms) {
+        return countExistentials(axioms) > 0;
+    }
+
 	
 	public static int countExistentials(Set<OWLAxiom> axioms) {
 		int count = 0;
@@ -100,8 +153,20 @@ public class AxiomMetric {
 		}		
 		return count;
 	}
-		
-	
+
+
+
+
+    public static boolean containsUniversals(Set<OWLAxiom> axioms) {
+        return countUniversals(axioms) > 0;
+    }
+
+
+    public static boolean containsUniversals(OWLAxiom axiom) {
+        return countUniversals(axiom) > 0;
+    }
+
+
 	public static int countUniversals(Set<OWLAxiom> axioms) {
 		int count = 0;
 		for (OWLAxiom ax : axioms) {
@@ -121,6 +186,38 @@ public class AxiomMetric {
 		}		
 		return count;
 	}
+
+
+
+    public static boolean containsMaxRestrictions(Set<OWLAxiom> axioms) {
+        return countMaxRestrictions(axioms) > 0;
+    }
+
+
+    public static boolean containsMaxRestrictions(OWLAxiom axiom) {
+        return countMaxRestrictions(axiom) > 0;
+    }
+
+
+    public static int countMaxRestrictions(Set<OWLAxiom> axioms) {
+        int count = 0;
+        for (OWLAxiom ax : axioms) {
+            count += countMaxRestrictions(ax);
+        }
+        return count;
+    }
+
+
+
+    public static int countMaxRestrictions(OWLAxiom axiom) {
+        int count = 0;
+        for (OWLClassExpression expr : axiom.getNestedClassExpressions()) {
+            if (expr instanceof OWLObjectMaxCardinality) {
+                count++;
+            }
+        }
+        return count;
+    }
 	
 	
 	
@@ -142,16 +239,8 @@ public class AxiomMetric {
 		}
 		return true;
 	}
-	
-	
-	public static int countOWLThing(OWLClassExpression expr) {
-		int count = 0;
-		for (OWLClassExpression nest : expr.getNestedClassExpressions()) {
-			if (nest.isOWLThing()) {
-				count++;
-			}
-		}
-		return count;
-	}
+
+
+
 
 }

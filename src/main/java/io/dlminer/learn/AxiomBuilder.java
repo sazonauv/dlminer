@@ -172,7 +172,7 @@ public class AxiomBuilder {
 		Set<OWLClass> sortCls = sortConceptsByInstanceNumber(classInstanceMap, SortingOrder.DESC).keySet();
 		List<OWLClass> cls = new LinkedList<>(sortCls);
 		Collections.sort(cls, new ConceptLengthComparator(SortingOrder.ASC));
-		int total = cls.size()*cls.size() - cls.size();
+		long total = cls.size()*cls.size() - cls.size();
 		int maxLength = findMaxLength(cls);
 		Out.p(total + " axioms to check");
 		// if KBC
@@ -230,7 +230,7 @@ public class AxiomBuilder {
 		}
 		// if CDL or NORM
 		else {		
-			int count = 0;
+			long count = 0;
 			loop:
 			for (OWLClass cl2 : cls) {
 				OWLClassExpression expr2 = conceptBuilder.getExpressionByClass(cl2);
@@ -423,11 +423,11 @@ public class AxiomBuilder {
 				conceptBuilder.getRoleInstanceMap();
 //		Set<OWLObjectProperty> props = sortRolesByInstanceNumber(roleInstanceMap, SortingOrder.DESC).keySet();
 		Set<OWLObjectProperty> props = roleInstanceMap.keySet();
-		int total = props.size()*props.size() - props.size();
+		long total = props.size()*props.size() - props.size();
 		Out.p(total + " role axioms to check");		
 		int indNumber = ontologyHandler.getIndividuals().size();
 		indNumber = indNumber*indNumber;
-		int count = 0;
+		long count = 0;
 		for (OWLObjectProperty prop2 : props) {
 			for (OWLObjectProperty prop1 : props) {
 				if (prop1.equals(prop2)) {
