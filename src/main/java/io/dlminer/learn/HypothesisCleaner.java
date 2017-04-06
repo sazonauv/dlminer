@@ -8,30 +8,14 @@ import io.dlminer.sort.HypothesisSorter;
 import io.dlminer.sort.OWLClassExpressionSignatureComparator;
 import io.dlminer.sort.SortingOrder;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 import org.semanticweb.owl.explanation.impl.laconic.OPlusGenerator;
 import org.semanticweb.owl.explanation.impl.laconic.OPlusSplitting;
-import org.semanticweb.owlapi.model.ClassExpressionType;
-import org.semanticweb.owlapi.model.IRI;
-import org.semanticweb.owlapi.model.OWLAxiom;
-import org.semanticweb.owlapi.model.OWLClass;
-import org.semanticweb.owlapi.model.OWLClassExpression;
-import org.semanticweb.owlapi.model.OWLDataFactory;
-import org.semanticweb.owlapi.model.OWLEntity;
-import org.semanticweb.owlapi.model.OWLObjectComplementOf;
-import org.semanticweb.owlapi.model.OWLObjectPropertyExpression;
-import org.semanticweb.owlapi.model.OWLSubClassOfAxiom;
-import org.semanticweb.owlapi.model.OWLSubObjectPropertyOfAxiom;
+import org.semanticweb.owlapi.model.*;
 import org.semanticweb.owlapi.reasoner.InferenceType;
 import org.semanticweb.owlapi.reasoner.OWLReasoner;
+import org.semanticweb.owlapi.vocab.OWLFacet;
 
 
 public class HypothesisCleaner extends AxiomCleaner {
@@ -131,24 +115,143 @@ public class HypothesisCleaner extends AxiomCleaner {
             return hypos;
         }
         Set<Hypothesis> cleanHypos = new HashSet<>();
+        // build LHS-RHS mappings
+        Map<OWLClassExpression, Set<OWLSubClassOfAxiom>> LhsToRhsMap = new HashMap<>();
+        Map<OWLClassExpression, Set<OWLSubClassOfAxiom>> RhsToLhsMap = new HashMap<>();
+        Map<OWLSubClassOfAxiom, Hypothesis> axiomHypothesisMap = new HashMap<>();
         int count = 0;
         for (Hypothesis h : hypos) {
             // debug
             if (++count % 1e4 == 0) {
                 Out.p(count + " / " + hypos.size() + " hypotheses are cleaned");
             }
-            // TODO
-
-
+            if (AxiomMetric.containsDataRestrictions(h.axioms)) {
+                OWLAxiom axiom = null;
+                // only one axiom
+                for (OWLAxiom ax : h.axioms) {
+                    axiom = ax;
+                    break;
+                }
+                OWLSubClassOfAxiom classAxiom = (OWLSubClassOfAxiom) axiom;
+                axiomHypothesisMap.put(classAxiom, h);
+                OWLClassExpression lhs = classAxiom.getSubClass();
+                OWLClassExpression rhs = classAxiom.getSuperClass();
+                Set<OWLSubClassOfAxiom> rhsSet = LhsToRhsMap.get(lhs);
+                if (rhsSet == null) {
+                    rhsSet = new HashSet<>();
+                    LhsToRhsMap.put(lhs, rhsSet);
+                }
+                rhsSet.add(classAxiom);
+                Set<OWLSubClassOfAxiom> lhsSet = RhsToLhsMap.get(rhs);
+                if (lhsSet == null) {
+                    lhsSet = new HashSet<>();
+                    RhsToLhsMap.put(rhs, lhsSet);
+                }
+                lhsSet.add(classAxiom);
+            } else {
+                cleanHypos.add(h);
+            }
         }
+        // remove redundant data restrictions
+        Set<OWLSubClassOfAxiom> removals = new HashSet<>();
+        for (OWLClassExpression lhs : LhsToRhsMap.keySet()) {
+            Set<OWLSubClassOfAxiom> rhsSet = LhsToRhsMap.get(lhs);
+            // find redundant data restrictions
+            for (OWLSubClassOfAxiom rhs1 : rhsSet) {
+                if (removals.contains(rhs1)) {
+                    continue;
+                }
+                for (OWLSubClassOfAxiom rhs2 : rhsSet) {
+                    if (rhs1.equals(rhs2) || removals.contains(rhs2)) {
+                        continue;
+                    }
+                    if (isMoreSpecificDataRestriction(rhs1, rhs2)) {
+                        removals.add(rhs2);
+                    }
+                }
+            }
+        }
+
+
         Out.p("\n" + cleanHypos.size() + " / " +
-                hypos.size() + " have most specific data restrictions");
+                hypos.size() + " have most specific (or no) data restrictions");
         return cleanHypos;
     }
-	
-	
-	
-	private Set<Hypothesis> removeDuplicates(Set<Hypothesis> hypotheses) {		
+
+
+    private boolean isMoreSpecificDataRestriction(
+            OWLSubClassOfAxiom axiom1, OWLSubClassOfAxiom axiom2) {
+	    if (axiom1.equals(axiom2)) {
+	        return true;
+        }
+        OWLClassExpression sub1 = axiom1.getSubClass();
+        OWLClassExpression sub2 = axiom2.getSubClass();
+        OWLClassExpression super1 = axiom1.getSuperClass();
+        OWLClassExpression super2 = axiom2.getSuperClass();
+	    if (sub1.equals(sub2)) {
+	        return isMoreSpecificDataRestriction(super1, super2);
+        }
+        if (super1.equals(super2)) {
+            return isMoreSpecificDataRestriction(sub2, sub1);
+        }
+        return false;
+    }
+
+    private boolean isMoreSpecificDataRestriction(
+            OWLClassExpression exp1, OWLClassExpression exp2) {
+	    // only compare data restrictions
+        if (!AxiomMetric.containsDataRestrictions(exp1)
+                || !AxiomMetric.containsDataRestrictions(exp2)) {
+            return false;
+        }
+	    // no disjunctions
+	    if (LengthMetric.length(exp1) < LengthMetric.length(exp2)) {
+	        return false;
+        }
+        // compare: for each restriction in 2
+        // there must be a more specific restriction in 1
+        for (OWLClassExpression nest2 : exp2.getNestedClassExpressions()) {
+            if (!(nest2 instanceof OWLDataSomeValuesFrom)) {
+                continue;
+            }
+            boolean found = false;
+            for (OWLClassExpression nest1 : exp1.getNestedClassExpressions()) {
+                if (!(nest1 instanceof OWLDataSomeValuesFrom)) {
+                    continue;
+                }
+                if (isMoreSpecificDataRestriction(
+                        (OWLDataSomeValuesFrom) nest1, (OWLDataSomeValuesFrom) nest2)) {
+                    found = true;
+                    break;
+                }
+            }
+            if (!found) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+
+    private boolean isMoreSpecificDataRestriction(
+            OWLDataSomeValuesFrom exp1, OWLDataSomeValuesFrom exp2) {
+	    if (!exp1.getProperty().equals(exp2.getProperty())) {
+	        return false;
+        }
+        OWLDataRange range1 = exp1.getFiller();
+        OWLDataRange range2 = exp2.getFiller();
+        if (!(range1 instanceof OWLDatatypeRestriction)
+                || !(range2 instanceof OWLDatatypeRestriction)) {
+            return false;
+        }
+        // TODO
+
+
+        return true;
+    }
+
+
+    private Set<Hypothesis> removeDuplicates(Set<Hypothesis> hypotheses) {
 		// checking duplicates
 		Out.p("\nChecking duplicates");
 		List<Hypothesis> listHypotheses = new ArrayList<>(hypotheses);

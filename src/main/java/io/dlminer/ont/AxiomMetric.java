@@ -15,6 +15,10 @@ public class AxiomMetric {
         return countDataRestrictions(axiom) > 0;
     }
 
+    public static boolean containsDataRestrictions(OWLClassExpression expression) {
+        return countDataRestrictions(expression) > 0;
+    }
+
 
     public static int countDataRestrictions(Set<OWLAxiom> axioms) {
         int count = 0;
@@ -27,6 +31,16 @@ public class AxiomMetric {
     public static int countDataRestrictions(OWLAxiom axiom) {
         int count = 0;
         for (OWLClassExpression expr : axiom.getNestedClassExpressions()) {
+            if (expr instanceof OWLDataSomeValuesFrom) {
+                count++;
+            }
+        }
+        return count;
+    }
+
+    public static int countDataRestrictions(OWLClassExpression expression) {
+        int count = 0;
+        for (OWLClassExpression expr : expression.getNestedClassExpressions()) {
             if (expr instanceof OWLDataSomeValuesFrom) {
                 count++;
             }
