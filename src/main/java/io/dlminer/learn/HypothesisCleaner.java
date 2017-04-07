@@ -95,7 +95,7 @@ public class HypothesisCleaner extends AxiomCleaner {
 				cleanHypos.add(cleanHypo);
 			}
 		}
-		Out.p("\n" + cleanHypos.size() + " / " + 
+		Out.p(cleanHypos.size() + " / " +
 				hypotheses.size() + " unique by equals() hypotheses");		
 		return cleanHypos;
 	}
@@ -152,7 +152,7 @@ public class HypothesisCleaner extends AxiomCleaner {
                 cleanHypos.add(h);
             }
         }
-        // remove redundant data restrictions
+        // find redundant data restrictions
         Set<OWLSubClassOfAxiom> removals = new HashSet<>();
         for (OWLClassExpression lhs : LhsToRhsMap.keySet()) {
             Set<OWLSubClassOfAxiom> rhsSet = LhsToRhsMap.get(lhs);
@@ -171,9 +171,14 @@ public class HypothesisCleaner extends AxiomCleaner {
                 }
             }
         }
+        // add non-redundant data restrictions
+        for (OWLSubClassOfAxiom axiom : axiomHypothesisMap.keySet()) {
+            if (!removals.contains(axiom)) {
+                cleanHypos.add(axiomHypothesisMap.get(axiom));
+            }
+        }
 
-
-        Out.p("\n" + cleanHypos.size() + " / " +
+        Out.p(cleanHypos.size() + " / " +
                 hypos.size() + " have most specific (or no) data restrictions");
         return cleanHypos;
     }
@@ -203,6 +208,9 @@ public class HypothesisCleaner extends AxiomCleaner {
         if (!AxiomMetric.containsDataRestrictions(exp1)
                 || !AxiomMetric.containsDataRestrictions(exp2)) {
             return false;
+        }
+        if (exp1.equals(exp2)) {
+            return true;
         }
 	    // no disjunctions
 	    if (LengthMetric.length(exp1) < LengthMetric.length(exp2)) {
@@ -244,10 +252,42 @@ public class HypothesisCleaner extends AxiomCleaner {
                 || !(range2 instanceof OWLDatatypeRestriction)) {
             return false;
         }
-        // TODO
-
-
-        return true;
+        OWLDatatypeRestriction dataRestr1 = (OWLDatatypeRestriction) range1;
+        OWLDatatypeRestriction dataRestr2 = (OWLDatatypeRestriction) range2;
+        // always one facet restriction
+        OWLFacetRestriction facetRestr1 = null;
+        for (OWLFacetRestriction fr : dataRestr1.getFacetRestrictions()) {
+            facetRestr1 = fr;
+            break;
+        }
+        OWLFacetRestriction facetRestr2 = null;
+        for (OWLFacetRestriction fr : dataRestr2.getFacetRestrictions()) {
+            facetRestr2 = fr;
+            break;
+        }
+        OWLFacet facet1 = facetRestr1.getFacet();
+        OWLFacet facet2 = facetRestr2.getFacet();
+        if (!facet1.equals(facet2)) {
+            return false;
+        }
+        OWLLiteral lit1 = facetRestr1.getFacetValue();
+        OWLLiteral lit2 = facetRestr2.getFacetValue();
+        if (lit1.equals(lit2)) {
+            return true;
+        }
+        if (!lit1.isDouble() || !lit2.isDouble()) {
+            return false;
+        }
+        double val1 = lit1.parseDouble();
+        double val2 = lit2.parseDouble();
+        // only min and max data restrictions
+        if (facet1.equals(OWLFacet.MIN_INCLUSIVE)) {
+            return val1 >= val2;
+        }
+        if (facet1.equals(OWLFacet.MAX_INCLUSIVE)) {
+            return val1 <= val2;
+        }
+        return false;
     }
 
 

@@ -30,8 +30,8 @@ public class DLMinerTest {
         }
         DLMinerInput input = new DLMinerInput(ontologyFile);
         input.setMaxConceptLength(5);
-        input.setMinConceptSupport(1);
-        input.setMinPrecision(0.9);
+        input.setMinConceptSupport(30);
+        input.setMinPrecision(0.95);
         input.setUseCleaning(true);
         input.setDlminerMode(DLMinerMode.CDL);
         DLMiner miner = new DLMiner(input);

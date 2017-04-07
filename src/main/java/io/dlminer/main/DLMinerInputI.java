@@ -28,7 +28,7 @@ public interface DLMinerInputI {
 	/**
 	 * Default maxHypothesesNumber
 	 */
-	Integer DEF_MAX_HYPOTHESES_NUMBER = 100000;
+	Integer DEF_MAX_HYPOTHESES_NUMBER = 200000;
 	
 	
 	/**
