@@ -172,7 +172,7 @@ public class AxiomBuilder {
 		Set<OWLClass> sortCls = sortConceptsByInstanceNumber(classInstanceMap, SortingOrder.DESC).keySet();
 		List<OWLClass> cls = new LinkedList<>(sortCls);
 		Collections.sort(cls, new ConceptLengthComparator(SortingOrder.ASC));
-		long total = cls.size()*cls.size() - cls.size();
+		double total = cls.size()*cls.size() - cls.size();
 		int maxLength = findMaxLength(cls);
 		Out.p(total + " axioms to check");
 		// if KBC
@@ -423,7 +423,7 @@ public class AxiomBuilder {
 				conceptBuilder.getRoleInstanceMap();
 //		Set<OWLObjectProperty> props = sortRolesByInstanceNumber(roleInstanceMap, SortingOrder.DESC).keySet();
 		Set<OWLObjectProperty> props = roleInstanceMap.keySet();
-		long total = props.size()*props.size() - props.size();
+        double total = props.size()*props.size() - props.size();
 		Out.p(total + " role axioms to check");		
 		int indNumber = ontologyHandler.getIndividuals().size();
 		indNumber = indNumber*indNumber;

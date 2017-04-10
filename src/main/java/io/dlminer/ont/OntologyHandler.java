@@ -1364,12 +1364,14 @@ public class OntologyHandler {
 		return ontology.getAxioms();
 	}
 
+
 	public void addAnnotations(OWLOntology input) {
 		Set<OWLEntity> ents = input.getSignature();
 		for (OWLEntity ent : ents) {
 			addAxioms(input.getAnnotationAssertionAxioms(ent.getIRI()));
 		}
 	}
+
 
 	public void cleanDuplicateAnnotations() {
 		Set<OWLEntity> ents = ontology.getSignature();

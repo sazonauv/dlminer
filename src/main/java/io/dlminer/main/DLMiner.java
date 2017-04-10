@@ -354,6 +354,8 @@ public class DLMiner {
             evaluator.evaluateMainMeasures(hypotheses, stats);
             evaluator.evaluateComplexMeasures(hypotheses, stats);
         }
+
+
     }
     
     
@@ -601,8 +603,8 @@ public class DLMiner {
     public void saveHypotheses(File file) {   
     	saveHypotheses(file, input.getMaxHypothesesNumber());
 	}
-    
-    
+
+
     
     /**
      * @param file the file to store the output hypotheses
@@ -897,9 +899,7 @@ public class DLMiner {
 //		evaluator.evaluateComplexMeasures(hypos, stats);		
 		return hypos;
 	}
-	
 
 
-		
 
 }
