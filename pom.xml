@@ -7,6 +7,12 @@
     <groupId>dlminer</groupId>
     <artifactId>dlminer-main</artifactId>
     <version>1.0</version>
+    <repositories>
+        <repository>
+            <id>maven.aksw.internal</id>
+            <url>http://maven.aksw.org/repository/internal/</url>
+        </repository>
+    </repositories>
     <dependencies>
         <dependency>
             <groupId>com.hermit-reasoner</groupId>
@@ -23,7 +29,13 @@
             <artifactId>owlexplanation</artifactId>
             <version>1.0.2</version>
         </dependency>
+        <dependency>
+            <groupId>org.dllearner</groupId>
+            <artifactId>components-core</artifactId>
+            <version>1.2</version>
+        </dependency>
     </dependencies>
+
 
 
 </project>

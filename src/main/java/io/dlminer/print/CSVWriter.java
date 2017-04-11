@@ -7,6 +7,9 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+
+import io.dlminer.exp.CDLOutput;
+import io.dlminer.exp.GSOutput;
 import org.semanticweb.owlapi.model.OWLOntology;
 import io.dlminer.learn.Hypothesis;
 import io.dlminer.main.DLMinerStats;
@@ -631,5 +634,52 @@ public class CSVWriter {
 			csvWriter.close();
 		}
 	}
+
+
+
+    public void saveGSStatsToCSV(String ontName, GSOutput gsOutput) {
+        String[] entry = new String[6];
+        entry[0] = ontName;
+        entry[1] = Integer.toString(gsOutput.hypoNum);
+        entry[2] = Integer.toString(gsOutput.gsAxiomNum);
+        entry[3] = Integer.toString(gsOutput.gsAxiomEntNum);
+        entry[4] = Double.toString(gsOutput.gsAxiomEntTBoxNum);
+        entry[5] = Double.toString(gsOutput.recall);
+        append(entry);
+    }
+
+
+
+    public void saveCDLStatsToCSV(String ontName, CDLOutput cdlOutput) {
+        String[] entry = new String[22];
+        entry[0] = ontName;
+        entry[1] = Integer.toString(cdlOutput.hypoNumber);
+        entry[2] = Integer.toString(cdlOutput.defNumber);
+        entry[3] = Double.toString(cdlOutput.atomDefNumer);
+        entry[4] = Double.toString(cdlOutput.complDefNumer);
+        entry[5] = Double.toString(cdlOutput.hypoTime);
+        entry[6] = Double.toString(cdlOutput.defTime);
+        entry[7] = Double.toString(cdlOutput.defEntailedNumber);
+        entry[8] = Double.toString(cdlOutput.defEntailedRecall);
+        entry[9] = Double.toString(cdlOutput.defEntailedLength);
+        entry[10] = Double.toString(cdlOutput.atomDefEntailedNumber);
+        entry[11] = Double.toString(cdlOutput.complDefEntailedNumber);
+        entry[12] = Double.toString(cdlOutput.defEntailedTBoxNumber);
+        entry[13] = Double.toString(cdlOutput.defEntailedTBoxLength);
+        entry[14] = Double.toString(cdlOutput.atomDefEntailedTBoxNumber);
+        entry[15] = Double.toString(cdlOutput.complDefEntailedTBoxNumber);
+        entry[16] = Double.toString(cdlOutput.subAndSuperClassDefinedNumber);
+        entry[17] = Double.toString(cdlOutput.onlySuperClassDefinedNumber);
+        entry[18] = Double.toString(cdlOutput.onlySubClassDefinedNumber);
+        entry[19] = Double.toString(cdlOutput.classUndefinedNumber);
+        entry[20] = Double.toString(cdlOutput.entHyposNumber);
+        entry[21] = Double.toString(cdlOutput.entHyposLength);
+        append(entry);
+    }
+
+
+
+
+
 	
 }

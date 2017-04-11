@@ -154,9 +154,9 @@ public class HypothesisCleaner extends AxiomCleaner {
         }
         // find redundant data restrictions
         Set<OWLSubClassOfAxiom> removals = new HashSet<>();
+        // LHS
         for (OWLClassExpression lhs : LhsToRhsMap.keySet()) {
             Set<OWLSubClassOfAxiom> rhsSet = LhsToRhsMap.get(lhs);
-            // find redundant data restrictions
             for (OWLSubClassOfAxiom rhs1 : rhsSet) {
                 if (removals.contains(rhs1)) {
                     continue;
@@ -171,6 +171,24 @@ public class HypothesisCleaner extends AxiomCleaner {
                 }
             }
         }
+        // RHS
+        for (OWLClassExpression rhs : RhsToLhsMap.keySet()) {
+            Set<OWLSubClassOfAxiom> lhsSet = RhsToLhsMap.get(rhs);
+            for (OWLSubClassOfAxiom lhs1 : lhsSet) {
+                if (removals.contains(lhs1)) {
+                    continue;
+                }
+                for (OWLSubClassOfAxiom lhs2 : lhsSet) {
+                    if (lhs1.equals(lhs2) || removals.contains(lhs2)) {
+                        continue;
+                    }
+                    if (isMoreSpecificDataRestriction(lhs1, lhs2)) {
+                        removals.add(lhs2);
+                    }
+                }
+            }
+        }
+
         // add non-redundant data restrictions
         for (OWLSubClassOfAxiom axiom : axiomHypothesisMap.keySet()) {
             if (!removals.contains(axiom)) {

@@ -169,10 +169,10 @@ public class AxiomBuilder {
 	public Set<Hypothesis> generateInitialClassAxioms(int maxHypothesesNumber) {
 		Set<Hypothesis> hypotheses = new HashSet<>();
 		Map<OWLClass, Set<OWLNamedIndividual>> classInstanceMap = conceptBuilder.getClassInstanceMap();
-		Set<OWLClass> sortCls = sortConceptsByInstanceNumber(classInstanceMap, SortingOrder.DESC).keySet();
+		Set<OWLClass> sortCls = sortConceptsByInstanceNumber(classInstanceMap, SortingOrder.ASC).keySet();
 		List<OWLClass> cls = new LinkedList<>(sortCls);
 		Collections.sort(cls, new ConceptLengthComparator(SortingOrder.ASC));
-		double total = cls.size()*cls.size() - cls.size();
+		long total = (long) cls.size()*cls.size() - cls.size();
 		int maxLength = findMaxLength(cls);
 		Out.p(total + " axioms to check");
 		// if KBC
@@ -421,9 +421,8 @@ public class AxiomBuilder {
 		Set<Hypothesis> hypos = new HashSet<>();
 		Map<OWLObjectProperty, Set<List<OWLNamedIndividual>>> roleInstanceMap = 
 				conceptBuilder.getRoleInstanceMap();
-//		Set<OWLObjectProperty> props = sortRolesByInstanceNumber(roleInstanceMap, SortingOrder.DESC).keySet();
 		Set<OWLObjectProperty> props = roleInstanceMap.keySet();
-        double total = props.size()*props.size() - props.size();
+        long total = (long) props.size()*props.size() - props.size();
 		Out.p(total + " role axioms to check");		
 		int indNumber = ontologyHandler.getIndividuals().size();
 		indNumber = indNumber*indNumber;
