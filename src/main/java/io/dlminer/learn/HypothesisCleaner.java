@@ -103,6 +103,7 @@ public class HypothesisCleaner extends AxiomCleaner {
 
 
     public Set<Hypothesis> cleanDataRestrictions(Set<Hypothesis> hypos) {
+	    Out.p("\nCleaning data restrictions");
 	    // check if there are any data restrictions
         boolean hasDataRestrictions = false;
         for (Hypothesis h : hypos) {

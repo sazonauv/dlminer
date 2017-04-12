@@ -430,7 +430,7 @@ public class DLMiner {
     				conceptBuilder, classAxioms, reasoner);
     		cleanClassAxioms = cleaner.cleanSeparately();
     		if (input.isUseDataProperties()) {
-                cleanClassAxioms = cleaner.cleanDataRestrictions(cleanClassAxioms);
+//                cleanClassAxioms = cleaner.cleanDataRestrictions(cleanClassAxioms);
             }
     	}
     	end = System.currentTimeMillis();

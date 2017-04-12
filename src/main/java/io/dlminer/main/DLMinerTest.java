@@ -29,9 +29,9 @@ public class DLMinerTest {
             e.printStackTrace();
         }
         DLMinerInput input = new DLMinerInput(ontologyFile);
-        input.setMaxHypothesesNumber(100000);
+        input.setMaxHypothesesNumber(10000);
         input.setMaxConceptLength(5);
-        input.setMinConceptSupport(50);
+        input.setMinConceptSupport(100);
         input.setMinPrecision(0.95);
         input.setUseCleaning(true);
         input.setDlminerMode(DLMinerMode.CDL);
