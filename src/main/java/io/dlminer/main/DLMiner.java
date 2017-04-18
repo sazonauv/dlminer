@@ -55,7 +55,7 @@ import uk.ac.manchester.cs.owl.owlapi.OWLDataFactoryImpl;
  *         <p>
  *         The class encapsulates main functions of the DL-Miner algorithm.
  */
-public class DLMiner {
+public class DLMiner implements DLMinerComponent {
 
     // ====================== attributes ======================
 
@@ -124,26 +124,12 @@ public class DLMiner {
      */
     public void verifyParameters() throws Exception {
 
-        // checks null values
-        if (input.getMaxRoleDepth() == null) {
-            throw new DLMinerException(DLMinerInputI.NULL_MAX_ROLE_DEPTH_ERR);
-        }
-        if (input.getMaxHypothesesNumber() == null) {
-            throw new DLMinerException(DLMinerInputI.NULL_MAX_HYPOTHESES_NUMBER_ERR);
-        }
-        if (input.getReasonerTimeout() == null) {
-            throw new DLMinerException(DLMinerInputI.NULL_REASONER_TIMEOUT_ERR);
-        }
-        if (input.getMinPrecision() == null) {
-            throw new DLMinerException(DLMinerInputI.NULL_MIN_PRECISION_ERR);
-        }
-        if (input.getMinConceptSupport() == null) {
-            throw new DLMinerException(DLMinerInputI.NULL_MIN_CONCEPT_SUPPORT_ERR);
-        }
-
         // check wrong values
-        if (input.getMaxRoleDepth() < 0) {
+        if (input.getConfig().maxDepth < 0) {
             throw new DLMinerException(DLMinerInputI.WRONG_MAX_ROLE_DEPTH_ERR);
+        }
+        if (input.getConfig().minSupport < 0) {
+            throw new DLMinerException(DLMinerInputI.WRONG_MIN_CONCEPT_SUPPORT_ERR);
         }
         if (input.getMaxHypothesesNumber() <= 0) {
             throw new DLMinerException(DLMinerInputI.WRONG_MAX_HYPOTHESES_NUMBER_ERR);
@@ -154,43 +140,36 @@ public class DLMiner {
         if (input.getMinPrecision() <= 0) {
             throw new DLMinerException(DLMinerInputI.WRONG_MIN_PRECISION_ERR);
         }
-        if (input.getMinConceptSupport() <= 0) {
-            throw new DLMinerException(DLMinerInputI.WRONG_MIN_CONCEPT_SUPPORT_ERR);
-        }
 
     }
 
 
     /**
-     * The method runs the DL-Miner algorithm.
-     * Once DL-Miner terminates, the results (mined hypotheses and run statistics)
-     * are stored in the attribute <code>output</code>.
+     * The method initialises the DL-Miner object.
      *
      * @throws Exception throws an error of the following types:
      *                   1) incorrect input parameter value
      *                   2) ontology parsing error
      *                   3) inconsistent ontology
      *                   4) reasoner timeout exceeded
-     *                   5) empty output
-     *                   6) other
      */
-    public void run() throws Exception {
+    public void init() throws Exception {
 
         // check the parameters
         verifyParameters();
-        
+
         // init stats
         stats = new DLMinerStats();
 
         // parse the ontology file
-        long start = System.currentTimeMillis();        
+        long start = System.currentTimeMillis();
         OntologyHandler handler = null;
         if (input.isUseClosedWorldAssumption()) {
-        	handler = new OntologyHandler(input.getOntologyFile());        	
+            handler = new OntologyHandler(input.getOntologyFile());
         } else {
-        	handler = OntologyHandler.extractBotDataModule(input.getOntologyFile());
+            handler = OntologyHandler.extractBotDataModule(input.getOntologyFile());
         }
-        
+
         Out.p("\nOntology size:");
         Out.p("\tTBox size = " + handler.getTBoxAxioms().size());
         Out.p("\tRBox size = " + handler.getRBoxAxioms().size());
@@ -203,57 +182,45 @@ public class DLMiner {
         double ontologyParsingTime = (double) (end - start) / 1e3;
         stats.setOntologyParsingTime(ontologyParsingTime);
         Out.p("Ontology parsing time = " + Out.fn(ontologyParsingTime) + " seconds");
-               
+
         // process the ontology by the reasoner
-        Out.p("\nInitialising the reasoner");    
-        start = System.currentTimeMillis();        
+        Out.p("\nInitialising the reasoner");
+        start = System.currentTimeMillis();
         OWLReasoner reasoner = ReasonerLoader.initReasoner(
-        		input.getReasonerName(),
-        		handler.getOntology(),
+                input.getReasonerName(),
+                handler.getOntology(),
                 input.getReasonerTimeout());
-        
+
         // check if the ontology is consistent
         if (!reasoner.isConsistent()) {
-        	Out.p("\nThe ontology is inconsistent!");
-        	handler.removeInconsistency(reasoner);
-        	reasoner.flush();
-        }        
+            Out.p("\nThe ontology is inconsistent!");
+            handler.removeInconsistency(reasoner);
+            reasoner.flush();
+        }
         reasoner.precomputeInferences(InferenceType.CLASS_HIERARCHY,
-        		InferenceType.OBJECT_PROPERTY_HIERARCHY,
+                InferenceType.OBJECT_PROPERTY_HIERARCHY,
                 InferenceType.DATA_PROPERTY_HIERARCHY);
         handler.removeUnsatClasses(reasoner);
         handler.removeTautologies(reasoner);
-        reasoner.flush();        
+        reasoner.flush();
         end = System.currentTimeMillis();
         double ontologyReasoningTime = (double) (end - start) / 1e3;
         stats.setOntologyReasoningTime(ontologyReasoningTime);
         Out.p("Ontology reasoning time = " + Out.fn(ontologyReasoningTime) + " seconds");
-       
+
         if (input.isUseClosedWorldAssumption()) {
-        	handler.applyCWA(reasoner);
-        	reasoner.flush();
-        	if (!reasoner.isConsistent()) {
-            	Out.p("\nThe ontology is inconsistent!");
-            	handler.removeInconsistency(reasoner);
-            	reasoner.flush();
+            handler.applyCWA(reasoner);
+            reasoner.flush();
+            if (!reasoner.isConsistent()) {
+                Out.p("\nThe ontology is inconsistent!");
+                handler.removeInconsistency(reasoner);
+                reasoner.flush();
             }
         }
-        
-        
-        
-        
+
         Out.p("\nInitialising the concept builder");
         // config
-        OperatorConfig config = new OperatorConfig();
-        config.maxLength = input.getMaxConceptLength();
-        config.maxDepth = input.getMaxRoleDepth();
-        config.minSupport = input.getMinConceptSupport();
-        config.checkDisjointness = input.isUseDisjointness();
-        config.useDisjunction = input.isUseDisjunction();
-        config.useNegation = input.isUseNegation();
-        config.useUniversalRestriction = input.isUseUniversalRestriction();
-        config.useDataProperties = input.isUseDataProperties();
-        config.dataThresholdsNumber = input.getDataThresholdsNumber();
+        OperatorConfig config = input.getConfig();
         // check disjunctions
         if (input.getLogic().equals(Logic.EL)) {
             config.useDisjunction = false;
@@ -273,48 +240,69 @@ public class DLMiner {
         }
 
         // builder
-        ConceptBuilder conceptBuilder = new ConceptBuilder(handler, reasoner,
-                input.getMinConceptSupport(), input.getBeamSize(), config);
+        ConceptBuilder conceptBuilder = new ConceptBuilder(handler, reasoner, config);
         conceptBuilder.init();
-        
+
         // if prediction
         if (input.getPositiveClass() != null) {
-        	conceptBuilder.setPositiveClass(input.getPositiveClass());        	
+            conceptBuilder.setPositiveClass(input.getPositiveClass());
         }
         if (input.getNegativeClass() != null) {
-        	conceptBuilder.setNegativeClass(input.getNegativeClass());        	
+            conceptBuilder.setNegativeClass(input.getNegativeClass());
         }
 
         Out.p("\nInitialising the axiom builder");
         // setting the seed signature
         Set<OWLClass> seedClasses = null;
         if (input.getSeedClassName() != null) {
-        	OWLClass seedClass = handler.getClassByIRI(input.getSeedClassName());
-        	if (seedClass != null) {
-        		seedClasses = new HashSet<>();
-        		seedClasses.addAll(reasoner.getEquivalentClasses(seedClass).getEntities());
-        		seedClasses.addAll(reasoner.getSubClasses(seedClass, false).getFlattened());
-        		OWLDataFactory factory = handler.getDataFactory();
-        		seedClasses.remove(factory.getOWLThing());
-        		seedClasses.remove(factory.getOWLNothing());
-        	}
-        	Out.p("\n" + seedClasses.size() + " seed classes are selected");
+            OWLClass seedClass = handler.getClassByIRI(input.getSeedClassName());
+            if (seedClass != null) {
+                seedClasses = new HashSet<>();
+                seedClasses.addAll(reasoner.getEquivalentClasses(seedClass).getEntities());
+                seedClasses.addAll(reasoner.getSubClasses(seedClass, false).getFlattened());
+                OWLDataFactory factory = handler.getDataFactory();
+                seedClasses.remove(factory.getOWLThing());
+                seedClasses.remove(factory.getOWLNothing());
+            }
+            Out.p("\n" + seedClasses.size() + " seed classes are selected");
         }
         AxiomBuilder axiomBuilder = new AxiomBuilder(conceptBuilder,
-    			input.getMinConceptSupport(), input.getMinPrecision(), 
-    			input.isUseMinSupport(), input.isUseMinPrecision(), 
-    			input.getDlminerMode(), seedClasses);
-       
-        // build hypotheses
-        Collection<Hypothesis> hypotheses = buildHypotheses(
-        		reasoner, conceptBuilder, axiomBuilder);
+                input.getConfig().minSupport, input.getMinPrecision(),
+                input.isUseMinSupport(), input.isUseMinPrecision(),
+                input.getDlminerMode(), seedClasses);
+        axiomBuilder.init();
 
-        // create the output
+
+        // create output
         output = new DLMinerOutput();
-        output.setHypotheses(hypotheses);
+        output.setHandler(handler);
         output.setOntology(handler.getOntology());
-        stats.setConceptsNumber(conceptBuilder.getClassInstanceMap().size());
-        stats.setRolesNumber(conceptBuilder.getRoleInstanceMap().size());
+        output.setReasoner(reasoner);
+        output.setConceptBuilder(conceptBuilder);
+        output.setAxiomBuilder(axiomBuilder);
+
+    }
+
+
+
+
+    /**
+     * The method runs the DL-Miner algorithm.
+     * Once DL-Miner terminates, the results (mined hypotheses and run statistics)
+     * are stored in the attribute <code>output</code>.
+     *
+     * @throws Exception throws an error if the output is empty
+     *
+     */
+    public void run() throws Exception {
+
+        // build hypotheses
+        Collection<Hypothesis> hypotheses = buildHypotheses();
+        output.setHypotheses(hypotheses);
+
+        // record stats
+        stats.setConceptsNumber(output.getConceptBuilder().getClassInstanceMap().size());
+        stats.setRolesNumber(output.getConceptBuilder().getRoleInstanceMap().size());
         stats.setHypothesesNumber(hypotheses.size());
         OWLOntologyFormat hypothesisFormat = null;
         if (input.getHypothesisFormat().equals(OntologyFormat.OWLXML)) {
@@ -347,23 +335,25 @@ public class DLMiner {
         if (input.isUseComplexMeasures()) {
             // initialise the evaluator
             Out.p("\nInitialising the evaluator");
-            HypothesisEvaluator evaluator = new HypothesisEvaluator(
-                    handler, reasoner, conceptBuilder,
-                    input.isUseConsistency());
-            evaluator.evaluateConsistency(hypotheses, stats);
+            HypothesisEvaluator evaluator = new HypothesisEvaluator(output);
+            evaluator.init();
+            if (input.isUseConsistency()) {
+                evaluator.evaluateConsistency(hypotheses, stats);
+            }
             evaluator.evaluateMainMeasures(hypotheses, stats);
             evaluator.evaluateComplexMeasures(hypotheses, stats);
+            evaluator.dispose();
         }
 
-
+        // dispose the main reasoner
+        output.getReasoner().dispose();
     }
     
     
     
     
-    private Collection<Hypothesis> buildHypotheses(OWLReasoner reasoner,
-                                                   ConceptBuilder conceptBuilder,
-                                                   AxiomBuilder axiomBuilder) {
+    private Collection<Hypothesis> buildHypotheses() {
+
         // initialise parameters
         Set<Hypothesis> hypotheses = new HashSet<>();
         double roleBuildingTime = 0;
@@ -371,6 +361,8 @@ public class DLMiner {
         double hypothesesBuildingTime = 0;
         double hypothesesCleaningTime = 0;
         int maxConceptNumber = input.getMaxHypothesesNumber();
+        ConceptBuilder conceptBuilder = output.getConceptBuilder();
+        AxiomBuilder axiomBuilder = output.getAxiomBuilder();
         
         long start = System.currentTimeMillis();
         if (!input.getDlminerMode().equals(DLMinerMode.CDL)) {
@@ -397,7 +389,7 @@ public class DLMiner {
         
     	// build concepts
     	Out.p("\nBuilding at most " + maxConceptNumber 
-    			+ " concepts of length at most " + input.getMaxConceptLength());        	
+    			+ " concepts of length at most " + input.getConfig().maxLength);
     	start = System.currentTimeMillis();
     	conceptBuilder.buildConcepts(maxConceptNumber);
     	end = System.currentTimeMillis();
@@ -413,7 +405,7 @@ public class DLMiner {
 //        Out.printClassesMS(conceptBuilder.getExpressionClassMap().keySet());
 
     	// build hypotheses
-    	Out.p("\nBuilding hypotheses of length at most " + 2*input.getMaxConceptLength());
+    	Out.p("\nBuilding hypotheses of length at most " + 2*input.getConfig().maxLength);
     	start = System.currentTimeMillis();        	
     	Set<Hypothesis> classAxioms = axiomBuilder.generateInitialClassAxioms(
     	        input.getMaxHypothesesNumber());
@@ -427,9 +419,9 @@ public class DLMiner {
     	Set<Hypothesis> cleanClassAxioms = classAxioms;        
     	if (input.isUseCleaning()) {
     		HypothesisCleaner cleaner = new HypothesisCleaner(
-    				conceptBuilder, classAxioms, reasoner);
+    				conceptBuilder, classAxioms, output.getReasoner());
     		cleanClassAxioms = cleaner.cleanSeparately();
-    		if (input.isUseDataProperties()) {
+    		if (input.getConfig().useDataProperties) {
                 cleanClassAxioms = cleaner.cleanDataRestrictions(cleanClassAxioms);
             }
     	}

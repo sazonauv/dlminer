@@ -10,6 +10,7 @@ import io.dlminer.ont.ReasonerName;
 import io.dlminer.print.CSVWriter;
 import io.dlminer.print.HypothesisWriter;
 import io.dlminer.print.Out;
+import io.dlminer.refine.OperatorConfig;
 import org.semanticweb.owlapi.model.*;
 
 import java.io.File;
@@ -69,25 +70,37 @@ public class BelNetExperiment {
 
         // set parameters
         DLMinerInput input = new DLMinerInput(ontFile);
-        input.setMaxRoleDepth(roleDepth);
+        input.setLogic(logic);
+        input.setReasonerName(reasonerName);
         input.setMaxHypothesesNumber(hypothesesNumber);
         input.setReasonerTimeout(reasonerTimeout);
         input.setMinPrecision(minPrecision);
-        input.setMinConceptSupport(minSupport);
-        input.setBeamSize(beamSize);
-        input.setMaxConceptLength(maxConceptLength);
-        input.setLogic(logic);
-        input.setReasonerName(reasonerName);
-        input.setUseDisjunction(true);
         input.setUseMinPrecision(true);
         input.setUseCleaning(false);
         input.setUseClosedWorldAssumption(true);
-        if (!logic.equals(Logic.EL)) {
-            input.setUseDisjointness(true);
-            input.setUseDisjunction(false);
-            input.setUseNegation(true);
-            input.setUseUniversalRestriction(true);
+
+        // language bias
+        OperatorConfig config = input.getConfig();
+        config.maxDepth = roleDepth;
+        config.maxLength = maxConceptLength;
+        config.minSupport = minSupport;
+        config.useDataProperties = false;
+        config.useNegation = true;
+        config.useDisjunction = true;
+        config.useUniversalRestriction = true;
+        if (logic.equals(Logic.EL)) {
+            config.useNegation = false;
+            config.useDisjunction = false;
+            config.useUniversalRestriction = false;
         }
+
+        // optimisations
+        config.checkDisjointness = true;
+        config.checkClassHierarchy = true;
+        config.checkPropertyHierarchy = true;
+        config.checkPropertyDomainsAndRanges = true;
+        config.checkClassInstances = true;
+
 
         // run DL-Miner
         DLMiner miner = new DLMiner(input);

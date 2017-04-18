@@ -1,10 +1,36 @@
 package io.dlminer.refine;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 
-import io.dlminer.graph.*;
-import org.semanticweb.owlapi.model.*;
+import io.dlminer.graph.ALCNode;
+import io.dlminer.graph.CEdge;
+import io.dlminer.graph.CNode;
+import io.dlminer.graph.DataEdge;
+import io.dlminer.graph.GDataEdge;
+import io.dlminer.graph.LDataEdge;
+import io.dlminer.graph.NumericNode;
+import io.dlminer.graph.OnlyEdge;
+import io.dlminer.graph.SomeEdge;
+
+import org.semanticweb.owlapi.model.OWLAxiom;
+import org.semanticweb.owlapi.model.OWLClass;
+import org.semanticweb.owlapi.model.OWLClassAssertionAxiom;
+import org.semanticweb.owlapi.model.OWLClassExpression;
+import org.semanticweb.owlapi.model.OWLDataProperty;
+import org.semanticweb.owlapi.model.OWLIndividual;
+import org.semanticweb.owlapi.model.OWLLiteral;
+import org.semanticweb.owlapi.model.OWLNamedIndividual;
+import org.semanticweb.owlapi.model.OWLObjectComplementOf;
+import org.semanticweb.owlapi.model.OWLObjectProperty;
+import org.semanticweb.owlapi.model.OWLObjectPropertyExpression;
 import org.semanticweb.owlapi.reasoner.OWLReasoner;
 
 import io.dlminer.ont.LengthMetric;
@@ -93,54 +119,55 @@ public class ALCOperator extends RefinementOperator {
 
 	
 	private void initInstanceMap() {
-		classInstanceMap = new HashMap<>();		
-		int count = 0;
-		for (OWLClass cl : classes) {
-			Set<OWLNamedIndividual> insts = new HashSet<>(reasoner.getInstances(cl, false).getFlattened());
-			insts.remove(null);
-			// disjoint classes
-			if (!insts.isEmpty()) {
-				classInstanceMap.put(cl, insts);
-				Set<OWLClass> disjCls = disjClassMap.get(cl);
-				if (disjCls != null) {
-					for (OWLClass disjCl : disjCls) {
-						OWLClassExpression negCl = negationMap.get(disjCl);
-						Set<OWLNamedIndividual> negInsts = classInstanceMap.get(negCl);
-						if (negInsts == null) {
-							negInsts = new HashSet<>();
-							classInstanceMap.put(negCl, negInsts);
-						}
-						negInsts.addAll(insts);
-					}
-				}
-			}			
-			Out.p(++count + " / " + classes.size() + " classes are checked for instances");
-		}
-		// told negative assertions
-		if (!config.useNegation) {
-			return;
-		}		
+		classInstanceMap = new HashMap<>();
+
+		// reasoning
+	    if (config.checkClassInstances) {
+            int count = 0;
+            for (OWLClass cl : classes) {
+                Set<OWLNamedIndividual> insts = new HashSet<>(reasoner.getInstances(cl, false).getFlattened());
+                insts.remove(null);
+                // disjoint classes
+                if (!insts.isEmpty()) {
+                    classInstanceMap.put(cl, insts);
+                    Set<OWLClass> disjCls = disjClassMap.get(cl);
+                    if (disjCls != null) {
+                        for (OWLClass disjCl : disjCls) {
+                            OWLClassExpression negCl = negationMap.get(disjCl);
+                            Set<OWLNamedIndividual> negInsts = classInstanceMap.get(negCl);
+                            if (negInsts == null) {
+                                negInsts = new HashSet<>();
+                                classInstanceMap.put(negCl, negInsts);
+                            }
+                            negInsts.addAll(insts);
+                        }
+                    }
+                }
+                Out.p(++count + " / " + classes.size() + " classes are checked for instances");
+            }
+        }
+
+		// simple told assertions (positive and negative)
 		Set<OWLAxiom> aboxAxioms = reasoner.getRootOntology().getABoxAxioms(true);
 		for (OWLAxiom ax : aboxAxioms) {
 			if (ax instanceof OWLClassAssertionAxiom) {
 				OWLClassAssertionAxiom axiom = (OWLClassAssertionAxiom) ax;
-				if (axiom.getClassExpression() instanceof OWLObjectComplementOf) {
-					OWLObjectComplementOf negCl = (OWLObjectComplementOf) axiom.getClassExpression();
-					if (!negCl.getOperand().isAnonymous()) {
-						Set<OWLNamedIndividual> negInsts = classInstanceMap.get(negCl);
-						if (negInsts == null) {
-							negInsts = new HashSet<>();
-							classInstanceMap.put(negCl, negInsts);
-						}
-						OWLIndividual ind = axiom.getIndividual();
-						if (ind != null && ind.isNamed()) {
-							negInsts.add(ind.asOWLNamedIndividual());
-						}
-					}
-				}
+				OWLClassExpression expr = axiom.getClassExpression();
+                if (!expr.isAnonymous()
+                        || (config.useNegation && expr instanceof OWLObjectComplementOf
+                            && !((OWLObjectComplementOf) expr).getOperand().isAnonymous())) {
+                    Set<OWLNamedIndividual> insts = classInstanceMap.get(expr);
+                    if (insts == null) {
+                        insts = new HashSet<>();
+                        classInstanceMap.put(expr, insts);
+                    }
+                    OWLIndividual ind = axiom.getIndividual();
+                    if (ind != null && ind.isNamed()) {
+                        insts.add(ind.asOWLNamedIndividual());
+                    }
+                }
 			}			
 		}
-		// reasoning: costly!
 	}
 	
 	
@@ -161,33 +188,45 @@ public class ALCOperator extends RefinementOperator {
 
 	private void initClassHierachy() {
 		classHierarchy = new HashMap<>();
-		// owl:Thing
-		OWLClass thing = factory.getOWLThing();		
-		classHierarchy.put(thing, getDirectSubClasses(thing));
-		// classes
-		for (OWLClass cl : classes) {
-			classHierarchy.put(cl, getDirectSubClasses(cl));
-		}
+
+		OWLClass thing = factory.getOWLThing();
+		if (config.checkClassHierarchy) {
+            // owl:Thing
+            classHierarchy.put(thing, getDirectSubClasses(thing));
+            // classes
+            for (OWLClass cl : classes) {
+                classHierarchy.put(cl, getDirectSubClasses(cl));
+            }
+        } else {
+            classHierarchy.put(thing, new HashSet<>(classes));
+        }
+
 		// negations
 		if (negationMap != null) {
-			// owl:Thing			
 			Set<OWLClassExpression> tsubs = classHierarchy.get(thing);
-			Set<OWLClassExpression> nsups = getDirectSuperClasses(factory.getOWLNothing());
-			for (OWLClassExpression nsup : nsups) {
-				tsubs.add(negationMap.get(nsup));
-			}			
-			// classes
-			for (OWLClass cl : classes) {
-				Set<OWLClassExpression> subs = null;
-				Set<OWLClassExpression> sups = getDirectSuperClasses(cl);				
-				if (sups != null && !sups.isEmpty()) {
-					subs = new HashSet<>();
-					for (OWLClassExpression sup : sups) {
-						subs.add(negationMap.get(sup));
-					}
-				}
-				classHierarchy.put(negationMap.get(cl), subs);
-			}
+            if (config.checkClassHierarchy) {
+                // owl:Thing
+                Set<OWLClassExpression> nsups = getDirectSuperClasses(factory.getOWLNothing());
+                for (OWLClassExpression nsup : nsups) {
+                    tsubs.add(negationMap.get(nsup));
+                }
+                // classes
+                for (OWLClass cl : classes) {
+                    Set<OWLClassExpression> subs = null;
+                    Set<OWLClassExpression> sups = getDirectSuperClasses(cl);
+                    if (sups != null && !sups.isEmpty()) {
+                        subs = new HashSet<>();
+                        for (OWLClassExpression sup : sups) {
+                            subs.add(negationMap.get(sup));
+                        }
+                    }
+                    classHierarchy.put(negationMap.get(cl), subs);
+                }
+            } else {
+                for (OWLClass cl : classes) {
+                    tsubs.add(negationMap.get(cl));
+                }
+            }
 		}
 	}
 	
@@ -662,7 +701,8 @@ public class ALCOperator extends RefinementOperator {
     private boolean isInsufficientConjunctionForNode(OWLClassExpression expr, ALCNode node) {
 	    // top level
 	    if (node.getInEdges() == null || node.getInEdges().isEmpty()) {
-	        if (classInstanceMap.get(expr).size() < config.minSupport) {
+            Set<OWLNamedIndividual> insts = classInstanceMap.get(expr);
+            if (insts == null || insts.size() < config.minSupport) {
 	            return true;
             }
         }
@@ -898,7 +938,7 @@ public class ALCOperator extends RefinementOperator {
 						if (isRedundantWithClassExpressions(mgc, comb)) {
 							continue;
 						}
-						// do not add concepts with no instances or subsumed instances
+						// do not add concepts with no instances
 						Set<OWLNamedIndividual> insts = classInstanceMap.get(mgc);
 						if (insts == null || insts.isEmpty()) {
 							continue;

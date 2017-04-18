@@ -2,11 +2,15 @@ package io.dlminer.main;
 
 import java.util.Collection;
 
+import io.dlminer.learn.AxiomBuilder;
+import io.dlminer.learn.ConceptBuilder;
+import io.dlminer.ont.OntologyHandler;
 import org.semanticweb.owlapi.model.OWLOntology;
 import org.semanticweb.owlapi.model.OWLOntologyFormat;
 
 import io.dlminer.learn.Hypothesis;
 import io.dlminer.learn.HypothesisEvaluator;
+import org.semanticweb.owlapi.reasoner.OWLReasoner;
 
 /**
  * @author Slava Sazonau
@@ -46,6 +50,16 @@ public class DLMinerOutput {
      * additional evaluation of hypotheses
      */
     private HypothesisEvaluator evaluator;
+
+
+
+    private OntologyHandler handler;
+
+    private OWLReasoner reasoner;
+
+    private ConceptBuilder conceptBuilder;
+
+    private AxiomBuilder axiomBuilder;
     
 
 
@@ -110,7 +124,35 @@ public class DLMinerOutput {
 	}
 
 
-	
-	
-		
+    public OntologyHandler getHandler() {
+        return handler;
+    }
+
+    public void setHandler(OntologyHandler handler) {
+        this.handler = handler;
+    }
+
+    public OWLReasoner getReasoner() {
+        return reasoner;
+    }
+
+    public void setReasoner(OWLReasoner reasoner) {
+        this.reasoner = reasoner;
+    }
+
+    public ConceptBuilder getConceptBuilder() {
+        return conceptBuilder;
+    }
+
+    public void setConceptBuilder(ConceptBuilder conceptBuilder) {
+        this.conceptBuilder = conceptBuilder;
+    }
+
+    public AxiomBuilder getAxiomBuilder() {
+        return axiomBuilder;
+    }
+
+    public void setAxiomBuilder(AxiomBuilder axiomBuilder) {
+        this.axiomBuilder = axiomBuilder;
+    }
 }

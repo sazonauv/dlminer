@@ -9,6 +9,7 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.InputStream;
 
+import io.dlminer.refine.OperatorConfig;
 import org.semanticweb.owlapi.model.OWLClass;
 
 /**
@@ -20,14 +21,13 @@ import org.semanticweb.owlapi.model.OWLClass;
  */
 public class DLMinerInput {
 	
-	// ====================== attributes ====================== 
+	// ====================== attributes ======================
+
+    /**
+     * Configuration for hypothesis generation procedures
+     */
+    private OperatorConfig config;
 	
-	/**
-	 * The maximal role depth in a concept that DL-Miner should inspect,
-	 * e.g. "hasParent some Person" has role depth = 1 and
-	 * "hasParent some (Person and hasParent some Person)" has role depth = 2.
-	 */
-	private Integer maxRoleDepth;
 
 	
 	/**
@@ -60,19 +60,6 @@ public class DLMinerInput {
 	
 	
 	/**
-	 * The minimal support in data that a concept is required to have
-	 * in order to be inspected by DL-Miner. This is measured in number of
-	 * individuals and ontology specific. The higher the minimal support is,
-	 * the faster DL-Miner terminates, but returns fewer hypotheses.
-	 * It is recommended to be set between 1% and 5% of all individuals for big ontologies, 
-	 * e.g. 100 - 500 for an ontology with 10,000 individuals.
-	 */
-	private Integer minConceptSupport;
-
-	
-	
-	
-	/**
 	 * An input ontology that DL-Miner processes. The ontology must be consistent.	  
 	 * The file should be in one of standard OWL syntaxes, 
 	 * see https://en.wikipedia.org/wiki/Web_Ontology_Language.
@@ -82,26 +69,12 @@ public class DLMinerInput {
 	
 	
 	/**
-	 * The beam size in the beam search routine. This parameter is important
-	 * to maintain tractability for ontologies with a lot of data.
-	 */
-	private Integer beamSize;
-	
-	
-	
-	/**
 	 * The format to store hypotheses, e.g. OWL/XML, Turtle
 	 */
 	private OntologyFormat hypothesisFormat;
 	
 	
-	/**
-	 * The maximal length of a concept that DL-Miner should inspect,
-	 * e.g. "hasParent some Person" has concept length = 2 and
-	 * "hasParent some (Person and hasParent some Person)" has concept length = 5.
-	 */
-	private Integer maxConceptLength;
-	
+
 	
 	/**
 	 * The logic for hypotheses
@@ -124,35 +97,8 @@ public class DLMinerInput {
 	 */
 	private Boolean useMinSupport;
 	
-	
-	
-	
-	/**
-	 * The flag indicating whether disjoint classes are checked
-	 */
-	private Boolean useDisjointness;
-	
-	
-	/**
-	 * The flag indicating whether disjunction is used for constructing classes
-	 */
-	private Boolean useDisjunction;
-	
-	
-	
-	/**
-	 * The flag indicating whether universal restriction is used for constructing classes
-	 */
-	private Boolean useUniversalRestriction;
-	
-	
-	/**
-	 * The flag indicating whether negation is used for constructing classes
-	 */
-	private Boolean useNegation;
-	
-	
-	
+
+
 	/**
 	 * The flag indicating whether the minimal precision is used to filter hypotheses
 	 */
@@ -212,18 +158,6 @@ public class DLMinerInput {
 
 
 
-    /**
-     * The flag indicating whether data properties are used to generate concept expressions
-     */
-	private Boolean useDataProperties;
-
-
-    /**
-	 * The number of thresholds for expressions with data properties
-	 */
-	private Integer dataThresholdsNumber;
-
-
 
     /**
      * The flag indicating if complex measures should used
@@ -233,23 +167,6 @@ public class DLMinerInput {
 	
 	
 	// ====================== 	getters and setters ====================== 
-
-	/**
-	 * @return the maxRoleDepth
-	 */
-	public Integer getMaxRoleDepth() {
-		return maxRoleDepth;
-	}
-
-
-
-	/**
-	 * @param maxRoleDepth the maxRoleDepth to set
-	 */
-	public void setMaxRoleDepth(Integer maxRoleDepth) {
-		this.maxRoleDepth = maxRoleDepth;		
-	}
-
 
 
 	/**
@@ -305,24 +222,6 @@ public class DLMinerInput {
 	}
 
 
-
-	/**
-	 * @return the minConceptSupport
-	 */
-	public Integer getMinConceptSupport() {
-		return minConceptSupport;
-	}
-
-
-
-	/**
-	 * @param minConceptSupport the minConceptSupport to set
-	 */
-	public void setMinConceptSupport(Integer minConceptSupport) {
-		this.minConceptSupport = minConceptSupport;		
-	}
-	
-	
 	
 	/**
 	 * @return the ontologyFile
@@ -356,25 +255,7 @@ public class DLMinerInput {
 	}
 	
 	
-	
-	
-	/**
-	 * @return the beamSize
-	 */
-	public Integer getBeamSize() {
-		return beamSize;
-	}
 
-
-
-	/**
-	 * @param beamSize the beamSize to set
-	 */
-	public void setBeamSize(Integer beamSize) {
-		this.beamSize = beamSize;
-	}
-
-	
 	
 	/**
 	 * @return the hypothesisFormat
@@ -392,24 +273,7 @@ public class DLMinerInput {
 		this.hypothesisFormat = hypothesisFormat;
 	}
 	
-	
-	
-	/**
-	 * @return the maxConceptLength
-	 */
-	public Integer getMaxConceptLength() {
-		return maxConceptLength;
-	}
 
-
-
-	/**
-	 * @param maxConceptLength the maxConceptLength to set
-	 */
-	public void setMaxConceptLength(Integer maxConceptLength) {
-		this.maxConceptLength = maxConceptLength;
-	}
-	
 	
 	
 	/**
@@ -479,78 +343,6 @@ public class DLMinerInput {
 	 */
 	public void setUseMinSupport(boolean useMinSupport) {
 		this.useMinSupport = useMinSupport;
-	}
-
-
-
-	/**
-	 * @return the useDisjointness
-	 */
-	public boolean isUseDisjointness() {
-		return useDisjointness;
-	}
-
-
-
-	/**
-	 * @param useDisjointness the useDisjointness to set
-	 */
-	public void setUseDisjointness(Boolean useDisjointness) {
-		this.useDisjointness = useDisjointness;
-	}
-	
-	
-	
-	/**
-	 * @return the useDisjunction
-	 */
-	public boolean isUseDisjunction() {
-		return useDisjunction;
-	}
-
-
-
-	/**
-	 * @param useDisjunction the useDisjunction to set
-	 */
-	public void setUseDisjunction(boolean useDisjunction) {
-		this.useDisjunction = useDisjunction;
-	}
-
-
-
-	/**
-	 * @return the useUniversalRestriction
-	 */
-	public boolean isUseUniversalRestriction() {
-		return useUniversalRestriction;
-	}
-
-
-
-	/**
-	 * @param useUniversalRestriction the useUniversalRestriction to set
-	 */
-	public void setUseUniversalRestriction(boolean useUniversalRestriction) {
-		this.useUniversalRestriction = useUniversalRestriction;
-	}
-
-
-
-	/**
-	 * @return the useNegation
-	 */
-	public boolean isUseNegation() {
-		return useNegation;
-	}
-
-
-
-	/**
-	 * @param useNegation the useNegation to set
-	 */
-	public void setUseNegation(boolean useNegation) {
-		this.useNegation = useNegation;
 	}
 
 
@@ -672,45 +464,6 @@ public class DLMinerInput {
 	}
 
 
-    /**
-     *
-     * @param useDataProperties the flag to use data properties
-     */
-    public void setUseDataProperties(boolean useDataProperties) {
-        this.useDataProperties = useDataProperties;
-    }
-
-
-    /**
-     *
-     * @return the flag to use data properties
-     */
-    public boolean isUseDataProperties() {
-        return useDataProperties;
-    }
-
-
-
-
-	/**
-	 *
-	 * @return the number of thresholds for expressions with data properties
-	 */
-	public Integer getDataThresholdsNumber() {
-		return dataThresholdsNumber;
-	}
-
-
-	/**
-	 *
-	 * @param dataThresholdsNumber the number of thresholds for expressions with data properties
-	 */
-	public void setDataThresholdsNumber(Integer dataThresholdsNumber) {
-		this.dataThresholdsNumber = dataThresholdsNumber;
-	}
-
-
-
     public boolean isUseComplexMeasures() {
         return useComplexMeasures;
     }
@@ -718,9 +471,14 @@ public class DLMinerInput {
     public void setUseComplexMeasures(boolean useComplexMeasures) {
         this.useComplexMeasures = useComplexMeasures;
     }
-	
-	
-	// ====================== constructors ======================
+
+
+    public OperatorConfig getConfig() {
+        return config;
+    }
+
+
+    // ====================== constructors ======================
 
 	
 
@@ -743,29 +501,38 @@ public class DLMinerInput {
 		
 
 	private void init() {
-		this.maxRoleDepth = DLMinerInputI.DEF_MAX_ROLE_DEPTH;
-		this.maxHypothesesNumber = DLMinerInputI.DEF_MAX_HYPOTHESES_NUMBER;
-		this.reasonerTimeout = DLMinerInputI.DEF_REASONER_TIMEOUT;
-		this.minPrecision = DLMinerInputI.DEF_MIN_PRECISION;
-		this.minConceptSupport = DLMinerInputI.DEF_MIN_CONCEPT_SUPPORT;
-		this.beamSize = DLMinerInputI.DEF_BEAM_SIZE;
-		this.maxConceptLength = DLMinerInputI.DEF_MAX_CONCEPT_LENGTH;
-		this.hypothesisFormat = DLMinerInputI.DEF_HYPOTHESIS_FORMAT;
-		this.logic = DLMinerInputI.DEF_LOGIC;
-		this.reasonerName = DLMinerInputI.DEF_REASONER_NAME;
-		this.useMinSupport = DLMinerInputI.DEF_USE_MIN_SUPPORT;
-		this.useDisjointness = DLMinerInputI.DEF_USE_DISJOINTNESS;
-		this.useDisjunction = DLMinerInputI.DEF_USE_DISJUNCTION;
-		this.useUniversalRestriction = DLMinerInputI.DEF_USE_UNIVERSAL;
-		this.useNegation = DLMinerInputI.DEF_USE_NEGATION;
-		this.useMinPrecision = DLMinerInputI.DEF_USE_MIN_PRECISION;
-		this.useConsistency = DLMinerInputI.DEF_USE_CONSISTENCY;
-		this.dlminerMode = DLMinerInputI.DEF_DLMINER_MODE;
-		this.useCleaning = DLMinerInputI.DEF_USE_CLEANING;
-		this.useClosedWorldAssumption = DLMinerInputI.DEF_USE_CWA;
-		this.useDataProperties = DLMinerInputI.DEF_USE_DATA_PROPERTIES;
-		this.dataThresholdsNumber = DLMinerInputI.DEF_DATA_THRESHOLDS_NUMBER;
-		this.useComplexMeasures = DLMinerInputI.DEF_USE_COMPLEX_MEASURES;
+
+	    // configuration
+	    config = new OperatorConfig();
+	    config.maxDepth = DLMinerInputI.DEF_MAX_ROLE_DEPTH;
+	    config.minSupport = DLMinerInputI.DEF_MIN_CONCEPT_SUPPORT;
+	    config.beamSize = DLMinerInputI.DEF_BEAM_SIZE;
+	    config.maxLength = DLMinerInputI.DEF_MAX_CONCEPT_LENGTH;
+	    config.checkDisjointness = DLMinerInputI.DEF_USE_DISJOINTNESS;
+	    config.useDisjunction = DLMinerInputI.DEF_USE_DISJUNCTION;
+	    config.useUniversalRestriction = DLMinerInputI.DEF_USE_UNIVERSAL;
+	    config.useNegation = DLMinerInputI.DEF_USE_NEGATION;
+	    config.useDataProperties = DLMinerInputI.DEF_USE_DATA_PROPERTIES;
+	    config.dataThresholdsNumber = DLMinerInputI.DEF_DATA_THRESHOLDS_NUMBER;
+	    config.checkClassHierarchy = DLMinerInputI.DEF_USE_CLASS_HIERARCHY;
+	    config.checkPropertyHierarchy = DLMinerInputI.DEF_USE_PROPERTY_HIERARCHY;
+	    config.checkPropertyDomainsAndRanges = DLMinerInputI.DEF_USE_DOMAINS_RANGES;
+	    config.checkClassInstances = DLMinerInputI.DEF_USE_CLASS_INSTANCES;
+
+	    // other parameters
+		maxHypothesesNumber = DLMinerInputI.DEF_MAX_HYPOTHESES_NUMBER;
+		reasonerTimeout = DLMinerInputI.DEF_REASONER_TIMEOUT;
+		minPrecision = DLMinerInputI.DEF_MIN_PRECISION;
+		hypothesisFormat = DLMinerInputI.DEF_HYPOTHESIS_FORMAT;
+		logic = DLMinerInputI.DEF_LOGIC;
+		reasonerName = DLMinerInputI.DEF_REASONER_NAME;
+		useMinSupport = DLMinerInputI.DEF_USE_MIN_SUPPORT;
+		useMinPrecision = DLMinerInputI.DEF_USE_MIN_PRECISION;
+		useConsistency = DLMinerInputI.DEF_USE_CONSISTENCY;
+		dlminerMode = DLMinerInputI.DEF_DLMINER_MODE;
+		useCleaning = DLMinerInputI.DEF_USE_CLEANING;
+		useClosedWorldAssumption = DLMinerInputI.DEF_USE_CWA;
+		useComplexMeasures = DLMinerInputI.DEF_USE_COMPLEX_MEASURES;
 	}
 
 

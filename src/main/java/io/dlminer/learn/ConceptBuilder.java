@@ -15,6 +15,7 @@ import java.util.SortedSet;
 import java.util.TreeSet;
 
 import io.dlminer.graph.*;
+import io.dlminer.main.DLMinerComponent;
 import io.dlminer.refine.OperatorConfig;
 import org.semanticweb.owlapi.model.*;
 import org.semanticweb.owlapi.reasoner.OWLReasoner;
@@ -28,7 +29,7 @@ import io.dlminer.sort.NodeLengthComparator;
 import io.dlminer.sort.SortingOrder;
 
 
-public class ConceptBuilder {	
+public class ConceptBuilder implements DLMinerComponent {
 	
 	private OntologyHandler handler;		
 	private OWLDataFactory factory;
@@ -69,11 +70,7 @@ public class ConceptBuilder {
 	private OWLReasoner reasoner;
 		
 	// parameters
-	private int minSupport;
-	
 	private int maxConceptNumber;
-	
-	private int beamSize;
 
     private OperatorConfig config;
 
@@ -88,15 +85,12 @@ public class ConceptBuilder {
 	
 		
 		
-	public ConceptBuilder(OntologyHandler handler, OWLReasoner reasoner,
-                          int minSupport, Integer beamSize, OperatorConfig config) {
+	public ConceptBuilder(OntologyHandler handler, OWLReasoner reasoner, OperatorConfig config) {
         this.handler = handler;
         factory = handler.getDataFactory();
         this.reasoner = reasoner;
         signature = handler.getSignature();
         signature.addAll(reasoner.getRootOntology().getSignature());
-        this.minSupport = minSupport;
-        this.beamSize = beamSize;
         this.config = config;
 	}
 
@@ -160,7 +154,7 @@ public class ConceptBuilder {
 	private void buildExpansions() {
 		Out.p("\nBuilding the ABox graph");		
 		aboxGraph = buildABoxGraphFromAssertions();
-		// build an expansion per individual	
+		// build an expansion per individual
 		Out.p("\nBuilding the expansions for individuals");
 		expansions = buildIndividualExpansions(aboxGraph);				
 		// normalise
@@ -174,9 +168,14 @@ public class ConceptBuilder {
 	}
 
 
+    public void buildConcepts() {
+        buildConcepts(Integer.MAX_VALUE);
+    }
+
+
 	public void buildConcepts(int maxConceptNumber) {
 		this.maxConceptNumber = maxConceptNumber;
-		// build expressions		
+		// build expressions
 		buildClassExpressions();
 		buildClassDefinitions();
 	}
@@ -190,7 +189,7 @@ public class ConceptBuilder {
 
 
 
-	public void build(List<Language> languages) {
+	public void buildExpressions(List<Language> languages) {
 		// build expressions
 		buildForLanguages(languages);
 	}
@@ -490,12 +489,6 @@ public class ConceptBuilder {
 			List<OWLClass> cls = generateClasses(exprs);
 			addClassExpressionMappings(cls, exprs);
 			languageClassMap.put(Language.R_SOME_C_OR_D, cls);
-		} else
-		if (lang.equals(Language.CDL)) {
-			// do nothing here
-		} else
-		if (lang.equals(Language.DATA_C)) {
-			// do nothing here
 		}
 	}
 
@@ -600,7 +593,7 @@ public class ConceptBuilder {
 	
 	
 	private void buildALCConceptsOptimised() {
-		// build concepts		
+		// build concepts
 		aprioriALCOptimised();
 		// remove redundant concepts
 		removeRedundantNodesExp();
@@ -830,7 +823,7 @@ public class ConceptBuilder {
 					List<Expansion> instances = instanceChecker.getInstances(extension, currentInstances);
 					extension.coverage = instanceChecker.countAllInstances(instances);
 //					updateCoverage(extension, instances);
-					if (extension.coverage >= minSupport) {
+					if (extension.coverage >= config.minSupport) {
 						beam.add(extension);
 						nodeClusterMap.put(extension, instances);						
 						// record time
@@ -847,10 +840,10 @@ public class ConceptBuilder {
 			processed.addAll(extensions);			
 			// find beam concepts and add them to candidates
 //			Collections.sort(beam, new NodeCoverageComparator(SortingOrder.DESC));
-			if (beam.size() <= beamSize) {
+			if (beam.size() <= config.beamSize) {
 				candidates.addAll(beam);
 			} else {
-				candidates.addAll(beam.subList(0, beamSize));
+				candidates.addAll(beam.subList(0, config.beamSize));
 			}
 			// debug		
 			Out.p("iterations=" + (++iters) 
@@ -978,11 +971,11 @@ public class ConceptBuilder {
 		List<OWLClass> cls = languageClassMap.get(Language.DATA_C);
 		if (cls == null) {
 			cls = new ArrayList<>();
-			languageClassMap.put(Language.DATA_C, cls);			
+			languageClassMap.put(Language.DATA_C, cls);
 		}
 		for (OWLClassExpression expr : expressionInstanceMap.keySet()) {
 			if (!expressionClassMap.containsKey(expr)) {
-				OWLClass cl = null;
+				OWLClass cl;
 				if (!expr.isAnonymous()) {
 					cl = expr.asOWLClass();
 				} else {
@@ -993,9 +986,9 @@ public class ConceptBuilder {
 				classExpressionMap.put(cl, expr);
 				classInstanceMap.put(cl, expressionInstanceMap.get(expr));
 			}
-		}		
+		}
 	}
-	
+
 	
 		
 	private Map<OWLNamedIndividual, ALCNode> buildABoxGraphFromAssertions() {
@@ -1834,17 +1827,17 @@ public class ConceptBuilder {
 	}
 
 
-
-	/**
-	 * @return the expressionTimeMap
-	 */
 	public Map<OWLClassExpression, Double> getExpressionTimeMap() {
 		return expressionTimeMap;
 	}
 
 
+    public OperatorConfig getConfig() {
+        return config;
+    }
 
-	public double getTimeByExpression(OWLClassExpression expr) {
+
+    public double getTimeByExpression(OWLClassExpression expr) {
 		return expressionTimeMap.get(expr);
 	}
 

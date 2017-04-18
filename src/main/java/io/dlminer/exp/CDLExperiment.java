@@ -10,6 +10,7 @@ import io.dlminer.ont.ReasonerName;
 import io.dlminer.print.CSVWriter;
 import io.dlminer.print.HypothesisWriter;
 import io.dlminer.print.Out;
+import io.dlminer.refine.OperatorConfig;
 import org.dllearner.algorithms.celoe.CELOE;
 import org.dllearner.learningproblems.ClassLearningProblem;
 import org.dllearner.reasoning.OWLAPIReasoner;
@@ -80,26 +81,41 @@ public class CDLExperiment {
 //        Out.setLog(hypothesesPath);
 
 
+
         // set parameters
         DLMinerInput input = new DLMinerInput(ontFile);
-        input.setMaxRoleDepth(roleDepth);
+        input.setLogic(logic);
+        input.setReasonerName(reasonerName);
         input.setMaxHypothesesNumber(hypothesesNumber);
         input.setReasonerTimeout(reasonerTimeout);
         input.setMinPrecision(minPrecision);
-        input.setMinConceptSupport(minSupport);
-        input.setBeamSize(beamSize);
-        input.setMaxConceptLength(maxConceptLength);
-        input.setLogic(logic);
-        input.setReasonerName(reasonerName);
         input.setUseMinPrecision(usePrecision);
         input.setUseCleaning(useCleaning);
-        if (!logic.equals(Logic.EL)) {
-            input.setUseDisjointness(useDisjointness);
-            input.setUseDisjunction(useDisjunction);
-            input.setUseNegation(true);
-            input.setUseUniversalRestriction(true);
-        }
         input.setDlminerMode(DLMinerMode.CDL);
+
+        // language bias
+        OperatorConfig config = input.getConfig();
+        config.maxDepth = roleDepth;
+        config.maxLength = maxConceptLength;
+        config.minSupport = minSupport;
+        config.useDataProperties = false;
+        config.useNegation = true;
+        config.useDisjunction = true;
+        config.useUniversalRestriction = true;
+        if (logic.equals(Logic.EL)) {
+            config.useNegation = false;
+            config.useDisjunction = false;
+            config.useUniversalRestriction = false;
+        }
+
+        // optimisations
+        config.checkDisjointness = true;
+        config.checkClassHierarchy = true;
+        config.checkPropertyHierarchy = true;
+        config.checkPropertyDomainsAndRanges = true;
+        config.checkClassInstances = true;
+
+
 
         // run DL-Miner
         DLMiner miner = new DLMiner(input);
@@ -169,7 +185,7 @@ public class CDLExperiment {
         // filter axioms
         Set<Hypothesis> filtDefHypos = new HashSet<>();
         for (Hypothesis h : defHypos) {
-            if (h.support >= input.getMinConceptSupport()) {
+            if (h.support >= input.getConfig().minSupport) {
                 if (input.isUseMinPrecision() && h.precision < input.getMinPrecision()) {
                     continue;
                 }

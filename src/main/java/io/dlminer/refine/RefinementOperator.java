@@ -29,7 +29,6 @@ public abstract class RefinementOperator implements Operator {
 	protected OWLDataFactory factory;
 
 	protected OperatorConfig config;
-
 	
 
 	// handling redundancy	
@@ -46,90 +45,103 @@ public abstract class RefinementOperator implements Operator {
 	
 	protected Map<OWLObjectProperty, Set<OWLClass>> propDomainMap;
 	protected Map<OWLObjectProperty, Set<OWLClass>> propRangeMap;
-	
-	
 
 	
 
 	// faster checks via mappings
 	protected void mapRedundantClassesAndProperties() {
-		Out.p("\nMapping redundant classes");
+
 		// map redundant classes
 		equivClassMap = new HashMap<>();
 		subClassMap = new HashMap<>();
 		superClassMap = new HashMap<>();
-		disjClassMap = new HashMap<>();		
-		for (OWLClass cl : classes) {			
-			// check equivalent classes
-			Set<OWLClass> eqCls = new HashSet<>(reasoner.getEquivalentClasses(cl).getEntities());
-			eqCls.remove(factory.getOWLNothing());
-			equivClassMap.put(cl, eqCls);		
-			// check super classes
-			Set<OWLClass> superCls = new HashSet<>(reasoner.getSuperClasses(cl, false).getFlattened());
-			superCls.remove(factory.getOWLNothing());
-			superClassMap.put(cl, superCls);
-			// check sub classes
-			Set<OWLClass> subCls = new HashSet<>(reasoner.getSubClasses(cl, false).getFlattened());
-			subCls.remove(factory.getOWLNothing());
-			subClassMap.put(cl, subCls);			
-			// check disjoint classes if necessary
-			if (config.checkDisjointness) {
-				Set<OWLClass> disjCls = new HashSet<>(reasoner.getDisjointClasses(cl).getFlattened());
-				disjCls.remove(factory.getOWLNothing());
-				disjClassMap.put(cl, disjCls);
-			}
-		}
-		Out.p("\nMapping redundant properties");
+		disjClassMap = new HashMap<>();
+
+		if (config.checkClassHierarchy) {
+            Out.p("\nMapping redundant classes");
+            for (OWLClass cl : classes) {
+                // check equivalent classes
+                Set<OWLClass> eqCls = new HashSet<>(reasoner.getEquivalentClasses(cl).getEntities());
+                eqCls.remove(factory.getOWLNothing());
+                equivClassMap.put(cl, eqCls);
+                // check super classes
+                Set<OWLClass> superCls = new HashSet<>(reasoner.getSuperClasses(cl, false).getFlattened());
+                superCls.remove(factory.getOWLNothing());
+                superClassMap.put(cl, superCls);
+                // check sub classes
+                Set<OWLClass> subCls = new HashSet<>(reasoner.getSubClasses(cl, false).getFlattened());
+                subCls.remove(factory.getOWLNothing());
+                subClassMap.put(cl, subCls);
+            }
+        }
+
+        // check disjoint classes
+        if (config.checkDisjointness) {
+            for (OWLClass cl : classes) {
+                Set<OWLClass> disjCls = new HashSet<>(reasoner.getDisjointClasses(cl).getFlattened());
+                disjCls.remove(factory.getOWLNothing());
+                disjClassMap.put(cl, disjCls);
+            }
+        }
+
 		// map redundant properties
 		equivPropertyMap = new HashMap<>();
 		subPropertyMap = new HashMap<>();
 		superPropertyMap = new HashMap<>();
 		disjPropertyMap = new HashMap<>();
 		invPropertyMap = new HashMap<>();
-		for (OWLObjectProperty prop : properties) {
-			// check equivalent properties
-			Set<OWLObjectPropertyExpression> eqProps = 
-					new HashSet<>(reasoner.getEquivalentObjectProperties(prop).getEntities());
-			eqProps.remove(factory.getOWLBottomObjectProperty());
-			eqProps.remove(factory.getOWLTopObjectProperty());
-			equivPropertyMap.put(prop, eqProps);
-			// check super properties
-			Set<OWLObjectPropertyExpression> superProps = 
-					new HashSet<>(reasoner.getSuperObjectProperties(prop, false).getFlattened());
-			superProps.remove(factory.getOWLBottomObjectProperty());
-			superProps.remove(factory.getOWLTopObjectProperty());
-			superPropertyMap.put(prop, superProps);
-			// check sub properties
-			Set<OWLObjectPropertyExpression> subProps = 
-					new HashSet<>(reasoner.getSubObjectProperties(prop, false).getFlattened());
-			subProps.remove(factory.getOWLBottomObjectProperty());
-			subProps.remove(factory.getOWLTopObjectProperty());
-			subPropertyMap.put(prop, subProps);
-			// check disjoint properties
-			if (config.checkDisjointness) {
-				Set<OWLObjectPropertyExpression> disjProps = 
-						new HashSet<>(reasoner.getDisjointObjectProperties(prop).getFlattened());
-				disjProps.remove(factory.getOWLBottomObjectProperty());
-				disjProps.remove(factory.getOWLTopObjectProperty());
-				disjPropertyMap.put(prop, disjProps);
-			}
-			// check inverse properties
-			Set<OWLObjectPropertyExpression> invProps = 
-					new HashSet<>(reasoner.getInverseObjectProperties(prop).getEntities());
-			invProps.remove(factory.getOWLBottomObjectProperty());
-			invProps.remove(factory.getOWLTopObjectProperty());
-			invPropertyMap.put(prop, invProps);
-		}
+
+		if (config.checkPropertyHierarchy) {
+            Out.p("\nMapping redundant properties");
+            for (OWLObjectProperty prop : properties) {
+                // check equivalent properties
+                Set<OWLObjectPropertyExpression> eqProps =
+                        new HashSet<>(reasoner.getEquivalentObjectProperties(prop).getEntities());
+                eqProps.remove(factory.getOWLBottomObjectProperty());
+                eqProps.remove(factory.getOWLTopObjectProperty());
+                equivPropertyMap.put(prop, eqProps);
+                // check super properties
+                Set<OWLObjectPropertyExpression> superProps =
+                        new HashSet<>(reasoner.getSuperObjectProperties(prop, false).getFlattened());
+                superProps.remove(factory.getOWLBottomObjectProperty());
+                superProps.remove(factory.getOWLTopObjectProperty());
+                superPropertyMap.put(prop, superProps);
+                // check sub properties
+                Set<OWLObjectPropertyExpression> subProps =
+                        new HashSet<>(reasoner.getSubObjectProperties(prop, false).getFlattened());
+                subProps.remove(factory.getOWLBottomObjectProperty());
+                subProps.remove(factory.getOWLTopObjectProperty());
+                subPropertyMap.put(prop, subProps);
+                // check disjoint properties
+                if (config.checkDisjointness) {
+                    Set<OWLObjectPropertyExpression> disjProps =
+                            new HashSet<>(reasoner.getDisjointObjectProperties(prop).getFlattened());
+                    disjProps.remove(factory.getOWLBottomObjectProperty());
+                    disjProps.remove(factory.getOWLTopObjectProperty());
+                    disjPropertyMap.put(prop, disjProps);
+                }
+                // check inverse properties
+                Set<OWLObjectPropertyExpression> invProps =
+                        new HashSet<>(reasoner.getInverseObjectProperties(prop).getEntities());
+                invProps.remove(factory.getOWLBottomObjectProperty());
+                invProps.remove(factory.getOWLTopObjectProperty());
+                invPropertyMap.put(prop, invProps);
+            }
+        }
+
 		// fill property domains and ranges
-		Out.p("\nFilling property domains and ranges");
-		propDomainMap = new HashMap<>();
-		propRangeMap = new HashMap<>();
-		for (OWLObjectProperty prop : properties) {
-			Set<OWLClass> domains = new HashSet<>(reasoner.getObjectPropertyDomains(prop, false).getFlattened());
-			Set<OWLClass> ranges = new HashSet<>(reasoner.getObjectPropertyRanges(prop, false).getFlattened());
-			propDomainMap.put(prop, domains);
-			propRangeMap.put(prop, ranges);
-		}
+        propDomainMap = new HashMap<>();
+        propRangeMap = new HashMap<>();
+
+        if (config.checkPropertyDomainsAndRanges) {
+            Out.p("\nFilling property domains and ranges");
+            for (OWLObjectProperty prop : properties) {
+                Set<OWLClass> domains = new HashSet<>(reasoner.getObjectPropertyDomains(prop, false).getFlattened());
+                Set<OWLClass> ranges = new HashSet<>(reasoner.getObjectPropertyRanges(prop, false).getFlattened());
+                propDomainMap.put(prop, domains);
+                propRangeMap.put(prop, ranges);
+            }
+        }
 	}
 	
 	

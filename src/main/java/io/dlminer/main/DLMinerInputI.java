@@ -53,7 +53,7 @@ public interface DLMinerInputI {
 	/**
 	 * Default beamSize
 	 */
-	Integer DEF_BEAM_SIZE = 10000;
+	Integer DEF_BEAM_SIZE = 100000;
 	
 	
 	/**
@@ -167,6 +167,16 @@ public interface DLMinerInputI {
      */
     Boolean DEF_USE_COMPLEX_MEASURES = false;
 
+
+
+    Boolean DEF_USE_CLASS_HIERARCHY = true;
+
+    Boolean DEF_USE_PROPERTY_HIERARCHY = true;
+
+    Boolean DEF_USE_DOMAINS_RANGES = true;
+
+    Boolean DEF_USE_CLASS_INSTANCES = true;
+
 		
 	
 	// ====================== error messages ======================
@@ -184,7 +194,7 @@ public interface DLMinerInputI {
 	String WRONG_MAX_HYPOTHESES_NUMBER_ERR = "maxHypothesesNumber can only be positive!";
 	String WRONG_REASONER_TIMEOUT_ERR = "reasonerTimeout can only be positive!";
 	String WRONG_MIN_PRECISION_ERR = "minPrecision can only be positive!";
-	String WRONG_MIN_CONCEPT_SUPPORT_ERR = "minConceptSupport can only be positive!";
+	String WRONG_MIN_CONCEPT_SUPPORT_ERR = "minConceptSupport cannot be negative!";
 	
 
 

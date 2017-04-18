@@ -7,6 +7,7 @@ import java.io.InputStream;
 
 import io.dlminer.ont.Logic;
 import io.dlminer.print.Out;
+import io.dlminer.refine.OperatorConfig;
 
 
 /**
@@ -28,19 +29,24 @@ public class DLMinerTest {
         } catch (FileNotFoundException e) {
             e.printStackTrace();
         }
+
         DLMinerInput input = new DLMinerInput(ontologyFile);
         input.setMaxHypothesesNumber(10000);
-        input.setMaxConceptLength(5);
-        input.setMinConceptSupport(100);
         input.setMinPrecision(0.95);
         input.setUseCleaning(true);
         input.setDlminerMode(DLMinerMode.CDL);
+
+        OperatorConfig config = input.getConfig();
+        config.minSupport = 1;
+
         DLMiner miner = new DLMiner(input);
 		try {
+		    miner.init();
 			miner.run();			
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
+
 		Out.p("\nSaving hypotheses");
 		File hypothesesFile = new File(args[1]);
 		miner.saveHypotheses(hypothesesFile);

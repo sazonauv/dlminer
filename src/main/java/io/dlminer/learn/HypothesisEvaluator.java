@@ -1,50 +1,26 @@
 package io.dlminer.learn;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-
-import org.semanticweb.owlapi.model.OWLAxiom;
-import org.semanticweb.owlapi.model.OWLClass;
-import org.semanticweb.owlapi.model.OWLClassAssertionAxiom;
-import org.semanticweb.owlapi.model.OWLClassExpression;
-import org.semanticweb.owlapi.model.OWLDataFactory;
-import org.semanticweb.owlapi.model.OWLEntity;
-import org.semanticweb.owlapi.model.OWLNamedIndividual;
-import org.semanticweb.owlapi.model.OWLObjectAllValuesFrom;
-import org.semanticweb.owlapi.model.OWLObjectProperty;
-import org.semanticweb.owlapi.model.OWLObjectPropertyExpression;
-import org.semanticweb.owlapi.model.OWLOntology;
-import org.semanticweb.owlapi.model.OWLSubClassOfAxiom;
-import org.semanticweb.owlapi.model.OWLSubObjectPropertyOfAxiom;
-import org.semanticweb.owlapi.reasoner.InferenceType;
-import org.semanticweb.owlapi.reasoner.OWLReasoner;
-
-import io.dlminer.main.DLMinerMode;
+import io.dlminer.main.DLMinerComponent;
+import io.dlminer.main.DLMinerOutput;
 import io.dlminer.main.DLMinerOutputI;
 import io.dlminer.main.DLMinerStats;
-import io.dlminer.ont.AxiomMetric;
 import io.dlminer.ont.LengthMetric;
 import io.dlminer.ont.OntologyHandler;
 import io.dlminer.ont.ReasonerLoader;
-import io.dlminer.ont.ReasonerMode;
 import io.dlminer.ont.ReasonerName;
 import io.dlminer.print.Out;
 import io.dlminer.sort.Distance;
 import io.dlminer.sort.HypoDominanceComparator;
 import io.dlminer.sort.HypoLengthComparator;
-import io.dlminer.sort.HypothesisSorter;
 import io.dlminer.sort.SortingOrder;
+import org.semanticweb.owlapi.model.*;
+import org.semanticweb.owlapi.reasoner.InferenceType;
+import org.semanticweb.owlapi.reasoner.OWLReasoner;
+
+import java.util.*;
 
 
-public class HypothesisEvaluator {
+public class HypothesisEvaluator implements DLMinerComponent {
 	
 	
 	// tbox
@@ -69,81 +45,24 @@ public class HypothesisEvaluator {
 	private Map<OWLObjectProperty, Set<List<OWLNamedIndividual>>> roleInstanceMap;
 	private Map<List<OWLNamedIndividual>, Set<OWLObjectProperty>> instanceRoleMap;
 
-	
-		
-	// universal propagations
-//	private Map<OWLClass, Set<OWLObjectAllValuesFrom>> propagationMap;
-	
-	// interest entailments
-//	private Set<OWLAxiom> interestEntailments;
-	
+
 	private ConceptBuilder conceptBuilder;
 	
 	private OWLDataFactory factory;
-	
-	private boolean useConsistency;
 		
 
-	public HypothesisEvaluator(
-			OntologyHandler tboxHandler, OWLReasoner tboxReasoner, 
-			ConceptBuilder cbuilder, boolean useConcistency) {
-		this.ontologyHandler = tboxHandler;
-		this.ontologyReasoner = tboxReasoner;
-		this.conceptBuilder = cbuilder;
-		this.classInstanceMap = cbuilder.getClassInstanceMap();
-		this.roleInstanceMap = cbuilder.getRoleInstanceMap();		
-		this.factory = tboxHandler.getDataFactory();
-		this.useConsistency = useConcistency;
-		init();
+	public HypothesisEvaluator(DLMinerOutput output) {
+		this.ontologyHandler = output.getHandler();
+		this.ontologyReasoner = output.getReasoner();
+		this.conceptBuilder = output.getConceptBuilder();
+		this.classInstanceMap = conceptBuilder.getClassInstanceMap();
+		this.roleInstanceMap = conceptBuilder.getRoleInstanceMap();
+		this.factory = ontologyHandler.getDataFactory();
 	}
 
-//	private void initWithRoles() {
-//		init();
-//		// take care of universal propagations
-//		initPropagations();
-//		// initialise entailments for interest computation
-//		initInterestEntailments();
-//	}
-	
-	
-	/*private void initInterestEntailments() {
-		interestEntailments = new HashSet<OWLAxiom>();
-		OWLDataFactory factory = tboxHandler.getDataFactory();
-		// GCIs
-		for (OWLClass cl1 : conceptBuilder.getClassExpressionMap().keySet()) {
-			if (!cl1.isOWLThing() && !cl1.isOWLNothing()) {
-				for (OWLClass cl2 : conceptBuilder.getClassExpressionMap().keySet()) {
-					if (!cl1.equals(cl2) && !cl2.isOWLThing() && !cl2.isOWLNothing()) {
-						OWLSubClassOfAxiom codedAxiom = factory.getOWLSubClassOfAxiom(cl1, cl2);
-						if (!tboxReasoner.isEntailed(codedAxiom)) {
-							OWLSubClassOfAxiom axiom = factory.getOWLSubClassOfAxiom(
-									conceptBuilder.getExpressionByClass(cl1), conceptBuilder.getExpressionByClass(cl2));
-							interestEntailments.add(axiom);
-						}
-					}
-				}
-			}
-		}
-		// RIs
-		for (OWLObjectProperty prop1 : conceptBuilder.getRoleExpressionMap().keySet()) {
-			if (!prop1.isOWLTopObjectProperty() && !prop1.isOWLBottomObjectProperty()) {
-				for (OWLObjectProperty prop2 : conceptBuilder.getRoleExpressionMap().keySet()) {
-					if (!prop1.equals(prop2) && !prop2.isOWLTopObjectProperty() && !prop2.isOWLBottomObjectProperty()) {
-						OWLSubObjectPropertyOfAxiom codedAxiom = factory.getOWLSubObjectPropertyOfAxiom(prop1, prop2);
-						if (!tboxReasoner.isEntailed(codedAxiom)) {
-							OWLSubObjectPropertyOfAxiom axiom = factory.getOWLSubObjectPropertyOfAxiom(
-									conceptBuilder.getExpressionByRole(prop1), conceptBuilder.getExpressionByRole(prop2));
-							interestEntailments.add(axiom);
-						}
-					}
-				}
-			}
-		}
-	}*/
 
 	
-	
-	private void init() {
+	public void init() {
 		// init maps
 		initMaps();
 		// cluster individuals
@@ -1022,46 +941,10 @@ public class HypothesisEvaluator {
 		if (defaultReasoner != null) {
 			defaultReasoner.dispose();
 		}
-		if (ontologyReasoner != null) {
-			ontologyReasoner.dispose();
-		}
 	}
 	
 	
-	
-	/*private void initPropagations() {
-		Set<OWLObjectAllValuesFrom> univs = tboxHandler.getUniversals();
-		if (univs != null && !univs.isEmpty()) {
-			propagationMap = new HashMap<>();
-			Set<OWLObjectPropertyExpression> props = new HashSet<>();
-			for (OWLObjectAllValuesFrom univ : univs) {
-				props.add(univ.getProperty());
-			}
-			// build universals
-			Set<OWLClass> cls = conceptInstMap.keySet();
-			Set<OWLObjectAllValuesFrom> targets = new HashSet<>();
-			OWLDataFactory factory = tboxHandler.getDataFactory();
-			for (OWLClass c : cls) {
-				for (OWLObjectPropertyExpression p : props) {
-					targets.add(factory.getOWLObjectAllValuesFrom(p, c));
-				}
-			}
-			// check universal propagations		
-			for (OWLClass c1 : cls) {
-				for (OWLObjectAllValuesFrom c2 : targets) {
-					OWLSubClassOfAxiom ax = factory.getOWLSubClassOfAxiom(c1, c2);
-					if (tboxReasoner.isEntailed(ax)) {
-						Set<OWLObjectAllValuesFrom> propags = propagationMap.get(c1);
-						if (propags == null) {
-							propags = new HashSet<>();
-							propagationMap.put(c1, propags);
-						}
-						propags.add(c2);
-					}
-				}
-			}
-		}
-	}*/
+
 
 	public static Double calculateAverageSupport(Collection<Hypothesis> hypotheses) {
 		double averageSupport = 0;

@@ -132,13 +132,5 @@ public abstract class AxiomCleaner {
     }
 
 
-	/*public Set<Explanation<OWLAxiom>> computeExplanations(OWLAxiom axiom, int maxNumber) {
-		ExplanationGeneratorFactory<OWLAxiom> explFactory =
-				ExplanationManager.createExplanationGeneratorFactory(factory);
-		ExplanationGenerator<OWLAxiom> explGenerator =
-				explFactory.createExplanationGenerator(handler.getOntology());
-		Set<Explanation<OWLAxiom>> explanations = explGenerator.getExplanations(axiom, maxNumber);
-		return explanations;
-	}*/
 
 }

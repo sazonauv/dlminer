@@ -122,6 +122,9 @@ public class InstanceChecker {
 
 	public List<Expansion> getInstances(ALCNode node,
 			Collection<Expansion> suspects) {
+	    if (suspects == null || suspects.isEmpty()) {
+	        return null;
+        }
 	    if (node.isOWLThing()) {
 	        return getInstancesOfOWLThing();
         }
@@ -277,20 +280,23 @@ public class InstanceChecker {
 		// gather all instances
         int count = 0;
 		for (ALCNode expr : nodeClusterMap.keySet()) {
-			if (nodeExpansionMap.containsKey(expr)) {
-				continue;
-			}
-			List<Expansion> allInstances = new LinkedList<>();
-			List<Expansion> instances = nodeClusterMap.get(expr);
-			for (Expansion inst : instances) {
-				allInstances.addAll(expansionClusterMap.get(inst));
-			}
-			nodeExpansionMap.put(expr, allInstances);
             // debug
             if (++count % 100 == 0) {
                 Out.p(count + "/" + nodeClusterMap.keySet().size()
                         + " concepts are assigned instances as nodes");
             }
+			if (nodeExpansionMap.containsKey(expr)) {
+				continue;
+			}
+            List<Expansion> instances = nodeClusterMap.get(expr);
+			if (instances == null || instances.isEmpty()) {
+			    continue;
+            }
+			List<Expansion> allInstances = new LinkedList<>();
+			for (Expansion inst : instances) {
+				allInstances.addAll(expansionClusterMap.get(inst));
+			}
+			nodeExpansionMap.put(expr, allInstances);
 		}
 	}
 

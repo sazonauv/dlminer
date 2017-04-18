@@ -1,5 +1,6 @@
 package io.dlminer.learn;
 
+import io.dlminer.main.DLMinerComponent;
 import io.dlminer.main.DLMinerMode;
 import io.dlminer.main.DLMinerOutputI;
 import io.dlminer.ont.AxiomMetric;
@@ -39,7 +40,7 @@ import org.semanticweb.owlapi.reasoner.InferenceType;
 import org.semanticweb.owlapi.reasoner.OWLReasoner;
 
 
-public class AxiomBuilder {
+public class AxiomBuilder implements DLMinerComponent {
 	
 			
 	// components
@@ -83,14 +84,18 @@ public class AxiomBuilder {
 		this.useMinPrecision = useMinPrecision;
 		this.dlminerMode = dlminerMode;
 		this.seedClasses = seedClasses;
-		
-		classAxioms = new HashSet<>();
-		roleAxioms = new HashSet<>();
-		
-		if (dlminerMode.equals(DLMinerMode.KBC)) {
-			initInternalReasoner();
-		}		
 	}
+
+
+
+	public void init() {
+        classAxioms = new HashSet<>();
+        roleAxioms = new HashSet<>();
+
+        if (dlminerMode.equals(DLMinerMode.KBC)) {
+            initInternalReasoner();
+        }
+    }
 	
 	
 	
