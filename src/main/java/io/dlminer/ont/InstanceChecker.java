@@ -174,10 +174,12 @@ public class InstanceChecker {
         }
         Set<OWLNamedIndividual> individuals = classInstanceMap.get(atom);
         List<Expansion> instances = new LinkedList<>();
-        for (OWLNamedIndividual ind : individuals) {
-            Expansion exp = individualClusterMap.get(ind);
-            if (exp != null) {
-                instances.add(exp);
+        if (individuals != null) {
+            for (OWLNamedIndividual ind : individuals) {
+                Expansion exp = individualClusterMap.get(ind);
+                if (exp != null) {
+                    instances.add(exp);
+                }
             }
         }
         classExpansionMap.put(atom, instances);
@@ -289,13 +291,12 @@ public class InstanceChecker {
 				continue;
 			}
             List<Expansion> instances = nodeClusterMap.get(expr);
-			if (instances == null || instances.isEmpty()) {
-			    continue;
-            }
 			List<Expansion> allInstances = new LinkedList<>();
-			for (Expansion inst : instances) {
-				allInstances.addAll(expansionClusterMap.get(inst));
-			}
+			if (instances != null) {
+                for (Expansion inst : instances) {
+                    allInstances.addAll(expansionClusterMap.get(inst));
+                }
+            }
 			nodeExpansionMap.put(expr, allInstances);
 		}
 	}

@@ -4,9 +4,12 @@ import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.Set;
 
-import org.semanticweb.owlapi.model.*;
-
 import io.dlminer.ont.LengthMetric;
+import org.semanticweb.owlapi.model.OWLClassExpression;
+import org.semanticweb.owlapi.model.OWLDataFactory;
+import org.semanticweb.owlapi.model.OWLDataPropertyExpression;
+import org.semanticweb.owlapi.model.OWLDataRange;
+import org.semanticweb.owlapi.model.OWLObjectPropertyExpression;
 
 public class ALCNode extends CNode {
 	
@@ -58,8 +61,7 @@ public class ALCNode extends CNode {
 	
 	private boolean isMoreSpecificThanALCNode(ALCNode node) {
 		// check concepts
-		if (concept != null && node.concept != null 
-				&& concept.equals(node.concept)) {
+		if (getConcept().equals(node.getConcept())) {
 			return true;
 		}
 		// check labels
@@ -107,32 +109,6 @@ public class ALCNode extends CNode {
 
 
 
-
-    @Override
-	protected int hash(int hash) {
-		hash += clabels.hashCode() + 2*dlabels.hashCode();
-		if (outEdges != null) {			
-			for (CEdge e : outEdges) {
-				hash = e.hashCode() + e.object.hash(hash);
-				if (e instanceof OnlyEdge) {
-					hash += 3;
-				}
-                if (e instanceof EDataEdge) {
-                    hash += 7;
-                }
-                if (e instanceof GDataEdge) {
-                    hash += 11;
-                }
-                if (e instanceof LDataEdge) {
-                    hash += 17;
-                }
-			}		
-		}
-		return hash;
-	}
-	
-
-	
 
 	@Override
 	public ALCNode clone() {
@@ -280,6 +256,8 @@ public class ALCNode extends CNode {
                         range = factory.getOWLDatatypeMinInclusiveRestriction(val);
                     } else if (e instanceof LDataEdge) {
                         range = factory.getOWLDatatypeMaxInclusiveRestriction(val);
+                    } else if (e instanceof EDataEdge) {
+                        range = factory.getOWLDataOneOf(factory.getOWLLiteral(val));
                     } else {
                         throw new IllegalArgumentException(WRONG_EDGE_TYPE_ERROR);
                     }
@@ -355,92 +333,18 @@ public class ALCNode extends CNode {
 
 
 
-
-	public boolean containsUniversal() {
-		if (outEdges == null) {
-			return false;
-		}
-		for (CEdge e : outEdges) {
-			if (e instanceof OnlyEdge) {
-				return true;
-			}
-		}		
-		return false;
-	}
-
-
-
-	public boolean containsExistential() {
-		if (outEdges == null) {
-			return false;
-		}
-		for (CEdge e : outEdges) {
-			if (e instanceof SomeEdge) {
-				return true;
-			}
-		}		
-		return false;
-	}
-
-
-
-
-    // similarity and normalisation methods
-
-    public double similarity(ALCNode node) {
-        return (double)(getSimilarityWith(node, 0) + node.getSimilarityWith(this, 0))/(length() + node.length());
-    }
-
-
     // recursion!
-    private int getSimilarityWith(ALCNode node, int similarity) {
-        for (OWLClassExpression expr1 : node.clabels) {
-            for (OWLClassExpression expr2 : clabels) {
-                if (expr1.equals(expr2)) {
-                    similarity++;
-                }
-            }
-        }
-        // find the most similar node
-        if (outEdges != null && node.outEdges != null) {
-            for (CEdge e1 : outEdges) {
-                int maxSim = -1;
-                for (CEdge e2 : node.outEdges) {
-                    if (e1.label.equals(e2.label)) {
-                        int sim = ((ALCNode)e1.object).getSimilarityWith((ALCNode)e2.object, similarity);
-                        if (sim > maxSim) {
-                            maxSim = sim;
-                        }
-                    }
-                }
-                if (maxSim > -1) {
-                    similarity = maxSim + 1;
-                }
-            }
-        }
-        return similarity;
-    }
-
-
-
-
-    public ALCNode normalise() {
-        removeRedundantSuccessors();
-        return this;
-    }
-
-
-    // recursion!
-    private void removeRedundantSuccessors() {
+    public void normalise() {
         if (outEdges != null) {
             Set<CEdge> duplicates = new HashSet<>();
-            for (CEdge e1 : outEdges) {
-                for (CEdge e2 : outEdges) {
-                    if (!e1.equals(e2)
-                            && e1 instanceof SomeEdge == e2 instanceof SomeEdge
-                            && e1 instanceof OnlyEdge == e2 instanceof OnlyEdge
-                            && e1.label.equals(e2.label)
-                            && !duplicates.contains(e1)
+            for (int i=0; i<outEdges.size(); i++) {
+                CEdge e1 = outEdges.get(i);
+                if (duplicates.contains(e1)) {
+                    continue;
+                }
+                for (int j=0; j<outEdges.size(); j++) {
+                    CEdge e2 = outEdges.get(j);
+                    if (i != j && e1.equals(e2)
                             && isMoreSpecificThan(e1, e2)) {
                         duplicates.add(e2);
                     }
@@ -449,12 +353,35 @@ public class ALCNode extends CNode {
             removeOutEdges(duplicates);
             for (CEdge e : outEdges) {
                 if (!(e instanceof DataEdge)) {
-                    ((ALCNode) e.object).removeRedundantSuccessors();
+                    ((ALCNode) e.object).normalise();
                 }
             }
         }
     }
 
 
+
+    // recursion!
+    public boolean isRedundant() {
+	    if (outEdges == null) {
+	        return false;
+        }
+        for (int i=0; i<outEdges.size(); i++) {
+            CEdge e1 = outEdges.get(i);
+            for (int j=0; j<outEdges.size(); j++) {
+                CEdge e2 = outEdges.get(j);
+                if (i != j && e1.equals(e2)
+                        && isMoreSpecificThan(e1, e2)) {
+                    return true;
+                }
+            }
+        }
+        for (CEdge e : outEdges) {
+	        if (!(e instanceof DataEdge) && ((ALCNode) e.object).isRedundant()) {
+	            return true;
+            }
+        }
+        return false;
+    }
 
 }

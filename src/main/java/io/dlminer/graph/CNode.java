@@ -16,7 +16,7 @@ public abstract class CNode {
             "data min/max restriction";
 
 
-    public OWLClassExpression concept;
+    protected OWLClassExpression concept;
 	
 	public Integer coverage;
 	
@@ -128,26 +128,21 @@ public abstract class CNode {
 
 
 	protected boolean isEqualTo(CNode node) {
-		if (concept != null && node.concept != null 
-				&& concept.equals(node.concept)) {
-			return true;
-		}
-		return this.isMoreSpecificThan(node) && node.isMoreSpecificThan(this);
+        return getConcept().equals(node.getConcept());
 	}
 	
 		
 	
 	@Override
 	public abstract boolean equals(Object obj);
-	
+
+
 	@Override
 	public int hashCode() {
-		return hash(0);
+		return getConcept().hashCode();
 	}
 	
-	
-	protected abstract int hash(int hash);
-	
+
 	
 	@Override
 	public abstract CNode clone();	
@@ -159,7 +154,7 @@ public abstract class CNode {
 		return "(cover=" + coverage
 		+ "; length=" + length()
 		+ "; depth=" + depth()
-        + "; concept=" + concept
+        + "; concept=" + getConcept()
 		+ ")";
 	}
 
@@ -241,7 +236,16 @@ public abstract class CNode {
 	
 	
 	protected abstract void buildTopLevelConcept(OWLDataFactory factory);
-	
+
+
+
+    public void updateConcept() {
+        concept = null;
+        getConcept();
+    }
+
+
+
 	
 	public CNode find(CNode target) {
 		return find(target, false);
@@ -306,6 +310,5 @@ public abstract class CNode {
 		return outEdges == null || outEdges.isEmpty();
 	}
 
-	
-	
+
 }

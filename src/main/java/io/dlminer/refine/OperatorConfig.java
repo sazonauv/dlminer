@@ -70,6 +70,7 @@ public class OperatorConfig {
     public boolean checkPropertyHierarchy;
     public boolean checkPropertyDomainsAndRanges;
     public boolean checkClassInstances;
+    public boolean checkSyntacticRedundancy;
 
 
 

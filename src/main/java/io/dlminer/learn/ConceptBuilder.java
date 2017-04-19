@@ -161,6 +161,7 @@ public class ConceptBuilder implements DLMinerComponent {
 		Out.p("\nNormalising the trees");
 		for (Expansion n : expansions) {
 			n.normalise();
+			n.updateConcept();
 		}
 		// find unique representatives
 		Out.p("\nClustering expansions");
@@ -596,7 +597,7 @@ public class ConceptBuilder implements DLMinerComponent {
 		// build concepts
 		aprioriALCOptimised();
 		// remove redundant concepts
-		removeRedundantNodesExp();
+        normaliseNodes();
 		// convert to expressionInstanceMap
 		convertToExpressionInstanceMapExp();	
 	}
@@ -614,11 +615,11 @@ public class ConceptBuilder implements DLMinerComponent {
 
 	
 	
-	private void removeRedundantNodesExp() {
+	private void normaliseNodes() {
 		Out.p("\nRemoving redundant concepts");
 		Set<ALCNode> redunNodes = new HashSet<>();
 		for (ALCNode node : nodeClusterMap.keySet()) {
-			if (operator.isRedundantNode(node)) {
+			if (node.isRedundant()) {
 				redunNodes.add(node);
 			}
 		}
@@ -946,23 +947,23 @@ public class ConceptBuilder implements DLMinerComponent {
 	private void replaceNodesWithIndividuals() {
         int count = 0;
         for (ALCNode expr : nodeExpansionMap.keySet()) {
-            OWLClassExpression concept = expr.getConcept();
-            if (expressionInstanceMap.containsKey(concept)) {
-                continue;
-            }
-            List<Expansion> expansions = nodeExpansionMap.get(expr);
-            if (expansions != null) {
-                Set<OWLNamedIndividual> instances = new HashSet<>();
-                for (Expansion expansion : expansions) {
-                    instances.add(expansion.individual);
-                }
-                expressionInstanceMap.put(concept, instances);
-            }
             // debug
             if (++count % 100 == 0) {
                 Out.p(count + "/" + nodeExpansionMap.keySet().size()
                         + " concepts are assigned instances as individuals");
             }
+            OWLClassExpression concept = expr.getConcept();
+            if (expressionInstanceMap.containsKey(concept)) {
+                continue;
+            }
+            List<Expansion> expansions = nodeExpansionMap.get(expr);
+            Set<OWLNamedIndividual> instances = new HashSet<>();
+            if (expansions != null) {
+                for (Expansion expansion : expansions) {
+                    instances.add(expansion.individual);
+                }
+            }
+            expressionInstanceMap.put(concept, instances);
         }
     }
 

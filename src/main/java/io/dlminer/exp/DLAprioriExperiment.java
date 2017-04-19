@@ -75,11 +75,13 @@ public class DLAprioriExperiment {
         }
 
         // optimisations
-        config.checkDisjointness = false;
+        config.checkDisjointness = true;
+        config.checkClassInstances = true;
+
         config.checkClassHierarchy = false;
         config.checkPropertyHierarchy = false;
         config.checkPropertyDomainsAndRanges = false;
-        config.checkClassInstances = true;
+        config.checkSyntacticRedundancy = false;
 
 
         DLMiner miner = new DLMiner(input);

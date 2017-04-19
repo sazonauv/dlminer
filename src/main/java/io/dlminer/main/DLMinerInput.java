@@ -518,6 +518,7 @@ public class DLMinerInput {
 	    config.checkPropertyHierarchy = DLMinerInputI.DEF_USE_PROPERTY_HIERARCHY;
 	    config.checkPropertyDomainsAndRanges = DLMinerInputI.DEF_USE_DOMAINS_RANGES;
 	    config.checkClassInstances = DLMinerInputI.DEF_USE_CLASS_INSTANCES;
+	    config.checkSyntacticRedundancy = DLMinerInputI.DEF_USE_SYNTACTIC_REDUNDANCY;
 
 	    // other parameters
 		maxHypothesesNumber = DLMinerInputI.DEF_MAX_HYPOTHESES_NUMBER;

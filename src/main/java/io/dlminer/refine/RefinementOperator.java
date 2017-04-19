@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import io.dlminer.graph.ALCNode;
 import org.semanticweb.owlapi.model.*;
 import org.semanticweb.owlapi.reasoner.OWLReasoner;
 
@@ -151,7 +152,8 @@ public abstract class RefinementOperator implements Operator {
 		if (edges == null) {
 			return false;
 		}
-		if (disjClassMap.isEmpty()) {
+		if (disjClassMap == null || disjClassMap.isEmpty()
+                || propRangeMap == null || propRangeMap.isEmpty()) {
 			return false;
 		}
 		Set<OWLClass> disjClasses = disjClassMap.get(expr);
@@ -161,7 +163,7 @@ public abstract class RefinementOperator implements Operator {
 		for (CEdge edge :edges) {
 			// OK for OnlyEdge
 			Set<OWLClass> ranges = propRangeMap.get(edge.label);					
-			if (ranges.isEmpty() || ranges.contains(factory.getOWLThing())) {
+			if (ranges == null || ranges.isEmpty() || ranges.contains(factory.getOWLThing())) {
 				continue;
 			}			
 			for (OWLClass range : ranges) {								
@@ -181,7 +183,8 @@ public abstract class RefinementOperator implements Operator {
 		if (edges == null) {
 			return false;
 		}
-		if (disjClassMap.isEmpty()) {
+		if (disjClassMap == null || disjClassMap.isEmpty()
+                || propDomainMap == null || propDomainMap.isEmpty()) {
 			return false;
 		}
 		Set<OWLClass> disjClasses = disjClassMap.get(expr);
@@ -193,7 +196,7 @@ public abstract class RefinementOperator implements Operator {
 				continue;
 			}
 			Set<OWLClass> domains = propDomainMap.get(edge.label);					
-			if (domains.isEmpty() || domains.contains(factory.getOWLThing())) {
+			if (domains == null || domains.isEmpty() || domains.contains(factory.getOWLThing())) {
 				continue;
 			}			
 			ClassPair pair = new ClassPair();
@@ -214,7 +217,8 @@ public abstract class RefinementOperator implements Operator {
 		if (edges == null) {
 			return false;
 		}
-		if (subClassMap.isEmpty()) {
+		if (subClassMap == null || subClassMap.isEmpty()
+                || propRangeMap == null || propRangeMap.isEmpty()) {
 			return false;
 		}
 		// equivalent ranges are not redundant
@@ -226,7 +230,7 @@ public abstract class RefinementOperator implements Operator {
 		for (CEdge edge :edges) {
 			// OK for OnlyEdge
 			Set<OWLClass> ranges = propRangeMap.get(edge.label);					
-			if (ranges.isEmpty() || ranges.contains(factory.getOWLThing())) {
+			if (ranges == null || ranges.isEmpty() || ranges.contains(factory.getOWLThing())) {
 				continue;
 			}			
 			for (OWLClass range : ranges) {								
@@ -245,7 +249,9 @@ public abstract class RefinementOperator implements Operator {
 		if (edges == null) {
 			return false;
 		}		
-		if (equivClassMap.isEmpty() && subClassMap.isEmpty()) {
+		if (equivClassMap == null || equivClassMap.isEmpty()
+                || subClassMap == null || subClassMap.isEmpty()
+                || propDomainMap == null || propDomainMap.isEmpty()) {
 			return false;
 		}
 		Set<OWLClass> equivClasses = equivClassMap.get(expr);
@@ -259,7 +265,7 @@ public abstract class RefinementOperator implements Operator {
 				continue;
 			}
 			Set<OWLClass> domains = propDomainMap.get(edge.label);					
-			if (domains.isEmpty() || domains.contains(factory.getOWLThing())) {
+			if (domains == null || domains.isEmpty() || domains.contains(factory.getOWLThing())) {
 				continue;
 			}			
 			for (OWLClass domain : domains) {								
@@ -270,6 +276,35 @@ public abstract class RefinementOperator implements Operator {
 		}		
 		return false;		
 	}
+
+
+
+    protected boolean isDisjointWithPropertyDomains(OWLObjectProperty prop, ALCNode node) {
+        // check domains
+        if (disjClassMap == null || disjClassMap.isEmpty()
+                || propDomainMap == null || propDomainMap.isEmpty()) {
+            return false;
+        }
+        Set<OWLClass> domains = propDomainMap.get(prop);
+        if (domains == null || domains.isEmpty() || domains.contains(factory.getOWLThing())) {
+            return false;
+        }
+        if (domains.contains(factory.getOWLNothing())) {
+            return true;
+        }
+        for (OWLClass domain : domains) {
+            Set<OWLClass> disjClasses = disjClassMap.get(domain);
+            if (disjClasses == null || disjClasses.isEmpty()) {
+                return false;
+            }
+            for (OWLClassExpression label : node.clabels) {
+                if (disjClasses.contains(label)) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
 	
 	
 	

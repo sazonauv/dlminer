@@ -177,6 +177,8 @@ public interface DLMinerInputI {
 
     Boolean DEF_USE_CLASS_INSTANCES = true;
 
+    Boolean DEF_USE_SYNTACTIC_REDUNDANCY = true;
+
 		
 	
 	// ====================== error messages ======================

@@ -31,10 +31,12 @@ public class NumericNode extends CNode {
         return value == node.value;
     }
 
+
     @Override
-    protected int hash(int hash) {
+    public int hashCode() {
         return Double.hashCode(value);
     }
+
 
     @Override
     public CNode clone() {
