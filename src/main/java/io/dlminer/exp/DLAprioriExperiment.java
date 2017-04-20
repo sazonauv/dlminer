@@ -34,9 +34,6 @@ public class DLAprioriExperiment {
 
         // process parameters
         File ontFile = new File(args[0]);
-        if (ontFile.getName().contains("complete")) {
-            return;
-        }
         Integer roleDepth = Integer.parseInt(args[1]);
         Integer minSupport = Integer.parseInt(args[2]);
         Integer maxConceptLength = Integer.parseInt(args[3]);
