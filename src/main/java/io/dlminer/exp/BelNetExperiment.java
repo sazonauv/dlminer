@@ -97,9 +97,7 @@ public class BelNetExperiment {
         // optimisations
         config.checkDisjointness = true;
         config.checkClassHierarchy = true;
-        config.checkPropertyHierarchy = true;
-        config.checkPropertyDomainsAndRanges = true;
-        config.checkClassInstances = true;
+        config.useReasonerForAtomicClassInstances = true;
 
 
         // run DL-Miner

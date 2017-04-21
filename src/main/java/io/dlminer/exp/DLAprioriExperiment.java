@@ -73,11 +73,10 @@ public class DLAprioriExperiment {
 
         // optimisations
         config.checkDisjointness = true;
-        config.checkClassInstances = true;
+        config.useReasonerForAtomicClassInstances = true;
+        config.useReasonerForClassInstances = false;
 
         config.checkClassHierarchy = false;
-        config.checkPropertyHierarchy = false;
-        config.checkPropertyDomainsAndRanges = false;
         config.checkSyntacticRedundancy = false;
 
 

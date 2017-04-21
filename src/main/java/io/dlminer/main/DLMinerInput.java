@@ -158,7 +158,6 @@ public class DLMinerInput {
 
 
 
-
     /**
      * The flag indicating if complex measures should used
      */
@@ -464,6 +463,7 @@ public class DLMinerInput {
 	}
 
 
+
     public boolean isUseComplexMeasures() {
         return useComplexMeasures;
     }
@@ -515,10 +515,9 @@ public class DLMinerInput {
 	    config.useDataProperties = DLMinerInputI.DEF_USE_DATA_PROPERTIES;
 	    config.dataThresholdsNumber = DLMinerInputI.DEF_DATA_THRESHOLDS_NUMBER;
 	    config.checkClassHierarchy = DLMinerInputI.DEF_USE_CLASS_HIERARCHY;
-	    config.checkPropertyHierarchy = DLMinerInputI.DEF_USE_PROPERTY_HIERARCHY;
-	    config.checkPropertyDomainsAndRanges = DLMinerInputI.DEF_USE_DOMAINS_RANGES;
-	    config.checkClassInstances = DLMinerInputI.DEF_USE_CLASS_INSTANCES;
 	    config.checkSyntacticRedundancy = DLMinerInputI.DEF_USE_SYNTACTIC_REDUNDANCY;
+        config.useReasonerForAtomicClassInstances = DLMinerInputI.DEF_USE_REASONER_FOR_ATOMIC_CLASS_INSTANCES;
+	    config.useReasonerForClassInstances = DLMinerInputI.DEF_USE_REASONER_FOR_CLASS_INSTANCES;
 
 	    // other parameters
 		maxHypothesesNumber = DLMinerInputI.DEF_MAX_HYPOTHESES_NUMBER;
@@ -534,6 +533,7 @@ public class DLMinerInput {
 		useCleaning = DLMinerInputI.DEF_USE_CLEANING;
 		useClosedWorldAssumption = DLMinerInputI.DEF_USE_CWA;
 		useComplexMeasures = DLMinerInputI.DEF_USE_COMPLEX_MEASURES;
+
 	}
 
 

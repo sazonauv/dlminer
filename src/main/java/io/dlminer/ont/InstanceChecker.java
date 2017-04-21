@@ -115,6 +115,12 @@ public class InstanceChecker {
 	}
 
 
+    public Set<OWLNamedIndividual> getInstances(OWLClassExpression concept) {
+	    return classInstanceMap.get(concept);
+    }
+
+
+
     public List<Expansion> getInstances(ALCNode node) {
         return getInstances(node, expansionClusterMap.keySet());
     }
@@ -338,6 +344,4 @@ public class InstanceChecker {
 	}
 
 
-
-	
 }
