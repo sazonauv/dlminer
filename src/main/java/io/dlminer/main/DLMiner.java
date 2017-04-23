@@ -224,18 +224,20 @@ public class DLMiner implements DLMinerComponent {
         // check disjunctions
         if (input.getLogic().equals(Logic.EL)) {
             config.useDisjunction = false;
+            config.useNegation = false;
+            config.useUniversalRestriction = false;
         }
         // check negations
-        if (input.getLogic().equals(Logic.EL) || !handler.containsNegations()) {
+        if (config.checkRedundancy && !handler.containsNegations()) {
             config.useNegation = false;
         }
         // check universals
-        if (input.getLogic().equals(Logic.EL) ||
-                (!handler.containsUniversals() && !handler.containsMaxRestrictions())) {
+        if (config.checkRedundancy &&
+                !handler.containsUniversals() && !handler.containsMaxRestrictions()) {
             config.useUniversalRestriction = false;
         }
         // check data properties
-        if (!handler.containsDataProperties()) {
+        if (config.checkRedundancy && !handler.containsDataProperties()) {
             config.useDataProperties = false;
         }
 

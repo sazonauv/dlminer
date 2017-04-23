@@ -110,7 +110,6 @@ public class CDLExperiment {
 
         // optimisations
         config.checkDisjointness = true;
-        config.checkClassHierarchy = true;
         config.useReasonerForAtomicClassInstances = true;
 
 

@@ -1,5 +1,6 @@
 package io.dlminer.exp;
 
+import io.dlminer.graph.ALCNode;
 import io.dlminer.learn.ConceptBuilder;
 import io.dlminer.main.DLMiner;
 import io.dlminer.main.DLMinerInput;
@@ -7,12 +8,9 @@ import io.dlminer.ont.Logic;
 import io.dlminer.ont.ReasonerName;
 import io.dlminer.print.Out;
 import io.dlminer.refine.OperatorConfig;
-import org.semanticweb.owlapi.model.OWLClass;
-import org.semanticweb.owlapi.model.OWLNamedIndividual;
 
 import java.io.File;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 /**
  * Created by slava on 18/04/17.
@@ -50,7 +48,6 @@ public class DLAprioriExperiment {
             }
         }
 
-
         // set parameters
         DLMinerInput input = new DLMinerInput(ontFile);
         input.setLogic(logic);
@@ -61,6 +58,10 @@ public class DLAprioriExperiment {
         config.maxDepth = roleDepth;
         config.maxLength = maxConceptLength;
         config.minSupport = minSupport;
+        // optimisations
+        config.checkDisjointness = true;
+        config.useReasonerForAtomicClassInstances = true;
+        config.useReasonerForClassInstances = false;
         config.useDataProperties = false;
         config.useNegation = true;
         config.useDisjunction = true;
@@ -71,15 +72,10 @@ public class DLAprioriExperiment {
             config.useUniversalRestriction = false;
         }
 
-        // optimisations
-        config.checkDisjointness = true;
-        config.useReasonerForAtomicClassInstances = true;
-        config.useReasonerForClassInstances = false;
 
-        config.checkClassHierarchy = false;
-        config.checkSyntacticRedundancy = false;
-
-
+        // first ignore redundancy
+        Out.p("\n============ Ignoring redundancy");
+        config.checkRedundancy = false;
         DLMiner miner = new DLMiner(input);
         try {
             miner.init();
@@ -90,13 +86,67 @@ public class DLAprioriExperiment {
 
         ConceptBuilder conceptBuilder = miner.getOutput().getConceptBuilder();
 
-        // generate only supported concepts
-        long start = System.currentTimeMillis();
+        // generate concepts
         conceptBuilder.buildConcepts();
-        long end = System.currentTimeMillis();
-        double time = (double)(end - start) / 1e3;
-        Map<OWLClass, Set<OWLNamedIndividual>> classInstMap = conceptBuilder.getClassInstanceMap();
-        Out.p("\n" + classInstMap.size() + " concepts are built in " + time + " seconds");
+
+        Set<ALCNode> nodes = conceptBuilder.getNodes();
+        Out.p("\n" + nodes.size() + " concepts are built");
+
+        double totalTime = 0;
+        for (ALCNode node : nodes) {
+            totalTime += conceptBuilder.getTimeByExpression(node.getConcept());
+        }
+        Out.p("\nTotal time of checking instances = " + totalTime + " seconds");
+
+
+        // then remove redundancy
+        Out.p("\n============ Removing redundancy");
+        config.checkRedundancy = true;
+        input.setOntologyFile(ontFile);
+        miner = new DLMiner(input);
+        try {
+            miner.init();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        conceptBuilder = miner.getOutput().getConceptBuilder();
+
+        // generate concepts
+        conceptBuilder.buildConcepts();
+
+        nodes = conceptBuilder.getNodes();
+        Out.p("\n" + nodes.size() + " concepts are built");
+
+        totalTime = 0;
+        for (ALCNode node : nodes) {
+            totalTime += conceptBuilder.getTimeByExpression(node.getConcept());
+        }
+        Out.p("\nTotal time of checking instances = " + totalTime + " seconds");
+
+
+        Out.p("\nAmong them at least X instances have Y concepts:");
+        Map<Integer, Set<ALCNode>> instanceNodesMap = new HashMap<>();
+        for (ALCNode node : nodes) {
+            Set<ALCNode> instNodes = instanceNodesMap.get(node.coverage);
+            if (instNodes == null) {
+                instNodes = new HashSet<>();
+                instanceNodesMap.put(node.coverage, instNodes);
+            }
+            instNodes.add(node);
+        }
+
+        List<Integer> instanceNumbers = new ArrayList<>(instanceNodesMap.keySet());
+        Collections.sort(instanceNumbers);
+        for (Integer minInstanceNumber : instanceNumbers) {
+            int conceptNumber = 0;
+            for (Integer instanceNumber : instanceNodesMap.keySet()) {
+                if (instanceNumber >= minInstanceNumber) {
+                    conceptNumber += instanceNodesMap.get(instanceNumber).size();
+                }
+            }
+            Out.p(minInstanceNumber + " instances : " + conceptNumber + " concepts");
+        }
 
 
         Out.p("\nAll is done.\n");

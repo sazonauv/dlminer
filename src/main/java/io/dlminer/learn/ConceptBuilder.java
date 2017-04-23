@@ -604,7 +604,9 @@ public class ConceptBuilder implements DLMinerComponent {
 		// build concepts
 		aprioriALCOptimised();
 		// remove redundant concepts
-        normaliseNodes();
+        if (config.checkRedundancy) {
+            normaliseNodes();
+        }
 		// convert to expressionInstanceMap
 		convertToExpressionInstanceMapExp();	
 	}
@@ -615,7 +617,9 @@ public class ConceptBuilder implements DLMinerComponent {
 		// build concepts
 		aprioriALC();
 		// remove redundant concepts
-		normaliseNodesInd();
+        if (config.checkRedundancy) {
+            normaliseNodesInd();
+        }
 		// convert to expressionInstanceMap
 		convertToExpressionInstanceMapInd();
 	}
@@ -710,23 +714,24 @@ public class ConceptBuilder implements DLMinerComponent {
 					}
 					double t1 = System.nanoTime();
 					Set<OWLNamedIndividual> instances = null;
-					try {
-						if (reasoner.isSatisfiable(concept)) {
-							instances = reasoner.getInstances(concept, false).getFlattened();
-						}
-					} catch (Exception e) {
-						Out.p(e + DLMinerOutputI.CONCEPT_BUILDING_ERROR);
+                    try {
+                        instances = reasoner.getInstances(concept, false).getFlattened();
+                    } catch (Exception e) {
+                        Out.p(e + DLMinerOutputI.CONCEPT_BUILDING_ERROR);
 					}
 					extension.coverage = (instances == null) ? 0 : instances.size();
-					if (instances == null) {
-						continue;
-					}
 					if (extension.coverage >= config.minSupport) {
 						beam.add(extension);
 						nodeInstanceMap.put(extension, instances);
 						// record time
 						double t2 = System.nanoTime();
 						double time = (t2 - t1)/1e9;
+                        if (extension.isAtomic()) {
+                            Double classTime = operator.getTimeByClass(concept);
+                            if (classTime != null) {
+                                time = classTime;
+                            }
+                        }
 						expressionTimeMap.put(concept, time);
 						// break the loop if the maximal number of concepts is reached
 						if (nodeInstanceMap.size() - initialNumber >= maxConceptNumber) {
@@ -743,11 +748,11 @@ public class ConceptBuilder implements DLMinerComponent {
 				candidates.addAll(beam.subList(0, config.beamSize));
 			}
 			// debug
-			Out.p("iterations=" + (++iters)
-					+ " concepts=" + nodeInstanceMap.size()
-					+ " candidates=" + candidates.size()
-					+ " extensions=" + extensions.size()
-					+ " current=" + current);
+//			Out.p("iterations=" + (++iters)
+//					+ " concepts=" + nodeInstanceMap.size()
+//					+ " candidates=" + candidates.size()
+//					+ " extensions=" + extensions.size()
+//					+ " current=" + current);
 		}
 		Out.p("\nDL-Apriori has terminated");
 	}
@@ -812,16 +817,22 @@ public class ConceptBuilder implements DLMinerComponent {
 							continue;
 						}
 					}
-					double t1 = System.nanoTime();					
+					double t1 = System.nanoTime();
 					List<Expansion> instances = instanceChecker.getInstances(extension, currentInstances);
 					extension.coverage = instanceChecker.countAllInstances(instances);
-					if (extension.coverage >= config.minSupport) {
+                    if (extension.coverage >= config.minSupport) {
 						beam.add(extension);
 						nodeClusterMap.put(extension, instances);						
 						// record time
 						double t2 = System.nanoTime();
-						double time = (t2 - t1)/1e9;						
-						expressionTimeMap.put(concept, time);
+						double time = (t2 - t1)/1e9;
+						if (extension.isAtomic()) {
+						    Double classTime = operator.getTimeByClass(concept);
+						    if (classTime != null) {
+						        time = classTime;
+                            }
+                        }
+                        expressionTimeMap.put(concept, time);
 						// break the loop if the maximal number of concepts is reached
 						if (nodeClusterMap.size() - initialNumber >= maxConceptNumber) {
 							break loop;
@@ -837,11 +848,11 @@ public class ConceptBuilder implements DLMinerComponent {
 				candidates.addAll(beam.subList(0, config.beamSize));
 			}
 			// debug		
-			Out.p("iterations=" + (++iters) 
-					+ " concepts=" + nodeClusterMap.size()
-					+ " candidates=" + candidates.size()
-					+ " extensions=" + extensions.size()
-					+ " current=" + current);
+//			Out.p("iterations=" + (++iters)
+//					+ " concepts=" + nodeClusterMap.size()
+//					+ " candidates=" + candidates.size()
+//					+ " extensions=" + extensions.size()
+//					+ " current=" + current);
 		}		
 		Out.p("\nDL-Apriori has terminated");		
 	}
@@ -944,10 +955,10 @@ public class ConceptBuilder implements DLMinerComponent {
         int count = 0;
         for (ALCNode expr : nodeExpansionMap.keySet()) {
             // debug
-            if (++count % 100 == 0) {
-                Out.p(count + "/" + nodeExpansionMap.keySet().size()
-                        + " concepts are assigned instances as individuals");
-            }
+//            if (++count % 100 == 0) {
+//                Out.p(count + "/" + nodeExpansionMap.keySet().size()
+//                        + " concepts are assigned instances as individuals");
+//            }
             OWLClassExpression concept = expr.getConcept();
             if (expressionInstanceMap.containsKey(concept)) {
                 continue;
@@ -1829,14 +1840,21 @@ public class ConceptBuilder implements DLMinerComponent {
 	}
 
 
+    public double getTimeByExpression(OWLClassExpression expr) {
+		return expressionTimeMap.get(expr);
+	}
+
     public OperatorConfig getConfig() {
         return config;
     }
 
 
-    public double getTimeByExpression(OWLClassExpression expr) {
-		return expressionTimeMap.get(expr);
-	}
+    public Set<ALCNode> getNodes() {
+	    if (nodeClusterMap != null && !nodeClusterMap.isEmpty()) {
+	        return nodeClusterMap.keySet();
+        }
+        return nodeInstanceMap.keySet();
+    }
 
 
 	public void retainClassDefinitions(Set<Hypothesis> hypotheses) {

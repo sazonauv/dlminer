@@ -58,7 +58,7 @@ public abstract class RefinementOperator implements Operator {
 		superClassMap = new HashMap<>();
 		disjClassMap = new HashMap<>();
 
-		if (config.checkClassHierarchy) {
+		if (config.checkRedundancy) {
             Out.p("\nMapping redundant classes");
             for (OWLClass cl : classes) {
                 // check equivalent classes

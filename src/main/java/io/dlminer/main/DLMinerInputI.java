@@ -168,16 +168,11 @@ public interface DLMinerInputI {
     Boolean DEF_USE_COMPLEX_MEASURES = false;
 
 
-    Boolean DEF_USE_REASONER_FOR_CLASS_INSTANCES = false;
-
-
-
-
-    Boolean DEF_USE_CLASS_HIERARCHY = true;
-
     Boolean DEF_USE_REASONER_FOR_ATOMIC_CLASS_INSTANCES = true;
 
-    Boolean DEF_USE_SYNTACTIC_REDUNDANCY = true;
+    Boolean DEF_USE_REASONER_FOR_CLASS_INSTANCES = false;
+
+    Boolean DEF_USE_REDUNDANCY = true;
 
 		
 	

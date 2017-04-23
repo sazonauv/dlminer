@@ -5,11 +5,7 @@ import java.util.LinkedList;
 import java.util.Set;
 
 import io.dlminer.ont.LengthMetric;
-import org.semanticweb.owlapi.model.OWLClassExpression;
-import org.semanticweb.owlapi.model.OWLDataFactory;
-import org.semanticweb.owlapi.model.OWLDataPropertyExpression;
-import org.semanticweb.owlapi.model.OWLDataRange;
-import org.semanticweb.owlapi.model.OWLObjectPropertyExpression;
+import org.semanticweb.owlapi.model.*;
 
 public class ALCNode extends CNode {
 	
@@ -61,51 +57,126 @@ public class ALCNode extends CNode {
 	
 	private boolean isMoreSpecificThanALCNode(ALCNode node) {
 		// check concepts
-		if (getConcept().equals(node.getConcept())) {
+		if (hasMoreSpecificConceptThan(node)) {
 			return true;
 		}
-		// check labels
-		// (A1 and A2) < A1; A1 < (A1 or A2)
-		if (!clabels.containsAll(node.clabels)
-				|| !node.dlabels.containsAll(dlabels)) {
-			return false;
-		}
-		// check edges
-		LinkedList<CEdge> edges = node.outEdges;
-		if (edges == null) {
-			return true;
-		} 
-		if (outEdges == null) {
-			return false;
-		}
-		// check edge labels
-		for (CEdge e2 : edges) {
-			boolean found = false;
-			for (CEdge e1 : outEdges) {
-				if (e2.label.equals(e1.label)) {
-					found = true;
-					break;					
-				}				
-			}
-			if (!found) {
-				return false;
-			}
-		}
-		// check edge successors
-		for (CEdge e2 : edges) {
-			boolean found = false;
-			for (CEdge e1 : outEdges) {
+		// check labels, edges, edge successors
+		if (!hasMoreSpecificLabelsThan(node)
+                || !hasMoreSpecificEdgesThan(node)
+                || !hasMoreSpecificEdgeSuccessorsThan(node)) {
+		    return false;
+        }
+		return true;
+	}
+
+
+    private boolean hasMoreSpecificConceptThan(ALCNode node) {
+        if (getConcept().equals(node.getConcept())) {
+            return true;
+        }
+        return false;
+    }
+
+
+	private boolean hasMoreSpecificLabelsThan(ALCNode node) {
+        // (A1 and A2) < A1; A1 < (A1 or A2)
+        if (!clabels.containsAll(node.clabels)
+                || !node.dlabels.containsAll(dlabels)) {
+            return false;
+        }
+        if (node.containsOWLThingInDisjunctions()) {
+            return true;
+        }
+        return hasCommonConjunctionWithDisjunctionsOf(node);
+    }
+
+
+
+
+    private boolean containsOWLThingInDisjunctions() {
+	    if (dlabels.isEmpty()) {
+	        return true;
+        }
+	    for (OWLClassExpression dlabel : dlabels) {
+	        if (dlabel.isOWLThing()) {
+	            return true;
+            }
+        }
+        for (OWLClassExpression dlabel : dlabels) {
+	        if (dlabel instanceof OWLObjectComplementOf) {
+                OWLObjectComplementOf complement = (OWLObjectComplementOf) dlabel;
+                OWLClassExpression cl = complement.getOperand();
+                if (dlabels.contains(cl)) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+
+
+    private boolean hasCommonConjunctionWithDisjunctionsOf(ALCNode node) {
+        // (A1 and A2) <  (A1 or A3)
+        // (A1 and A2) and (A3) <  (A2) and (A1 or A3)
+        for (OWLClassExpression dlabel : node.dlabels) {
+            if (clabels.contains(dlabel)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+
+
+    private boolean hasMoreSpecificEdgesThan(ALCNode node) {
+        LinkedList<CEdge> edges = node.outEdges;
+        if (edges == null) {
+            return true;
+        }
+        if (outEdges == null) {
+            return false;
+        }
+        // check edge labels
+        for (CEdge e2 : edges) {
+            boolean found = false;
+            for (CEdge e1 : outEdges) {
+                if (e2.label.equals(e1.label)) {
+                    found = true;
+                    break;
+                }
+            }
+            if (!found) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+
+
+    private boolean hasMoreSpecificEdgeSuccessorsThan(ALCNode node) {
+        LinkedList<CEdge> edges = node.outEdges;
+        if (edges == null) {
+            return true;
+        }
+        if (outEdges == null) {
+            return false;
+        }
+        for (CEdge e2 : edges) {
+            boolean found = false;
+            for (CEdge e1 : outEdges) {
                 if (isMoreSpecificThan(e1, e2)) {
                     found = true;
                     break;
                 }
-			}
-			if (!found) {
-				return false;
-			}
-		}					
-		return true;
-	}
+            }
+            if (!found) {
+                return false;
+            }
+        }
+        return true;
+    }
 
 
 
@@ -306,7 +377,7 @@ public class ALCNode extends CNode {
 
 
     public boolean isAtomic() {
-	    if (outEdges == null && clabels.size() == 1) {
+	    if (clabels.size() == 1 && dlabels.isEmpty() && isLeaf()) {
 	        return true;
         }
         return false;

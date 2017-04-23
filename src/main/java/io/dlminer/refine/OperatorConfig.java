@@ -65,10 +65,12 @@ public class OperatorConfig {
      * The flag indicating whether disjoint classes are checked
      */
     public boolean checkDisjointness;
+
     public boolean useReasonerForAtomicClassInstances;
 
-    public boolean checkClassHierarchy;
-    public boolean checkSyntacticRedundancy;
+    public boolean useReasonerForClassInstances;
+
+    public boolean checkRedundancy;
 
 
 
@@ -78,7 +80,7 @@ public class OperatorConfig {
     public int dataThresholdsNumber;
 
 
-    public boolean useReasonerForClassInstances;
+
 
 
 

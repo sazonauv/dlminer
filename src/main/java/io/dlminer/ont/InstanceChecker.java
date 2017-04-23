@@ -141,7 +141,7 @@ public class InstanceChecker {
 	        return getInstancesOfDataValueRestriction(node, suspects);
         }
 		List<Expansion> instances = null;
-		for (Expansion suspect : suspects) {			
+		for (Expansion suspect : suspects) {
 			if (isInstanceOf(suspect, node)) {
 				if (instances == null) {
 					instances = new LinkedList<>();
@@ -167,14 +167,7 @@ public class InstanceChecker {
 
 
     private List<Expansion> getInstancesOfAtomicNode(ALCNode node) {
-	    OWLClassExpression atom = null;
-	    for (OWLClassExpression label : node.clabels) {
-	        atom = label;
-	        break;
-        }
-        if (atom == null) {
-            return getInstancesOfOWLThing();
-        }
+	    OWLClassExpression atom = node.getConcept();
         if (classExpansionMap.containsKey(atom)) {
 	        return classExpansionMap.get(atom);
         }
@@ -289,10 +282,10 @@ public class InstanceChecker {
         int count = 0;
 		for (ALCNode expr : nodeClusterMap.keySet()) {
             // debug
-            if (++count % 100 == 0) {
-                Out.p(count + "/" + nodeClusterMap.keySet().size()
-                        + " concepts are assigned instances as nodes");
-            }
+//            if (++count % 100 == 0) {
+//                Out.p(count + "/" + nodeClusterMap.keySet().size()
+//                        + " concepts are assigned instances as nodes");
+//            }
 			if (nodeExpansionMap.containsKey(expr)) {
 				continue;
 			}

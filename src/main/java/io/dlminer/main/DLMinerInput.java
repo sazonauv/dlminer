@@ -514,8 +514,7 @@ public class DLMinerInput {
 	    config.useNegation = DLMinerInputI.DEF_USE_NEGATION;
 	    config.useDataProperties = DLMinerInputI.DEF_USE_DATA_PROPERTIES;
 	    config.dataThresholdsNumber = DLMinerInputI.DEF_DATA_THRESHOLDS_NUMBER;
-	    config.checkClassHierarchy = DLMinerInputI.DEF_USE_CLASS_HIERARCHY;
-	    config.checkSyntacticRedundancy = DLMinerInputI.DEF_USE_SYNTACTIC_REDUNDANCY;
+	    config.checkRedundancy = DLMinerInputI.DEF_USE_REDUNDANCY;
         config.useReasonerForAtomicClassInstances = DLMinerInputI.DEF_USE_REASONER_FOR_ATOMIC_CLASS_INSTANCES;
 	    config.useReasonerForClassInstances = DLMinerInputI.DEF_USE_REASONER_FOR_CLASS_INSTANCES;
 

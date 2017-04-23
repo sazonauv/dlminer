@@ -96,7 +96,6 @@ public class BelNetExperiment {
 
         // optimisations
         config.checkDisjointness = true;
-        config.checkClassHierarchy = true;
         config.useReasonerForAtomicClassInstances = true;
 
 
