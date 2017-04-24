@@ -820,6 +820,10 @@ public class ConceptBuilder implements DLMinerComponent {
 					double t1 = System.nanoTime();
 					List<Expansion> instances = instanceChecker.getInstances(extension, currentInstances);
 					extension.coverage = instanceChecker.countAllInstances(instances);
+                    Set<OWLNamedIndividual> reasInstances = reasoner.getInstances(concept, false).getFlattened();
+                    if (extension.coverage != reasInstances.size()) {
+                        Out.p("\tinstances are different: " + concept);
+                    }
                     if (extension.coverage >= config.minSupport) {
 						beam.add(extension);
 						nodeClusterMap.put(extension, instances);						
@@ -1000,7 +1004,7 @@ public class ConceptBuilder implements DLMinerComponent {
 	
 		
 	private Map<OWLNamedIndividual, ALCNode> buildABoxGraphFromAssertions() {
-		Map<OWLNamedIndividual, Set<OWLClassAssertionAxiom>> indCAssMap = 
+		Map<OWLNamedIndividual, Set<OWLClassAssertionAxiom>> indCAssMap =
 				handler.createIndClassAssertionMap();
 		Map<OWLNamedIndividual, Set<OWLObjectPropertyAssertionAxiom>> indRAssMap = 
 				handler.createIndPropertyAssertionMap();
@@ -1009,22 +1013,39 @@ public class ConceptBuilder implements DLMinerComponent {
 		// create an ABox graph
 		Map<OWLNamedIndividual, ALCNode> aboxMap = new HashMap<>();
 		// create nodes
-		Set<OWLNamedIndividual> inds = handler.getIndividuals();
-		for (OWLNamedIndividual ind : inds) {
-			Set<OWLClassAssertionAxiom> cfacts = indCAssMap.get(ind);
-			Set<OWLClassExpression> label;
-			if (cfacts != null) {
-				label = handler.getExpressionsFromAssertions(cfacts);
-			} else {
-				label = new HashSet<>(1);
-			}
-            ALCNode node = new ALCNode(label);
-			aboxMap.put(ind, node);
-		}
+        createNodes(aboxMap, indCAssMap);
 		if (config.maxDepth <= 0 || config.maxLength <= 1) {
 		    return aboxMap;
         }
 		// create data relations
+        createDataRelations(aboxMap, indDRAssMap);
+        // create universals
+        createUniversals(aboxMap);
+        // create existentials
+        createExistentials(aboxMap, indRAssMap);
+		return aboxMap;
+	}
+
+
+
+    private void createNodes(Map<OWLNamedIndividual, ALCNode> aboxMap,
+                             Map<OWLNamedIndividual, Set<OWLClassAssertionAxiom>> indCAssMap) {
+        Set<OWLNamedIndividual> inds = handler.getIndividuals();
+        for (OWLNamedIndividual ind : inds) {
+            Set<OWLClassAssertionAxiom> cfacts = indCAssMap.get(ind);
+            Set<OWLClassExpression> label = new HashSet<>(1);
+            if (cfacts != null) {
+                label.addAll(handler.getExpressionsFromAssertions(cfacts));
+                label.remove(factory.getOWLThing());
+            }
+            ALCNode node = new ALCNode(label);
+            aboxMap.put(ind, node);
+        }
+    }
+
+
+    private void createDataRelations(Map<OWLNamedIndividual, ALCNode> aboxMap,
+                                     Map<OWLNamedIndividual, Set<OWLDataPropertyAssertionAxiom>> indDRAssMap) {
         for (OWLNamedIndividual ind : indDRAssMap.keySet()) {
             Set<OWLDataPropertyAssertionAxiom> drfacts = indDRAssMap.get(ind);
             ALCNode subj = aboxMap.get(ind);
@@ -1038,94 +1059,83 @@ public class ConceptBuilder implements DLMinerComponent {
                 subj.addOutEdge(edge);
             }
         }
-		// build map of universals
-		Map<OWLClassExpression, Set<OWLObjectAllValuesFrom>> classUniversalMap = new HashMap<>();
-		for (OWLAxiom ax : handler.getTBoxAxioms()) {
-			if (ax instanceof OWLSubClassOfAxiom) {
-				OWLSubClassOfAxiom classAxiom = (OWLSubClassOfAxiom) ax;
-				OWLClassExpression subClass = classAxiom.getSubClass();
-				OWLClassExpression superClass = classAxiom.getSuperClass();
-				if (superClass instanceof OWLObjectAllValuesFrom) {
-					OWLObjectAllValuesFrom univ = (OWLObjectAllValuesFrom) superClass;
-					// add only atomic fillers
-					if (univ.getFiller().isAnonymous()) {
-						continue;
-					}
-					Set<OWLObjectAllValuesFrom> universals = classUniversalMap.get(subClass);
-					if (universals == null) {
-						universals = new HashSet<>();
-						classUniversalMap.put(subClass, universals);
-					}
-					universals.add(univ);
-				}
-			}
-		}
-		// create object relations
-		Map<OWLObjectProperty, Set<OWLClass>> propRangeMap = operator.getPropRangeMap();
-		Map<OWLClass, Set<OWLClass>> eqClMap = operator.getEquivClassMap();
-		Map<OWLClass, Set<OWLClass>> supClMap = operator.getSuperClassMap();
-		for (OWLNamedIndividual ind : indRAssMap.keySet()) {
-			Set<OWLClassAssertionAxiom> cfacts = indCAssMap.get(ind);
-			Set<OWLClassExpression> indLabel = handler.getExpressionsFromAssertions(cfacts);
-			Set<OWLObjectPropertyAssertionAxiom> rfacts = indRAssMap.get(ind);
+    }
+
+
+    private void createUniversals(Map<OWLNamedIndividual, ALCNode> aboxMap) {
+        // build map of universals
+        Map<OWLClassExpression, Set<OWLObjectAllValuesFrom>> classUniversalMap = new HashMap<>();
+        for (OWLAxiom ax : handler.getTBoxAxioms()) {
+            if (ax instanceof OWLSubClassOfAxiom) {
+                OWLSubClassOfAxiom classAxiom = (OWLSubClassOfAxiom) ax;
+                OWLClassExpression subClass = classAxiom.getSubClass();
+                OWLClassExpression superClass = classAxiom.getSuperClass();
+                if (superClass instanceof OWLObjectAllValuesFrom) {
+                    OWLObjectAllValuesFrom univ = (OWLObjectAllValuesFrom) superClass;
+                    // add only atomic fillers
+                    if (univ.getFiller().isAnonymous()) {
+                        continue;
+                    }
+                    Set<OWLObjectAllValuesFrom> universals = classUniversalMap.get(subClass);
+                    if (universals == null) {
+                        universals = new HashSet<>();
+                        classUniversalMap.put(subClass, universals);
+                    }
+                    universals.add(univ);
+                }
+            }
+        }
+        // add universals to all nodes
+        Map<OWLObjectProperty, Set<OWLClass>> propRangeMap = operator.getPropRangeMap();
+        for (OWLNamedIndividual ind : aboxMap.keySet()) {
             ALCNode subj = aboxMap.get(ind);
-			for (OWLObjectPropertyAssertionAxiom rfact : rfacts) {
+            Set<OWLClassExpression> subjLabels = subj.clabels;
+            for (OWLObjectProperty prop : propRangeMap.keySet()) {
+                Set<OWLClass> rangeCls = propRangeMap.get(prop);
+                Set<OWLClassExpression> rangeLabels = new HashSet<>(rangeCls);
+                rangeLabels.remove(factory.getOWLThing());
+                // add additional universals
+                for (OWLClassExpression subjLabel : subjLabels) {
+                    Set<OWLObjectAllValuesFrom> universals = classUniversalMap.get(subjLabel);
+                    if (universals == null) {
+                        continue;
+                    }
+                    for (OWLObjectAllValuesFrom univ : universals) {
+                        if (prop.equals(univ.getProperty())) {
+                            OWLClass rangeCl = univ.getFiller().asOWLClass();
+                            rangeLabels.add(rangeCl);
+                        }
+                    }
+                }
+                // create an object
+                ALCNode obj = new ALCNode(rangeLabels);
+                OnlyEdge univEdge = new OnlyEdge(subj, prop, obj);
+                subj.addOutEdge(univEdge);
+            }
+        }
+    }
+
+
+
+
+    private void createExistentials(Map<OWLNamedIndividual, ALCNode> aboxMap,
+                                    Map<OWLNamedIndividual, Set<OWLObjectPropertyAssertionAxiom>> indRAssMap) {
+        // create object relations
+        for (OWLNamedIndividual ind : indRAssMap.keySet()) {
+            Set<OWLObjectPropertyAssertionAxiom> rfacts = indRAssMap.get(ind);
+            ALCNode subj = aboxMap.get(ind);
+            for (OWLObjectPropertyAssertionAxiom rfact : rfacts) {
                 ALCNode obj = aboxMap.get(rfact.getObject());
                 // add existentials
-				SomeEdge edge = new SomeEdge(subj, rfact.getProperty(), obj);
-				List<CEdge> sEdges = subj.getOutEdges();				
-				subj.addOutEdge(edge);								
-				// add property ranges as universals
-				OWLObjectPropertyExpression propExpr = rfact.getProperty();
-				if (propExpr.isAnonymous()) {
-					continue;
-				}
-				OWLObjectProperty prop = propExpr.asOWLObjectProperty();
-				if (propRangeMap.containsKey(prop)) {
-					Set<OWLClass> rangeCls = propRangeMap.get(prop);
-					if (rangeCls.size() <= 1) {
-						continue;
-					}
-					Set<OWLClassExpression> rangeLabel = new HashSet<>();
-					rangeLabel.addAll(rangeCls);
-					rangeLabel.remove(factory.getOWLThing());
-					if (!rangeLabel.isEmpty()) {
-                        ALCNode range = new ALCNode(rangeLabel);
-						OnlyEdge univEdge = new OnlyEdge(subj, prop, range);
-						if (sEdges != null) {
-							subj.addOutEdge(univEdge);	
-						}
-					}
-				}
-				// add additional universals
-				for (OWLClassExpression lab : indLabel) {
-					Set<OWLObjectAllValuesFrom> universals = classUniversalMap.get(lab);
-					if (universals == null) {
-						continue;
-					}
-					for (OWLObjectAllValuesFrom univ : universals) {
-						if (prop.equals(univ.getProperty())) {
-							OWLClass rangeClass = univ.getFiller().asOWLClass();
-							Set<OWLClassExpression> rangeLabel = new HashSet<>();
-							rangeLabel.addAll(eqClMap.get(rangeClass));
-							rangeLabel.addAll(supClMap.get(rangeClass));
-							rangeLabel.remove(factory.getOWLThing());
-							if (rangeLabel.isEmpty()) {
-								continue;
-							}
-                            ALCNode range = new ALCNode(rangeLabel);
-							OnlyEdge univEdge = new OnlyEdge(subj, prop, range);
-							if (sEdges != null) {
-								subj.addOutEdge(univEdge);	
-							}
-						}
-					}
-				}
-			}
-		}
-		return aboxMap;
-	}
-	
+                SomeEdge edge = new SomeEdge(subj, rfact.getProperty(), obj);
+                subj.addOutEdge(edge);
+                // add property ranges as universals
+//				OWLObjectPropertyExpression propExpr = rfact.getProperty();
+            }
+        }
+    }
+
+
 
 
 	private List<Expansion> 

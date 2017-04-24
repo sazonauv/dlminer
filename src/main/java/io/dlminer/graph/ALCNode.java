@@ -32,6 +32,13 @@ public class ALCNode extends CNode {
     }
 
 
+    public ALCNode() {
+        this.clabels = new HashSet<>(1);
+        this.dlabels = new HashSet<>(1);
+    }
+
+
+
     @Override
 	public boolean equals(Object obj) {
 		if (this == obj) {
@@ -62,7 +69,7 @@ public class ALCNode extends CNode {
 		}
 		// check labels, edges, edge successors
 		if (!hasMoreSpecificLabelsThan(node)
-                || !hasMoreSpecificEdgesThan(node)
+//                || !hasMoreSpecificEdgesThan(node)
                 || !hasMoreSpecificEdgeSuccessorsThan(node)) {
 		    return false;
         }
@@ -129,7 +136,7 @@ public class ALCNode extends CNode {
 
 
 
-    private boolean hasMoreSpecificEdgesThan(ALCNode node) {
+    /*private boolean hasMoreSpecificEdgesThan(ALCNode node) {
         LinkedList<CEdge> edges = node.outEdges;
         if (edges == null) {
             return true;
@@ -141,7 +148,7 @@ public class ALCNode extends CNode {
         for (CEdge e2 : edges) {
             boolean found = false;
             for (CEdge e1 : outEdges) {
-                if (e2.label.equals(e1.label)) {
+                if (e2.equals(e1)) {
                     found = true;
                     break;
                 }
@@ -151,7 +158,7 @@ public class ALCNode extends CNode {
             }
         }
         return true;
-    }
+    }*/
 
 
 

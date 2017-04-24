@@ -114,15 +114,14 @@ public abstract class CNode {
 
 
     public static boolean isMoreSpecificThan(CEdge e1, CEdge e2) {
-        if (!e1.label.equals(e2.label)) {
+        if (e1 instanceof DataEdge && e2 instanceof DataEdge) {
+            return DataEdge.isMoreSpecificThan((DataEdge) e1, (DataEdge) e2);
+        }
+        if (!e1.equals(e2)) {
             return false;
         }
-        if (e1 instanceof DataEdge) {
-            return DataEdge.isMoreSpecificThan((DataEdge) e1, (DataEdge) e2);
-        } else {
-            // recursion
-            return e1.object.isMoreSpecificThan(e2.object);
-        }
+        // recursion
+        return e1.object.isMoreSpecificThan(e2.object);
     }
 
 

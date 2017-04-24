@@ -74,7 +74,6 @@ public class DLAprioriExperiment {
 
 
         // first ignore redundancy
-        Out.p("\n============ Ignoring redundancy");
         config.checkRedundancy = false;
         DLMiner miner = new DLMiner(input);
         try {
@@ -93,32 +92,6 @@ public class DLAprioriExperiment {
         Out.p("\n" + nodes.size() + " concepts are built");
 
         double totalTime = 0;
-        for (ALCNode node : nodes) {
-            totalTime += conceptBuilder.getTimeByExpression(node.getConcept());
-        }
-        Out.p("\nTotal time of checking instances = " + totalTime + " seconds");
-
-
-        // then remove redundancy
-        Out.p("\n============ Removing redundancy");
-        config.checkRedundancy = true;
-        input.setOntologyFile(ontFile);
-        miner = new DLMiner(input);
-        try {
-            miner.init();
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-
-        conceptBuilder = miner.getOutput().getConceptBuilder();
-
-        // generate concepts
-        conceptBuilder.buildConcepts();
-
-        nodes = conceptBuilder.getNodes();
-        Out.p("\n" + nodes.size() + " concepts are built");
-
-        totalTime = 0;
         for (ALCNode node : nodes) {
             totalTime += conceptBuilder.getTimeByExpression(node.getConcept());
         }
