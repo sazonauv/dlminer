@@ -8,6 +8,8 @@ import io.dlminer.ont.Logic;
 import io.dlminer.ont.ReasonerName;
 import io.dlminer.print.Out;
 import io.dlminer.refine.OperatorConfig;
+import org.semanticweb.owlapi.model.OWLClassExpression;
+import org.semanticweb.owlapi.model.OWLNamedIndividual;
 
 import java.io.File;
 import java.util.*;
@@ -74,7 +76,7 @@ public class DLAprioriExperiment {
 
 
         // first ignore redundancy
-        config.checkRedundancy = false;
+        config.checkRedundancy = true;
         DLMiner miner = new DLMiner(input);
         try {
             miner.init();
@@ -88,34 +90,35 @@ public class DLAprioriExperiment {
         // generate concepts
         conceptBuilder.buildConcepts();
 
-        Set<ALCNode> nodes = conceptBuilder.getNodes();
-        Out.p("\n" + nodes.size() + " concepts are built");
+        Map<OWLClassExpression, Set<OWLNamedIndividual>> exprInstMap = conceptBuilder.getClassExpressionInstanceMap();
+        Out.p("\n" + exprInstMap.size() + " concepts are built");
 
         double totalTime = 0;
-        for (ALCNode node : nodes) {
-            totalTime += conceptBuilder.getTimeByExpression(node.getConcept());
+        for (OWLClassExpression expr : exprInstMap.keySet()) {
+            totalTime += conceptBuilder.getTimeByExpression(expr);
         }
         Out.p("\nTotal time of checking instances = " + totalTime + " seconds");
 
 
         Out.p("\nAmong them at least X instances have Y concepts:");
-        Map<Integer, Set<ALCNode>> instanceNodesMap = new HashMap<>();
-        for (ALCNode node : nodes) {
-            Set<ALCNode> instNodes = instanceNodesMap.get(node.coverage);
-            if (instNodes == null) {
-                instNodes = new HashSet<>();
-                instanceNodesMap.put(node.coverage, instNodes);
+        Map<Integer, Set<OWLClassExpression>> instNumExprsMap = new HashMap<>();
+        for (OWLClassExpression expr : exprInstMap.keySet()) {
+            int instNum = exprInstMap.get(expr).size();
+            Set<OWLClassExpression> exprs = instNumExprsMap.get(instNum);
+            if (exprs == null) {
+                exprs = new HashSet<>();
+                instNumExprsMap.put(instNum, exprs);
             }
-            instNodes.add(node);
+            exprs.add(expr);
         }
 
-        List<Integer> instanceNumbers = new ArrayList<>(instanceNodesMap.keySet());
+        List<Integer> instanceNumbers = new ArrayList<>(instNumExprsMap.keySet());
         Collections.sort(instanceNumbers);
         for (Integer minInstanceNumber : instanceNumbers) {
             int conceptNumber = 0;
-            for (Integer instanceNumber : instanceNodesMap.keySet()) {
+            for (Integer instanceNumber : instNumExprsMap.keySet()) {
                 if (instanceNumber >= minInstanceNumber) {
-                    conceptNumber += instanceNodesMap.get(instanceNumber).size();
+                    conceptNumber += instNumExprsMap.get(instanceNumber).size();
                 }
             }
             Out.p(minInstanceNumber + " instances : " + conceptNumber + " concepts");

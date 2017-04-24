@@ -19,7 +19,6 @@ public interface DLMinerOutputI {
 	
 	String AXIOM_BUILDING_ERROR = ": Ignore and continue building axioms";	
 	String HYPOTHESIS_EVALUATION_ERROR = ": Ignore and continue evaluating hypotheses.";
-	String WRONG_REASONER_MODE_ERROR = "ALC concepts can be constructed only using the NORMAL reasoner mode";
 	String CONCEPT_BUILDING_ERROR = ": Ignore and continue building concepts";
 
 	String REASONER_UPDATE_ERROR = ": Evaluation is not possible due to the reasoning error";

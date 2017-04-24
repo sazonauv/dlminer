@@ -16,7 +16,6 @@ import java.util.TreeSet;
 
 import io.dlminer.graph.*;
 import io.dlminer.main.DLMinerComponent;
-import io.dlminer.main.DLMinerOutputI;
 import io.dlminer.refine.OperatorConfig;
 import org.semanticweb.owlapi.model.*;
 import org.semanticweb.owlapi.reasoner.OWLReasoner;
@@ -56,9 +55,6 @@ public class ConceptBuilder implements DLMinerComponent {
 	// class-instance maps
 	private Map<OWLClassExpression, Set<OWLNamedIndividual>> expressionInstanceMap;
 	private Map<OWLClass, Set<OWLNamedIndividual>> classInstanceMap;
-	private Map<ALCNode, Set<OWLNamedIndividual>> nodeInstanceMap;
-	private Map<ALCNode, List<Expansion>> nodeExpansionMap;
-	private Map<ALCNode, List<Expansion>> nodeClusterMap;
 	private Map<OWLClassExpression, Double> expressionTimeMap;
 	
 	// role-instance maps
@@ -236,9 +232,6 @@ public class ConceptBuilder implements DLMinerComponent {
 		// init class-instance maps
 		expressionInstanceMap = new LinkedHashMap<>();
 		classInstanceMap = new LinkedHashMap<>();
-		nodeInstanceMap = new LinkedHashMap<>();
-		nodeExpansionMap = new LinkedHashMap<>();
-		nodeClusterMap = new LinkedHashMap<>();
 		roleInstanceMap = new LinkedHashMap<>();
 		// time
 		expressionTimeMap = new LinkedHashMap<>();
@@ -528,16 +521,6 @@ public class ConceptBuilder implements DLMinerComponent {
 		
 
 
-	/*public void learnConceptDefinitions(Map<OWLClass, Set<OWLNamedIndividual>> posMap) {
-		List<OWLClassExpression> exprs = generateCDs(posMap);
-		List<OWLClass> cls = generateClasses(exprs);
-		addClassExpressionMappings(cls, exprs);
-		languageClassMap.put(Language.CDL, cls);
-		buildClassDefinitions();
-	}*/
-
-
-	
 	
 	
 	private void buildRoleExpressions() {
@@ -577,217 +560,36 @@ public class ConceptBuilder implements DLMinerComponent {
 
 
 
-	private boolean isEquivalentTo(OWLClassExpression cl1,
-			OWLClassExpression cl2) throws Exception {		
-		OWLAxiom axiom1 = factory.getOWLSubClassOfAxiom(cl1, cl2);
-		OWLAxiom axiom2 = factory.getOWLSubClassOfAxiom(cl2, cl1);
-		return reasoner.isEntailed(axiom1) && reasoner.isEntailed(axiom2);
-	}
-
-
-
-
-
-	private void buildClassExpressions() {
-	    if (config.useReasonerForClassInstances) {
-            buildALCConcepts();
-        } else {
-            buildALCConceptsOptimised();
-        }
-		// generate encoding classes
-		generateAndMapDataConcepts();
-	}
-	
-	
-	
-	private void buildALCConceptsOptimised() {
-		// build concepts
-		aprioriALCOptimised();
-		// remove redundant concepts
-        if (config.checkRedundancy) {
-            normaliseNodes();
-        }
-		// convert to expressionInstanceMap
-		convertToExpressionInstanceMapExp();	
-	}
-		
-
-
-	private void buildALCConcepts() {
-		// build concepts
-		aprioriALC();
-		// remove redundant concepts
-        if (config.checkRedundancy) {
-            normaliseNodesInd();
-        }
-		// convert to expressionInstanceMap
-		convertToExpressionInstanceMapInd();
-	}
-
-	
-	
-	private void normaliseNodes() {
-		Out.p("\nRemoving redundant concepts");
-		Set<ALCNode> redunNodes = new HashSet<>();
-		for (ALCNode node : nodeClusterMap.keySet()) {
-			if (node.isRedundant()) {
-				redunNodes.add(node);
-			}
-		}
-		for (ALCNode node : redunNodes) {
-			nodeClusterMap.remove(node);
-		}
-		Out.p("\n" + redunNodes.size() + " concepts are redundant and removed");
+    private void buildClassExpressions() {
+        aprioriALC();
+        // generate encoding classes
+        generateAndMapDataConcepts();
 	}
 	
 	
 
-
-	private void normaliseNodesInd() {
-        Out.p("\nRemoving redundant concepts");
-		Set<ALCNode> redunNodes = new HashSet<>();
-		for (ALCNode node : nodeInstanceMap.keySet()) {
-			if (node.isRedundant()) {
-				redunNodes.add(node);
-			}
-		}
-		for (ALCNode node : redunNodes) {
-			nodeInstanceMap.remove(node);
-		}
-		Out.p("\n" + redunNodes.size() + " concepts are redundant and removed");
-	}
-
-
-
+	
 	private void aprioriALC() {
-		PriorityQueue<ALCNode> candidates = new PriorityQueue<>(100,
-				new NodeLengthComparator(SortingOrder.ASC));
-		Set<ALCNode> processed = new HashSet<>();
-		if (nodeInstanceMap.isEmpty()) {
-			// the first run
-			ALCNode rootNode = processNode(factory.getOWLThing());
-			candidates.add(rootNode);
-			processed.add(rootNode);
-			// if CDL
-			if (positiveClass != null && negativeClass != null) {
-				// set positive
-				positiveNode = processNode(positiveClass);
-				candidates.add(positiveNode);
-				processed.add(positiveNode);
-				// set negative
-				negativeNode = processNode(negativeClass);
-				candidates.add(negativeNode);
-				processed.add(negativeNode);
-			}
-		} else {
-			candidates.addAll(nodeInstanceMap.keySet());
-			processed.addAll(nodeInstanceMap.keySet());
-		}
-		// loop
-		Out.p("\nEntering the main loop");
-		int initialNumber = nodeInstanceMap.size();
-		int iters = 0;
-		loop:
-		while (!candidates.isEmpty()) {
-			ALCNode current = candidates.poll();
-			// generate all extensions of labelSize+1
-			Set<ALCNode> refinements = operator.refine(current);
-            // first check atomic nodes
-            if (current.isOWLThing()) {
-                refinements.addAll(operator.getAtomicNodes());
-            }
-            List<ALCNode> extensions = new ArrayList<>(refinements);
-            Collections.sort(extensions, new NodeLengthComparator(SortingOrder.ASC));
-			// beam
-			List<ALCNode> beam = new LinkedList<>();
-			// evaluate extensions
-			for (ALCNode extension : extensions) {
-				OWLClassExpression concept = extension.getConcept();
-				if (extension.depth() <= config.maxDepth
-						&& extension.length() <= config.maxLength
-						&& !processed.contains(extension)) {
-					// if prediction
-					if (positiveClass != null && negativeClass != null
-							&& (concept.containsEntityInSignature(positiveClass)
-									|| concept.containsEntityInSignature(negativeClass))) {
-						continue;
-					}
-					double t1 = System.nanoTime();
-					Set<OWLNamedIndividual> instances = null;
-                    try {
-                        instances = reasoner.getInstances(concept, false).getFlattened();
-                    } catch (Exception e) {
-                        Out.p(e + DLMinerOutputI.CONCEPT_BUILDING_ERROR);
-					}
-					extension.coverage = (instances == null) ? 0 : instances.size();
-					if (extension.coverage >= config.minSupport) {
-						beam.add(extension);
-						nodeInstanceMap.put(extension, instances);
-						// record time
-						double t2 = System.nanoTime();
-						double time = (t2 - t1)/1e9;
-                        if (extension.isAtomic()) {
-                            Double classTime = operator.getTimeByClass(concept);
-                            if (classTime != null) {
-                                time = classTime;
-                            }
-                        }
-						expressionTimeMap.put(concept, time);
-						// break the loop if the maximal number of concepts is reached
-						if (nodeInstanceMap.size() - initialNumber >= maxConceptNumber) {
-							break loop;
-						}
-					}
-				}
-			}
-			processed.addAll(extensions);
-			// find beam concepts and add them to candidates
-			if (beam.size() <= config.beamSize) {
-				candidates.addAll(beam);
-			} else {
-				candidates.addAll(beam.subList(0, config.beamSize));
-			}
-			// debug
-//			Out.p("iterations=" + (++iters)
-//					+ " concepts=" + nodeInstanceMap.size()
-//					+ " candidates=" + candidates.size()
-//					+ " extensions=" + extensions.size()
-//					+ " current=" + current);
-		}
-		Out.p("\nDL-Apriori has terminated");
-	}
-
-
-
-	
-	private void aprioriALCOptimised() {
 		PriorityQueue<ALCNode> candidates = new PriorityQueue<>(100, 
-				new NodeLengthComparator(SortingOrder.ASC));		
-		Set<ALCNode> processed = new HashSet<>();		
-		if (nodeClusterMap.isEmpty()) {
-			// the first run
-			ALCNode rootNode = processNode(factory.getOWLThing());
-			candidates.add(rootNode);
-			processed.add(rootNode);
-			// if prediction
-			if (positiveClass != null && negativeClass != null) {
-				// set positive
-				positiveNode = processNode(positiveClass);				
-				candidates.add(positiveNode);
-				processed.add(positiveNode);
-				// set negative
-				negativeNode = processNode(negativeClass);				
-				candidates.add(negativeNode);
-				processed.add(negativeNode);
-			}			
-		} else {
-			// not the first run
-			candidates.addAll(nodeClusterMap.keySet());
-			processed.addAll(nodeClusterMap.keySet());
-		}
-		// loop
-		Out.p("\nEntering the main loop");
-		int initialNumber = nodeClusterMap.size();
+				new NodeLengthComparator(SortingOrder.ASC));
+        Set<ALCNode> processed = new HashSet<>();
+        // the first run
+        ALCNode rootNode = processNode(factory.getOWLThing());
+        candidates.add(rootNode);
+        processed.add(rootNode);
+        // if prediction
+        if (positiveClass != null && negativeClass != null) {
+            // set positive
+            positiveNode = processNode(positiveClass);
+            candidates.add(positiveNode);
+            processed.add(positiveNode);
+            // set negative
+            negativeNode = processNode(negativeClass);
+            candidates.add(negativeNode);
+            processed.add(negativeNode);
+        }
+        // loop
+        Out.p("\nEntering the main loop");
 		int iters = 0;
 		loop:
 		while (!candidates.isEmpty()) {
@@ -802,8 +604,6 @@ public class ConceptBuilder implements DLMinerComponent {
 			Collections.sort(extensions, new NodeLengthComparator(SortingOrder.ASC));			
 			// beam
 			List<ALCNode> beam = new LinkedList<>();
-			// get instances of a current candidate
-			List<Expansion> currentInstances = nodeClusterMap.get(current);			
 			// evaluate extensions			
 			for (ALCNode extension : extensions) {
 				OWLClassExpression concept = extension.getConcept();				
@@ -818,39 +618,47 @@ public class ConceptBuilder implements DLMinerComponent {
 						}
 					}
 					double t1 = System.nanoTime();
-					List<Expansion> instances = instanceChecker.getInstances(extension, currentInstances);
-					extension.coverage = instanceChecker.countAllInstances(instances);
-                    Set<OWLNamedIndividual> reasInstances = reasoner.getInstances(concept, false).getFlattened();
-                    if (extension.coverage != reasInstances.size()) {
-                        Out.p("\tinstances are different: " + concept);
+                    Set<OWLNamedIndividual> instances;
+                    if (config.useReasonerForClassInstances) {
+                        instances = instanceChecker.getInstancesByReasoner(extension);
+                    } else {
+                        instances = instanceChecker.getInstances(extension, current);
                     }
-                    if (extension.coverage >= config.minSupport) {
-						beam.add(extension);
-						nodeClusterMap.put(extension, instances);						
-						// record time
-						double t2 = System.nanoTime();
-						double time = (t2 - t1)/1e9;
-						if (extension.isAtomic()) {
-						    Double classTime = operator.getTimeByClass(concept);
-						    if (classTime != null) {
-						        time = classTime;
-                            }
+                    extension.coverage = instances.size();
+                    // record time
+                    double t2 = System.nanoTime();
+                    double time = (t2 - t1)/1e9;
+                    if (extension.isAtomic()) {
+                        Double classTime = operator.getTimeByClass(concept);
+                        if (classTime != null) {
+                            time = classTime;
                         }
-                        expressionTimeMap.put(concept, time);
+                    }
+                    expressionTimeMap.put(concept, time);
+                    // debug
+//                    Set<OWLNamedIndividual> reasInstances = instanceChecker.getInstancesByReasoner(extension);
+//                    if (extension.coverage != reasInstances.size()) {
+//                        Out.p("\tinstances are different: " + concept);
+//                    }
+                    // check support
+                    if (extension.coverage >= config.minSupport) {
+                        // store instances
+                        if (!config.checkRedundancy || !extension.isRedundant()) {
+                            expressionInstanceMap.put(concept, instances);
+                        }
 						// break the loop if the maximal number of concepts is reached
-						if (nodeClusterMap.size() - initialNumber >= maxConceptNumber) {
+						if (expressionInstanceMap.size() >= maxConceptNumber) {
 							break loop;
 						}
+                        beam.add(extension);
+						if (beam.size() >= config.beamSize) {
+						    break;
+                        }
 					}
 				}				
 			}			
-			processed.addAll(extensions);			
-			// find beam concepts and add them to candidates
-			if (beam.size() <= config.beamSize) {
-				candidates.addAll(beam);
-			} else {
-				candidates.addAll(beam.subList(0, config.beamSize));
-			}
+			processed.addAll(extensions);
+            candidates.addAll(beam);
 			// debug		
 //			Out.p("iterations=" + (++iters)
 //					+ " concepts=" + nodeClusterMap.size()
@@ -862,68 +670,18 @@ public class ConceptBuilder implements DLMinerComponent {
 	}
 	
 	
-	
-	private void updateCoverage(ALCNode extension, List<Expansion> instances) {
-		if (positiveNode == null || negativeNode == null) {
-			return;
-		}
-		List<Expansion> posInstances = nodeClusterMap.get(positiveNode);
-		int posIntersect = instanceChecker.countIntersection(instances, posInstances);
-		List<Expansion> negInstances = nodeClusterMap.get(negativeNode);
-		int negIntersect = instanceChecker.countIntersection(instances, negInstances);
-		extension.coverage = getDescriptionQuality(posIntersect, negIntersect
-        );
-	}
-	
-	
-	
-
-	private void updateCoverage(ALCNode extension, Set<OWLNamedIndividual> instances) {
-		if (positiveNode == null || negativeNode == null) {
-			return;
-		}		
-		Set<OWLNamedIndividual> posInstances = nodeInstanceMap.get(positiveNode);
-		int posIntersect = (int) HypothesisEvaluator.countIntersection(instances, posInstances);
-		Set<OWLNamedIndividual> negInstances = nodeInstanceMap.get(negativeNode);
-		int negIntersect = (int) HypothesisEvaluator.countIntersection(instances, negInstances);
-		extension.coverage = getDescriptionQuality(posIntersect, negIntersect
-        );
-	}
-	
-	
-	
-	private int getDescriptionQuality(int posIntersect, int negIntersect) {
-		if (posIntersect == 0 && negIntersect == 0) {
-			return 0;
-		}
-		if (posIntersect >= negIntersect) {			
-			return posIntersect;
-		}		
-		return negIntersect;		
-	}
-
-	
-
 
 
 	private ALCNode processNode(OWLClass cl) {
-		Set<OWLClassExpression> conjs = new HashSet<>(2);
+		Set<OWLClassExpression> conjs = new HashSet<>(1);
 		if (!cl.isOWLThing()) {
 			conjs.add(cl);
 		}
-		Set<OWLClassExpression> disjs = new HashSet<>(2);
-		ALCNode node = new ALCNode(conjs, disjs);
-		double t1 = System.nanoTime();
-		if (config.useReasonerForClassInstances) {
-            Set<OWLNamedIndividual> instances = instanceChecker.getInstances(node.getConcept());
-            node.coverage = (instances == null) ? 0 : instances.size();
-            nodeInstanceMap.put(node, instances);
-        } else {
-            List<Expansion> instances = instanceChecker.getInstances(node);
-            node.coverage = instanceChecker.countAllInstances(instances);
-            nodeClusterMap.put(node, instances);
-        }
-		double t2 = System.nanoTime();
+		ALCNode node = new ALCNode(conjs);
+        double t1 = System.nanoTime();
+        Set<OWLNamedIndividual> instances = instanceChecker.getInstances(node);
+        node.coverage = (instances == null) ? 0 : instances.size();
+        double t2 = System.nanoTime();
 		double time = (t2 - t1)/1e9;		
 		expressionTimeMap.put(node.getConcept(), time);
 		return node;
@@ -931,52 +689,6 @@ public class ConceptBuilder implements DLMinerComponent {
 	
 	
 		
-	
-	private void convertToExpressionInstanceMapInd() {
-		for (ALCNode expr : nodeInstanceMap.keySet()) {
-			OWLClassExpression concept = expr.getConcept();
-			if (expressionInstanceMap.containsKey(concept)) {
-				continue;
-			}
-			Set<OWLNamedIndividual> individuals = nodeInstanceMap.get(expr);
-			if (individuals != null) {
-				expressionInstanceMap.put(concept, individuals);
-			}
-		}
-	}
-
-
-	private void convertToExpressionInstanceMapExp() {
-		// find all instances
-		Out.p("\nGathering all instances");
-		instanceChecker.addInstancesForClusters(nodeClusterMap, nodeExpansionMap);
-        Out.p("\nReplacing nodes with individuals");
-        replaceNodesWithIndividuals();
-	}
-
-
-	private void replaceNodesWithIndividuals() {
-        int count = 0;
-        for (ALCNode expr : nodeExpansionMap.keySet()) {
-            // debug
-//            if (++count % 100 == 0) {
-//                Out.p(count + "/" + nodeExpansionMap.keySet().size()
-//                        + " concepts are assigned instances as individuals");
-//            }
-            OWLClassExpression concept = expr.getConcept();
-            if (expressionInstanceMap.containsKey(concept)) {
-                continue;
-            }
-            List<Expansion> expansions = nodeExpansionMap.get(expr);
-            Set<OWLNamedIndividual> instances = new HashSet<>();
-            if (expansions != null) {
-                for (Expansion expansion : expansions) {
-                    instances.add(expansion.individual);
-                }
-            }
-            expressionInstanceMap.put(concept, instances);
-        }
-    }
 
 
 	public void generateAndMapDataConcepts() {
@@ -1801,25 +1513,6 @@ public class ConceptBuilder implements DLMinerComponent {
 
 		
 
-	public void updateClassProjection(Set<OWLAxiom> classProjection,
-			Language lang) {
-		List<OWLClass> cls = languageClassMap.get(lang);
-		if (cls != null) {
-			for (OWLClass cl : cls) {
-				Set<OWLNamedIndividual> insts = reasoner.getInstances(cl, false).getFlattened();			
-				for (OWLNamedIndividual inst : insts) {
-					if (inst != null) {
-						OWLAxiom ca = getClassAssertion(cl, inst);
-						classProjection.add(ca);
-					}
-				}
-			}
-		}
-	}
-
-
-
-
 	public OWLClass getClassByExpression(OWLClassExpression expr) {
 		return expressionClassMap.get(expr);
 	}
@@ -1858,13 +1551,6 @@ public class ConceptBuilder implements DLMinerComponent {
         return config;
     }
 
-
-    public Set<ALCNode> getNodes() {
-	    if (nodeClusterMap != null && !nodeClusterMap.isEmpty()) {
-	        return nodeClusterMap.keySet();
-        }
-        return nodeInstanceMap.keySet();
-    }
 
 
 	public void retainClassDefinitions(Set<Hypothesis> hypotheses) {

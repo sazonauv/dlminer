@@ -1,19 +1,23 @@
 package io.dlminer.ont;
 
 import io.dlminer.graph.*;
+import io.dlminer.main.DLMinerOutputI;
 import io.dlminer.print.Out;
 
 import java.util.*;
 
 import io.dlminer.refine.ALCOperator;
 import org.semanticweb.owlapi.model.*;
+import org.semanticweb.owlapi.reasoner.OWLReasoner;
 
 public class InstanceChecker {
 
 	// internal maps for instance checking
 	private Map<OWLClassExpression, Set<OWLNamedIndividual>> classInstanceMap;
-    private Map<OWLClassExpression, List<Expansion>> classExpansionMap;
+    private Map<ALCNode, List<Expansion>> nodeExpansionMap;
+    private Map<ALCNode, Set<OWLNamedIndividual>> nodeInstanceMap;
     private Map<OWLObjectPropertyExpression, Map<OWLNamedIndividual, Set<OWLNamedIndividual>>> propInstanceMap;
+
 
     // data properties
     private Map<OWLDataProperty, List<Double>> dataPropertyThresholdsMap;
@@ -21,25 +25,30 @@ public class InstanceChecker {
     private Map<OWLDataProperty, Integer> dataPropertyStepMap;
 
     // clusters of identical trees
-	private Map<Expansion, List<Expansion>> expansionClusterMap;
+	private Map<Expansion, Set<OWLNamedIndividual>> expansionClusterMap;
     private Map<OWLNamedIndividual, Expansion> individualClusterMap;
 
 	private OWLDataFactory factory;
+	private OntologyHandler handler;
+	private OWLReasoner reasoner;
 
 		
 	public InstanceChecker(ALCOperator operator, OntologyHandler handler) {
 		classInstanceMap = operator.getClassInstanceMap();
-        classExpansionMap = new HashMap<>();
+        nodeExpansionMap = new HashMap<>();
+        nodeInstanceMap = new HashMap<>();
         dataPropertyThresholdsMap = operator.getDataPropertyThresholdsMap();
         dataPropertyInstancesMap = operator.getDataPropertyInstancesMap();
         dataPropertyStepMap = operator.getDataPropertyStepMap();
+        this.handler = handler;
         factory = handler.getDataFactory();
-        initPropMaps(handler);
+        reasoner = operator.getReasoner();
+        initPropMaps();
 	}
 
 
 
-    private void initPropMaps(OntologyHandler handler) {
+    private void initPropMaps() {
         Set<OWLObjectPropertyAssertionAxiom> propAxioms = handler.getObjectPropertyAssertions();
         propInstanceMap = new HashMap<>();
         // fill individuals maps
@@ -68,68 +77,36 @@ public class InstanceChecker {
 
 
 
-	public Set<OWLNamedIndividual> getPropertyChainValues(
-			OWLNamedIndividual subj, OWLObjectPropertyChain chain) {
-		Set<OWLNamedIndividual> values = null;
-		List<OWLObjectPropertyExpression> roles = chain.getPropertyExpressions();
-		// two-step role chains
-		if (subj != null) {
-			Set<OWLNamedIndividual> middles =
-					getObjectPropertyValues(subj, roles.get(0));
-			if (middles != null) {
-				for (OWLNamedIndividual middle : middles) {
-					if (middle != null) {
-						Set<OWLNamedIndividual> objs =
-								getObjectPropertyValues(middle, roles.get(1));
-						if (objs != null && !objs.isEmpty()) {
-							if (values == null) {
-								values = new HashSet<>();
-							}
-							values.addAll(objs);
-						}
-					}
-				}
-			}
-		}
-		return values;
-	}
 
-
-	public Set<OWLNamedIndividual> getObjectPropertyValues(
-			OWLNamedIndividual subj, OWLObjectPropertyExpression expr) {
-		Map<OWLNamedIndividual, Set<OWLNamedIndividual>> instMap = propInstanceMap.get(expr);
-		if (instMap == null) {
-			return null;
-		}
-		return instMap.get(subj);
-	}
-
-
-
-	public Set<OWLNamedIndividual> getObjectPropertySubjects(OWLObjectPropertyExpression expr) {
-		Map<OWLNamedIndividual, Set<OWLNamedIndividual>> instMap = propInstanceMap.get(expr);
-		if (instMap == null) {
-			return null;
-		}
-		return instMap.keySet();
-	}
-
-
-    public Set<OWLNamedIndividual> getInstances(OWLClassExpression concept) {
-	    return classInstanceMap.get(concept);
+    public Set<OWLNamedIndividual> getInstancesByReasoner(ALCNode node) {
+	    if (nodeInstanceMap.containsKey(node)) {
+	        return nodeInstanceMap.get(node);
+        }
+        Set<OWLNamedIndividual> instances;
+        try {
+            instances = reasoner.getInstances(node.getConcept(), false).getFlattened();
+        } catch (Exception e) {
+            Out.p(e + DLMinerOutputI.CONCEPT_BUILDING_ERROR);
+            instances = new HashSet<>(1);
+            nodeInstanceMap.put(node, instances);
+        }
+        if (instances == null) {
+            instances = new HashSet<>(1);
+        }
+        nodeInstanceMap.put(node, instances);
+        return instances;
     }
 
 
 
-    public List<Expansion> getInstances(ALCNode node) {
-        return getInstances(node, expansionClusterMap.keySet());
+    public Set<OWLNamedIndividual> getInstances(ALCNode node) {
+        return getInstances(node, ALCNode.OWL_THING);
     }
 
 
-	public List<Expansion> getInstances(ALCNode node,
-			Collection<Expansion> suspects) {
-	    if (suspects == null || suspects.isEmpty()) {
-	        return null;
+	public Set<OWLNamedIndividual> getInstances(ALCNode node, ALCNode general) {
+        if (nodeInstanceMap.containsKey(node)) {
+            return nodeInstanceMap.get(node);
         }
 	    if (node.isOWLThing()) {
 	        return getInstancesOfOWLThing();
@@ -137,60 +114,45 @@ public class InstanceChecker {
         if (node.isAtomic()) {
 	        return getInstancesOfAtomicNode(node);
         }
-        if (node.isDataValueRestriction()) {
-	        return getInstancesOfDataValueRestriction(node, suspects);
-        }
-		List<Expansion> instances = null;
-		for (Expansion suspect : suspects) {
-			if (isInstanceOf(suspect, node)) {
-				if (instances == null) {
-					instances = new LinkedList<>();
-				}
-				instances.add(suspect);
-			}
-		}		
-		return instances;
+        return getInstancesFromSuspects(node, general);
 	}
 
 
 
-    private List<Expansion> getInstancesOfOWLThing() {
-	    OWLClass thing = factory.getOWLThing();
-        if (classExpansionMap.containsKey(thing)) {
-            return classExpansionMap.get(thing);
+    private Set<OWLNamedIndividual> getInstancesOfOWLThing() {
+	    ALCNode thing = ALCNode.OWL_THING;
+        if (nodeInstanceMap.containsKey(thing)) {
+            return nodeInstanceMap.get(thing);
         }
-        List<Expansion> instances = new LinkedList<>(expansionClusterMap.keySet());
-        classExpansionMap.put(thing, instances);
-        return instances;
+        List<Expansion> expansions = new LinkedList<>(expansionClusterMap.keySet());
+        nodeExpansionMap.put(thing, expansions);
+        Set<OWLNamedIndividual> individuals = handler.getIndividuals();
+        nodeInstanceMap.put(thing, individuals);
+        return individuals;
     }
 
 
 
-    private List<Expansion> getInstancesOfAtomicNode(ALCNode node) {
+    private Set<OWLNamedIndividual> getInstancesOfAtomicNode(ALCNode node) {
 	    OWLClassExpression atom = node.getConcept();
-        if (classExpansionMap.containsKey(atom)) {
-	        return classExpansionMap.get(atom);
-        }
         Set<OWLNamedIndividual> individuals = classInstanceMap.get(atom);
-        List<Expansion> instances = new LinkedList<>();
+        nodeInstanceMap.put(node, individuals);
+        List<Expansion> expansions = new LinkedList<>();
         if (individuals != null) {
             for (OWLNamedIndividual ind : individuals) {
                 Expansion exp = individualClusterMap.get(ind);
                 if (exp != null) {
-                    instances.add(exp);
+                    expansions.add(exp);
                 }
             }
         }
-        classExpansionMap.put(atom, instances);
-        return instances;
+        nodeExpansionMap.put(node, expansions);
+        return individuals;
     }
 
 
-    private List<Expansion> getInstancesOfDataValueRestriction(ALCNode node, Collection<Expansion> suspects) {
+    private Set<OWLNamedIndividual> getInstancesOfDataValueRestriction(ALCNode node, ALCNode general) {
         OWLClassExpression dataRestriction = node.getConcept();
-        if (classExpansionMap.containsKey(dataRestriction)) {
-            return classExpansionMap.get(dataRestriction);
-        }
         DataEdge de = null;
         for (CEdge e : node.getOutEdges()) {
             de = (DataEdge) e;
@@ -227,27 +189,51 @@ public class InstanceChecker {
             end = prevIndex;
         }
         // remove non-instances
-        List<Expansion> instances = new LinkedList<>(suspects);
+        List<Expansion> expansions = new LinkedList<>(nodeExpansionMap.get(general));
+        Set<OWLNamedIndividual> individuals = new HashSet<>(nodeInstanceMap.get(general));
         for (int i=start; i<=end; i++) {
             Set<OWLNamedIndividual> removals = instMap.get(thresholds.get(i));
+            individuals.removeAll(removals);
             for (OWLNamedIndividual rem : removals) {
                 Expansion exp = individualClusterMap.get(rem);
                 if (exp != null) {
-                    instances.remove(exp);
+                    expansions.remove(exp);
                 }
             }
         }
-        classExpansionMap.put(dataRestriction, instances);
-        return instances;
+        nodeInstanceMap.put(node, individuals);
+        nodeExpansionMap.put(node, expansions);
+        return individuals;
     }
+
+
+
+    private Set<OWLNamedIndividual> getInstancesFromSuspects(ALCNode node, ALCNode general) {
+        if (node.isDataValueRestriction()) {
+            return getInstancesOfDataValueRestriction(node, general);
+        }
+        List<Expansion> suspects = nodeExpansionMap.get(general);
+        List<Expansion> expansions = new LinkedList<>();
+        Set<OWLNamedIndividual> individuals = new HashSet<>();
+        for (Expansion suspect : suspects) {
+            if (isInstanceOf(suspect, node)) {
+                expansions.add(suspect);
+                individuals.addAll(expansionClusterMap.get(suspect));
+            }
+        }
+        nodeInstanceMap.put(node, individuals);
+        nodeExpansionMap.put(node, expansions);
+        return individuals;
+    }
+
+
 
 
     // if it is equivalent or more specific,
 	// then it is an instance
-	private static boolean isInstanceOf(Expansion suspect, ALCNode node) {		
+	private boolean isInstanceOf(Expansion suspect, ALCNode node) {
 		return suspect.isMoreSpecificThan(node);
 	}
-
 
 
 	
@@ -265,76 +251,65 @@ public class InstanceChecker {
 		expansionClusterMap = new HashMap<>();
 		individualClusterMap = new HashMap<>();
 		for (List<Expansion> cluster : localExpClusterMap.values()) {
+		    Set<OWLNamedIndividual> clusterInds = new HashSet<>();
+		    for (Expansion clusterExp : cluster) {
+                clusterInds.add(clusterExp.individual);
+            }
 		    Expansion first = cluster.get(0);
-			expansionClusterMap.put(first, cluster);
+			expansionClusterMap.put(first, clusterInds);
             individualClusterMap.put(first.individual, first);
 		}		
 		Out.p(expansionClusterMap.size() + " clusters for " + expansions.size() + " expansions");
 	}
 	
-	
 
 
-	
-	public void addInstancesForClusters(Map<ALCNode, List<Expansion>> nodeClusterMap, 
-			Map<ALCNode, List<Expansion>> nodeExpansionMap) {
-		// gather all instances
-        int count = 0;
-		for (ALCNode expr : nodeClusterMap.keySet()) {
-            // debug
-//            if (++count % 100 == 0) {
-//                Out.p(count + "/" + nodeClusterMap.keySet().size()
-//                        + " concepts are assigned instances as nodes");
-//            }
-			if (nodeExpansionMap.containsKey(expr)) {
-				continue;
-			}
-            List<Expansion> instances = nodeClusterMap.get(expr);
-			List<Expansion> allInstances = new LinkedList<>();
-			if (instances != null) {
-                for (Expansion inst : instances) {
-                    allInstances.addAll(expansionClusterMap.get(inst));
+
+    public Set<OWLNamedIndividual> getPropertyChainValues(
+            OWLNamedIndividual subj, OWLObjectPropertyChain chain) {
+        Set<OWLNamedIndividual> values = null;
+        List<OWLObjectPropertyExpression> roles = chain.getPropertyExpressions();
+        // two-step role chains
+        if (subj != null) {
+            Set<OWLNamedIndividual> middles =
+                    getObjectPropertyValues(subj, roles.get(0));
+            if (middles != null) {
+                for (OWLNamedIndividual middle : middles) {
+                    if (middle != null) {
+                        Set<OWLNamedIndividual> objs =
+                                getObjectPropertyValues(middle, roles.get(1));
+                        if (objs != null && !objs.isEmpty()) {
+                            if (values == null) {
+                                values = new HashSet<>();
+                            }
+                            values.addAll(objs);
+                        }
+                    }
                 }
             }
-			nodeExpansionMap.put(expr, allInstances);
-		}
-	}
+        }
+        return values;
+    }
+
+
+    public Set<OWLNamedIndividual> getObjectPropertyValues(
+            OWLNamedIndividual subj, OWLObjectPropertyExpression expr) {
+        Map<OWLNamedIndividual, Set<OWLNamedIndividual>> instMap = propInstanceMap.get(expr);
+        if (instMap == null) {
+            return null;
+        }
+        return instMap.get(subj);
+    }
 
 
 
-	public int countAllInstances(List<Expansion> instances) {
-		if (instances == null) {
-			return 0;
-		}
-		int count = 0;
-		for (Expansion inst : instances) {
-			count += expansionClusterMap.get(inst).size();
-		}		
-		return count;
-	}
-
-
-
-	public int countIntersection(List<Expansion> insts1, List<Expansion> insts2) {
-		if (insts1 == null || insts2 == null) {
-			return 0;
-		}		
-		int count = 0;
-		if (insts1.size() <= insts2.size()) {
-			for (Expansion inst1 : insts1) {
-				if (insts2.contains(inst1)) {
-					count += expansionClusterMap.get(inst1).size();
-				}
-			}
-		} else {
-			for (Expansion inst2 : insts2) {
-				if (insts1.contains(inst2)) {
-					count += expansionClusterMap.get(inst2).size();
-				}
-			}
-		}		
-		return count;
-	}
+    public Set<OWLNamedIndividual> getObjectPropertySubjects(OWLObjectPropertyExpression expr) {
+        Map<OWLNamedIndividual, Set<OWLNamedIndividual>> instMap = propInstanceMap.get(expr);
+        if (instMap == null) {
+            return null;
+        }
+        return instMap.keySet();
+    }
 
 
 }

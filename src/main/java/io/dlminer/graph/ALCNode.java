@@ -6,12 +6,14 @@ import java.util.Set;
 
 import io.dlminer.ont.LengthMetric;
 import org.semanticweb.owlapi.model.*;
+import org.semanticweb.owlapi.reasoner.OWLReasoner;
 
 public class ALCNode extends CNode {
+
+    public static final ALCNode OWL_THING = new ALCNode();
 	
 	public Set<OWLClassExpression> clabels;
 	public Set<OWLClassExpression> dlabels;
-	
 	
 	public ALCNode(Set<OWLClassExpression> clabels,
 			Set<OWLClassExpression> dlabels) {
@@ -60,7 +62,8 @@ public class ALCNode extends CNode {
 		}
 		return false;
 	}
-	
+
+
 	
 	private boolean isMoreSpecificThanALCNode(ALCNode node) {
 		// check concepts
@@ -69,7 +72,6 @@ public class ALCNode extends CNode {
 		}
 		// check labels, edges, edge successors
 		if (!hasMoreSpecificLabelsThan(node)
-//                || !hasMoreSpecificEdgesThan(node)
                 || !hasMoreSpecificEdgeSuccessorsThan(node)) {
 		    return false;
         }
@@ -109,6 +111,7 @@ public class ALCNode extends CNode {
 	            return true;
             }
         }
+        // check all forms of owl:Thing (ideally consider the class hierarchy)
         for (OWLClassExpression dlabel : dlabels) {
 	        if (dlabel instanceof OWLObjectComplementOf) {
                 OWLObjectComplementOf complement = (OWLObjectComplementOf) dlabel;
@@ -135,30 +138,6 @@ public class ALCNode extends CNode {
     }
 
 
-
-    /*private boolean hasMoreSpecificEdgesThan(ALCNode node) {
-        LinkedList<CEdge> edges = node.outEdges;
-        if (edges == null) {
-            return true;
-        }
-        if (outEdges == null) {
-            return false;
-        }
-        // check edge labels
-        for (CEdge e2 : edges) {
-            boolean found = false;
-            for (CEdge e1 : outEdges) {
-                if (e2.equals(e1)) {
-                    found = true;
-                    break;
-                }
-            }
-            if (!found) {
-                return false;
-            }
-        }
-        return true;
-    }*/
 
 
 
@@ -461,5 +440,7 @@ public class ALCNode extends CNode {
         }
         return false;
     }
+
+
 
 }

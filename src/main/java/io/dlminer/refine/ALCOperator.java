@@ -717,34 +717,28 @@ public class ALCOperator extends RefinementOperator {
 	
 	
 	private ALCNode dropDisjunction(OWLClassExpression expr, ALCNode node, ALCNode current) {
-		// if {A}, then do not drop A because results in the empty set (owl:Thing)
+		// if {A}, then do not drop A because this results in the empty set (owl:Thing)
 		if (node.dlabels.size() <= 1 && node.clabels.isEmpty()) {
 			return null;
-		}
-		// if {A, B} and expr=A, then drop A and B, 
-		// then move B to conjunctions if not redundant
-		OWLClassExpression remain = null;
-		if (node.dlabels.size() == 2) {
-			for (OWLClassExpression disj : node.dlabels) {
-				if (!disj.equals(expr)) {
-					remain = disj;
-					break;
-				}
-			}
-			if (config.checkRedundancy
-                    && isRedundantConjunctionForAddition(remain, node)) {
-				return null;
-			}
 		}
 		// clone the root
 		ALCNode extension = current.clone();					
 		// find the equal node
 		ALCNode equal = (ALCNode) extension.find(node);		
 		// remove		
-		equal.dlabels.remove(expr);		
+		equal.dlabels.remove(expr);
+        // if {A, B} and expr == A, then drop A and B,
+        // then move B to conjunctions if not redundant
 		if (equal.dlabels.size() == 1) {
-			equal.clabels.add(remain);
-			equal.dlabels.remove(remain);
+            OWLClassExpression remain = null;
+            for (OWLClassExpression disj : equal.dlabels) {
+                remain = disj;
+            }
+            equal.dlabels.remove(remain);
+            if (!config.checkRedundancy
+                    || !isRedundantConjunctionForAddition(remain, equal)) {
+                equal.clabels.add(remain);
+            }
 		}
         // update the concept
         extension.updateConcept();
@@ -762,8 +756,8 @@ public class ALCOperator extends RefinementOperator {
 		equal.dlabels.remove(expr);
 		// update the concept
         clone.updateConcept();
-		// get disjunctions that satisfy maximal length
-		Set<Set<OWLClassExpression>> disjs = generateDisjunctionsFor(expr, clone.length());
+		// get disjunctions
+		Set<Set<OWLClassExpression>> disjs = generateDisjunctionsFor(expr, 1);
 		if (disjs.isEmpty()) {
 			return new HashSet<>();
 		}		
@@ -794,14 +788,12 @@ public class ALCOperator extends RefinementOperator {
 
 	private Set<ALCNode> refineLabelsEmpty(ALCNode node, ALCNode current) {		
 		// get disjunctions that satisfy the maximal length
-        int currentLength;
+        int lengthToFill = config.maxLength - current.length();
         if (node.isOWLThing()) {
-            currentLength = current.length()-1;
-        } else {
-            currentLength = current.length();
+            lengthToFill += 1;
         }
 		Set<Set<OWLClassExpression>> disjs =
-                generateDisjunctionsFor(factory.getOWLThing(), currentLength);
+                generateDisjunctionsFor(factory.getOWLThing(), lengthToFill);
 		if (disjs.isEmpty()) {
 			return new HashSet<>();
 		}
@@ -823,7 +815,7 @@ public class ALCOperator extends RefinementOperator {
 			// find the equal node
 			ALCNode equal = (ALCNode) extension.find(node);
 			// add disjunction classes
-			if (disj.size() == 1) {
+			if (disj.size() == 1 && equal.dlabels.isEmpty()) {
 				OWLClassExpression disjExpr = null;
 				for (OWLClassExpression expr : disj) {
 					disjExpr = expr;
@@ -885,9 +877,8 @@ public class ALCOperator extends RefinementOperator {
 
 
 	private Set<Set<OWLClassExpression>> generateDisjunctionsFor(
-			OWLClassExpression expr, int currentLength) {
+			OWLClassExpression expr, int lengthToFill) {
 		Set<Set<OWLClassExpression>> disjs = new HashSet<>();
-		int lengthToFill = config.maxLength - currentLength;
 		if (lengthToFill <= 0) {
 			return disjs;			
 		}
@@ -981,62 +972,6 @@ public class ALCOperator extends RefinementOperator {
 
 
 
-	private boolean areInstancesSubsumed(Set<OWLNamedIndividual> insts, 
-			Set<OWLClassExpression> exprs) {
-		for (OWLClassExpression expr : exprs) {
-			Set<OWLNamedIndividual> exprInsts = classInstanceMap.get(expr);
-			if (exprInsts != null && exprInsts.containsAll(insts)) {
-				return true;
-			}
-		}
-		return false;
-	}
-
-
-
-	
-	/*public boolean isRedundantNode(ALCNode node) {
-		LinkedList<CNode> childs = node.traverse();	
-		for (CNode child : childs) {
-			ALCNode alcChild = (ALCNode) child;
-			// owl:Thing is never redundant
-			// check conjunctions
-			for (OWLClassExpression expr : alcChild.clabels) {
-				if (isRedundantConjunction(expr, alcChild)) {
-					return true;
-				}
-			}
-			// check disjunctions
-			for (OWLClassExpression expr : alcChild.dlabels) {
-				if (isRedundantDisjunction(expr, alcChild)) {
-					return true;
-				}
-			}
-		}
-		return false;
-	}*/
-
-
-	
-	private boolean isRedundantConjunction(OWLClassExpression expr, ALCNode node) {
-		return isRedundantConjunctionForSpecialisation(expr, node)
-				|| isRedundantWithClassExpressions(expr, node.dlabels)				
-				|| isRedundantWithPropertyDomains(expr, node)
-				|| isRedundantWithPropertyRanges(expr, node);
-	}
-	
-
-
-
-	private boolean isRedundantDisjunction(OWLClassExpression expr, ALCNode node) {
-		Set<OWLClassExpression> dlabels = new HashSet<>(node.dlabels);
-		dlabels.remove(expr);
-		return isRedundantWithClassExpressions(expr, dlabels);
-	}
-
-
-	
-
 	/**
 	 * @return the classInstanceMap
 	 */
@@ -1104,4 +1039,11 @@ public class ALCOperator extends RefinementOperator {
     }
 
 
+    public Map<OWLClassExpression, OWLClassExpression> getNegationMap() {
+	    return negationMap;
+    }
+
+    public Map<OWLClassExpression, Set<OWLClassExpression>> getClassHierarchy() {
+	    return classHierarchy;
+    }
 }

@@ -339,5 +339,9 @@ public abstract class RefinementOperator implements Operator {
 	public Map<OWLObjectProperty, Set<OWLClass>> getPropRangeMap() {
 		return  propRangeMap;
 	}
-	
+
+
+    public OWLReasoner getReasoner() {
+        return reasoner;
+    }
 }
