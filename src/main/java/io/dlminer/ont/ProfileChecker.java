@@ -50,7 +50,8 @@ public class ProfileChecker {
 		boolean insertedSome = false;
 		OWLDataFactory df = ont.getOWLOntologyManager().getOWLDataFactory();
 		for(OWLEntity e : ont.getSignature()) {
-			List<OWLOntologyChange> change = ont.getOWLOntologyManager().applyChange(new AddAxiom(ont, df.getOWLDeclarationAxiom(e)));
+			List<OWLOntologyChange> change = null;//ont.getOWLOntologyManager().applyChange(new AddAxiom(ont, df
+                    //.getOWLDeclarationAxiom(e)));
 			if(change.size() > 0)
 				insertedSome = true;
 		}

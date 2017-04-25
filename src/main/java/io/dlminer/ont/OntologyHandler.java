@@ -36,53 +36,13 @@ import org.semanticweb.owl.explanation.api.Explanation;
 import org.semanticweb.owl.explanation.api.ExplanationGenerator;
 import org.semanticweb.owl.explanation.impl.blackbox.checker.InconsistentOntologyExplanationGeneratorFactory;
 import org.semanticweb.owlapi.apibinding.OWLManager;
-import org.semanticweb.owlapi.io.OWLXMLOntologyFormat;
-import org.semanticweb.owlapi.model.AxiomType;
-import org.semanticweb.owlapi.model.IRI;
-import org.semanticweb.owlapi.model.OWLAnnotation;
-import org.semanticweb.owlapi.model.OWLAnnotationAssertionAxiom;
-import org.semanticweb.owlapi.model.OWLAnnotationValueVisitorEx;
-import org.semanticweb.owlapi.model.OWLAxiom;
-import org.semanticweb.owlapi.model.OWLClass;
-import org.semanticweb.owlapi.model.OWLClassAssertionAxiom;
-import org.semanticweb.owlapi.model.OWLClassExpression;
-import org.semanticweb.owlapi.model.OWLDataFactory;
-import org.semanticweb.owlapi.model.OWLDataProperty;
-import org.semanticweb.owlapi.model.OWLDataPropertyAssertionAxiom;
-import org.semanticweb.owlapi.model.OWLDataPropertyExpression;
-import org.semanticweb.owlapi.model.OWLDeclarationAxiom;
-import org.semanticweb.owlapi.model.OWLDisjointClassesAxiom;
-import org.semanticweb.owlapi.model.OWLEntity;
-import org.semanticweb.owlapi.model.OWLIndividual;
-import org.semanticweb.owlapi.model.OWLLogicalAxiom;
-import org.semanticweb.owlapi.model.OWLNamedIndividual;
-import org.semanticweb.owlapi.model.OWLObjectAllValuesFrom;
-import org.semanticweb.owlapi.model.OWLObjectCardinalityRestriction;
-import org.semanticweb.owlapi.model.OWLObjectComplementOf;
-import org.semanticweb.owlapi.model.OWLObjectExactCardinality;
-import org.semanticweb.owlapi.model.OWLObjectHasSelf;
-import org.semanticweb.owlapi.model.OWLObjectHasValue;
-import org.semanticweb.owlapi.model.OWLObjectIntersectionOf;
-import org.semanticweb.owlapi.model.OWLObjectMaxCardinality;
-import org.semanticweb.owlapi.model.OWLObjectMinCardinality;
-import org.semanticweb.owlapi.model.OWLObjectOneOf;
-import org.semanticweb.owlapi.model.OWLObjectProperty;
-import org.semanticweb.owlapi.model.OWLObjectPropertyAssertionAxiom;
-import org.semanticweb.owlapi.model.OWLObjectPropertyExpression;
-import org.semanticweb.owlapi.model.OWLObjectSomeValuesFrom;
-import org.semanticweb.owlapi.model.OWLObjectUnionOf;
-import org.semanticweb.owlapi.model.OWLOntology;
-import org.semanticweb.owlapi.model.OWLOntologyCreationException;
-import org.semanticweb.owlapi.model.OWLOntologyFormat;
-import org.semanticweb.owlapi.model.OWLOntologyManager;
-import org.semanticweb.owlapi.model.OWLOntologyStorageException;
-import org.semanticweb.owlapi.model.OWLSubClassOfAxiom;
-import org.semanticweb.owlapi.model.OWLSubObjectPropertyOfAxiom;
-import org.semanticweb.owlapi.model.OWLSubPropertyChainOfAxiom;
-import org.semanticweb.owlapi.model.SpecificOntologyChangeBroadcastStrategy;
+import org.semanticweb.owlapi.formats.OWLXMLDocumentFormat;
+import org.semanticweb.owlapi.model.*;
+import org.semanticweb.owlapi.model.parameters.Imports;
 import org.semanticweb.owlapi.reasoner.InferenceType;
 import org.semanticweb.owlapi.reasoner.OWLReasoner;
 import org.semanticweb.owlapi.reasoner.OWLReasonerFactory;
+import org.semanticweb.owlapi.search.EntitySearcher;
 import org.semanticweb.owlapi.util.AutoIRIMapper;
 
 import uk.ac.manchester.cs.owlapi.modularity.ModuleType;
@@ -330,7 +290,7 @@ public class OntologyHandler {
 	}
 	
 	
-	public void saveOntology(File file, OWLOntologyFormat format) {						
+	public void saveOntology(File file, OWLDocumentFormat format) {
 		try {
 			if (!file.exists()) {				
 					file.createNewFile();				
@@ -355,13 +315,13 @@ public class OntologyHandler {
 	}
 	
 	
-	public void saveOntology(OutputStream outputStream, OWLOntologyFormat format) {						
+	public void saveOntology(OutputStream outputStream, OWLDocumentFormat format) {
 		try {
 			BufferedOutputStream buffOutputStream = new BufferedOutputStream(outputStream);
 			if (format != null) {
 				manager.saveOntology(ontology, format, buffOutputStream);
 			} else {
-				manager.saveOntology(ontology, new OWLXMLOntologyFormat(), buffOutputStream);
+				manager.saveOntology(ontology, new OWLXMLDocumentFormat(), buffOutputStream);
 			}
 			buffOutputStream.close();
 		} catch (OWLOntologyStorageException e) {
@@ -420,15 +380,15 @@ public class OntologyHandler {
 	}
 		
 	public Set<OWLAxiom> getTBoxAxioms() {		
-		return ontology.getTBoxAxioms(true);
+		return ontology.getTBoxAxioms(Imports.INCLUDED);
 	}	
 	
 	public Set<OWLAxiom> getRBoxAxioms() {		
-		return ontology.getRBoxAxioms(true);
+		return ontology.getRBoxAxioms(Imports.INCLUDED);
 	}
 	
 	public Set<OWLAxiom> getABoxAxioms() {
-		return ontology.getABoxAxioms(true);
+		return ontology.getABoxAxioms(Imports.INCLUDED);
 	}	
 	
 	public static List<OWLClassExpression> getLHSandRHS(OWLAxiom ax) {
@@ -554,7 +514,7 @@ public class OntologyHandler {
 	}
 
 	public IRI getIRI() {
-		return ontology.getOntologyID().getOntologyIRI();
+		return ontology.getOntologyID().getOntologyIRI().or(IRI.create("unknown"));
 	}
 	
 	
@@ -1387,8 +1347,9 @@ public class OntologyHandler {
 		}
 	}
 
-	public String getLabel(OWLEntity ent) {		
-		Set<OWLAnnotation> annots = ent.getAnnotations(ontology);
+	public String getLabel(OWLEntity ent) {
+
+		Collection<OWLAnnotation> annots = EntitySearcher.getAnnotations(ent,ontology);
 		if (annots == null) {
 			return null;
 		}		
@@ -1666,7 +1627,8 @@ public class OntologyHandler {
 
 	private void addAnnotationsOfIndividualToClass(
 			OWLNamedIndividual ind, OWLClass cl) {
-		Set<OWLAnnotationAssertionAxiom> annots = ind.getAnnotationAssertionAxioms(ontology);
+
+		Collection<OWLAnnotationAssertionAxiom> annots =  EntitySearcher.getAnnotationAssertionAxioms(ind,ontology);
 		for (OWLAnnotationAssertionAxiom annot : annots) {
 			addAxiom(factory.getOWLAnnotationAssertionAxiom(
 					cl.getIRI(), annot.getAnnotation()));
@@ -1684,7 +1646,7 @@ public class OntologyHandler {
 				OWLClass cl = getClassByIRI(iri.replaceAll(Out.IND_SUFFIX, ""));
 				if (cl != null) {
 					count++;
-					Set<OWLAnnotationAssertionAxiom> annots = cl.getAnnotationAssertionAxioms(ontology);
+					Set<OWLAnnotationAssertionAxiom> annots = ontology.getAnnotationAssertionAxioms(cl.getIRI());
 					for (OWLAnnotationAssertionAxiom annot : annots) {
 						addAxiom(factory.getOWLAnnotationAssertionAxiom(
 								ind.getIRI(), annot.getAnnotation()));

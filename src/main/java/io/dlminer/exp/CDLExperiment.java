@@ -11,9 +11,9 @@ import io.dlminer.print.CSVWriter;
 import io.dlminer.print.HypothesisWriter;
 import io.dlminer.print.Out;
 import io.dlminer.refine.OperatorConfig;
-import org.dllearner.algorithms.celoe.CELOE;
-import org.dllearner.learningproblems.ClassLearningProblem;
-import org.dllearner.reasoning.OWLAPIReasoner;
+//import org.dllearner.algorithms.celoe.CELOE;
+//import org.dllearner.learningproblems.ClassLearningProblem;
+//import org.dllearner.reasoning.OWLAPIReasoner;
 import org.semanticweb.owlapi.model.*;
 import org.semanticweb.owlapi.reasoner.InferenceType;
 import org.semanticweb.owlapi.reasoner.OWLReasoner;
@@ -252,65 +252,65 @@ public class CDLExperiment {
         // set numeric ids
         HypothesisWriter.setNumericIDs(hypotheses);
         DLMiner.addQualityValues(hypotheses);
-        IRI iri = output.getOntology().getOntologyID().getOntologyIRI();
-        if (!owlPath.exists()) {
-            owlPath.mkdirs();
-        }
+//        IRI iri = output.getOntology().getOntologyID().getOntologyIRI();
+//        if (!owlPath.exists()) {
+//            owlPath.mkdirs();
+//        }
 
         // save all hypotheses
-        if (!csvPath.exists()) {
-            csvPath.mkdirs();
-        }
-        File csvFile = new File(csvPath, "hypotheses.csv");
-        CSVWriter.saveHypothesesToCSV(hypotheses, csvFile, ontFile.getName());
-
-        // save statistics
-        File csvStatsFile = new File(csvPath, "run_stats.csv");
-        CSVWriter.saveStatsToCSV(csvStatsFile, ontFile.getName(),
-                stats, output.getOntology());
-
-
-        // save hypotheses
-        String name = ontFile.getName().replaceAll(".owl", "");
-        File owlFile = new File(owlPath, name + "_h.owl");
-        miner.saveHypotheses(hypotheses, owlFile, iri);
-
-
-        File csvEntFile = new File(csvPath, "hypotheses_ent.csv");
-        CSVWriter.saveHypothesesToCSV(entHypos, csvEntFile, ontFile.getName());
-        File owlEntFile = new File(owlPath, name + "_h_ent.owl");
-        miner.saveHypotheses(entHypos, owlEntFile, iri);
-
-
-
-        // save statistics
-        File csvCDLFile = new File(csvPath, "cdl_stats.csv");
-        saveCDLOutputToCSV(csvCDLFile, ontFile.getName(), cdlOutput);
-
-
-        // save definitions
-        HypothesisWriter.setNumericIDs(defHypos);
-        DLMiner.addQualityValues(defHypos);
-        File owlDefFile = new File(owlPath, name + "_def.owl");
-        miner.saveHypotheses(defHypos, owlDefFile, iri);
-
-
-
-        // save entailed definitions
-        File owlEntDefFile = new File(owlPath, name + "_def_ent.owl");
-        miner.saveHypotheses(entDefHypos, owlEntDefFile, iri);
-
-        // save missed definitions
-        File owlMisDefFile = new File(owlPath, name + "_def_mis.owl");
-        miner.saveHypotheses(misDefHypos, owlMisDefFile, iri);
-
-        // save qualities of definitions
-        File csvDefHyposFile = new File(csvPath, "hypotheses_def.csv");
-        CSVWriter.saveHypothesesToCSV(defHypos, csvDefHyposFile, ontFile.getName());
-        File csvEntDefHyposFile = new File(csvPath, "hypotheses_def_ent.csv");
-        CSVWriter.saveHypothesesToCSV(entDefHypos, csvEntDefHyposFile, ontFile.getName());
-        File csvMisDefHyposFile = new File(csvPath, "hypotheses_def_mis.csv");
-        CSVWriter.saveHypothesesToCSV(misDefHypos, csvMisDefHyposFile, ontFile.getName());
+//        if (!csvPath.exists()) {
+//            csvPath.mkdirs();
+//        }
+//        File csvFile = new File(csvPath, "hypotheses.csv");
+//        CSVWriter.saveHypothesesToCSV(hypotheses, csvFile, ontFile.getName());
+//
+//        // save statistics
+//        File csvStatsFile = new File(csvPath, "run_stats.csv");
+//        CSVWriter.saveStatsToCSV(csvStatsFile, ontFile.getName(),
+//                stats, output.getOntology());
+//
+//
+//        // save hypotheses
+//        String name = ontFile.getName().replaceAll(".owl", "");
+//        File owlFile = new File(owlPath, name + "_h.owl");
+//        miner.saveHypotheses(hypotheses, owlFile, iri);
+//
+//
+//        File csvEntFile = new File(csvPath, "hypotheses_ent.csv");
+//        CSVWriter.saveHypothesesToCSV(entHypos, csvEntFile, ontFile.getName());
+//        File owlEntFile = new File(owlPath, name + "_h_ent.owl");
+//        miner.saveHypotheses(entHypos, owlEntFile, iri);
+//
+//
+//
+//        // save statistics
+//        File csvCDLFile = new File(csvPath, "cdl_stats.csv");
+//        saveCDLOutputToCSV(csvCDLFile, ontFile.getName(), cdlOutput);
+//
+//
+//        // save definitions
+//        HypothesisWriter.setNumericIDs(defHypos);
+//        DLMiner.addQualityValues(defHypos);
+//        File owlDefFile = new File(owlPath, name + "_def.owl");
+//        miner.saveHypotheses(defHypos, owlDefFile, iri);
+//
+//
+//
+//        // save entailed definitions
+//        File owlEntDefFile = new File(owlPath, name + "_def_ent.owl");
+//        miner.saveHypotheses(entDefHypos, owlEntDefFile, iri);
+//
+//        // save missed definitions
+//        File owlMisDefFile = new File(owlPath, name + "_def_mis.owl");
+//        miner.saveHypotheses(misDefHypos, owlMisDefFile, iri);
+//
+//        // save qualities of definitions
+//        File csvDefHyposFile = new File(csvPath, "hypotheses_def.csv");
+//        CSVWriter.saveHypothesesToCSV(defHypos, csvDefHyposFile, ontFile.getName());
+//        File csvEntDefHyposFile = new File(csvPath, "hypotheses_def_ent.csv");
+//        CSVWriter.saveHypothesesToCSV(entDefHypos, csvEntDefHyposFile, ontFile.getName());
+//        File csvMisDefHyposFile = new File(csvPath, "hypotheses_def_mis.csv");
+//        CSVWriter.saveHypothesesToCSV(misDefHypos, csvMisDefHyposFile, ontFile.getName());
 
 
         // dispose reasoners
@@ -348,43 +348,44 @@ public class CDLExperiment {
         reasoner.precomputeInferences(InferenceType.CLASS_HIERARCHY,
                 InferenceType.OBJECT_PROPERTY_HIERARCHY);
         OWLDataFactory df = handler.getDataFactory();
+        Set<OWLAxiom> definitions = null;
         // learn concepts
-        Out.p("\nLearning concept descriptions");
-        OWLAPIReasoner reasoningService = new OWLAPIReasoner(reasoner);
-        reasoningService.init();
-        Set<OWLClass> cls = new HashSet<>(handler.getClassesInSignature());
-        cls.remove(handler.getDataFactory().getOWLThing());
-        Set<OWLAxiom> definitions = new HashSet<>();
-        int count = 0;
-        for (OWLClass cl : cls) {
-            try {
-                ClassLearningProblem learningProblem = new ClassLearningProblem(reasoningService);
-                learningProblem.setClassToDescribe(cl);
-                learningProblem.init();
-                CELOE celoe = new CELOE(learningProblem, reasoningService);
-                celoe.init();
-                celoe.start();
-                List<OWLClassExpression> descriptions = celoe.getCurrentlyBestDescriptions(defsPerClass);
-//				List<OWLClassExpression> descriptions = new ArrayList<>();
-//				List<? extends EvaluatedDescription<? extends Score>> descrScores =
-//						celoe.getCurrentlyBestEvaluatedDescriptions(defsPerClass);
-//				for (EvaluatedDescription<? extends Score> descrScore : descrScores) {
-//					OWLClassExpression descr = descrScore.getDescription();
-//					if (!descr.equals(cl) && descrScore.getAccuracy() >= input.getMinPrecision()) {
-//						descriptions.add(descr);
-//					}
-//				}
-                for (OWLClassExpression descr : descriptions) {
-                    OWLAxiom subClassAxiom = df.getOWLSubClassOfAxiom(cl, descr);
-                    OWLAxiom superClassAxiom = df.getOWLSubClassOfAxiom(descr, cl);
-                    definitions.add(superClassAxiom);
-                    definitions.add(subClassAxiom);
-                }
-                Out.p(cl + ": " + (++count) + " / " + cls.size() + " is defined (" + descriptions.size() + " definitions)");
-            } catch (Exception e) {
-                Out.p(e + DLMinerOutputI.CONCEPT_BUILDING_ERROR);
-            }
-        }
+//        Out.p("\nLearning concept descriptions");
+//        OWLAPIReasoner reasoningService = new OWLAPIReasoner(reasoner);
+//        reasoningService.init();
+//        Set<OWLClass> cls = new HashSet<>(handler.getClassesInSignature());
+//        cls.remove(handler.getDataFactory().getOWLThing());
+//        Set<OWLAxiom> definitions = new HashSet<>();
+//        int count = 0;
+//        for (OWLClass cl : cls) {
+//            try {
+//                ClassLearningProblem learningProblem = new ClassLearningProblem(reasoningService);
+//                learningProblem.setClassToDescribe(cl);
+//                learningProblem.init();
+//                CELOE celoe = new CELOE(learningProblem, reasoningService);
+//                celoe.init();
+//                celoe.start();
+//                List<OWLClassExpression> descriptions = celoe.getCurrentlyBestDescriptions(defsPerClass);
+////				List<OWLClassExpression> descriptions = new ArrayList<>();
+////				List<? extends EvaluatedDescription<? extends Score>> descrScores =
+////						celoe.getCurrentlyBestEvaluatedDescriptions(defsPerClass);
+////				for (EvaluatedDescription<? extends Score> descrScore : descrScores) {
+////					OWLClassExpression descr = descrScore.getDescription();
+////					if (!descr.equals(cl) && descrScore.getAccuracy() >= input.getMinPrecision()) {
+////						descriptions.add(descr);
+////					}
+////				}
+//                for (OWLClassExpression descr : descriptions) {
+//                    OWLAxiom subClassAxiom = df.getOWLSubClassOfAxiom(cl, descr);
+//                    OWLAxiom superClassAxiom = df.getOWLSubClassOfAxiom(descr, cl);
+//                    definitions.add(superClassAxiom);
+//                    definitions.add(subClassAxiom);
+//                }
+//                Out.p(cl + ": " + (++count) + " / " + cls.size() + " is defined (" + descriptions.size() + " definitions)");
+//            } catch (Exception e) {
+//                Out.p(e + DLMinerOutputI.CONCEPT_BUILDING_ERROR);
+//            }
+//        }
         reasoner.dispose();
         return definitions;
     }

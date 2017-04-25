@@ -5,8 +5,8 @@ import java.util.Collection;
 import io.dlminer.learn.AxiomBuilder;
 import io.dlminer.learn.ConceptBuilder;
 import io.dlminer.ont.OntologyHandler;
+import org.semanticweb.owlapi.model.OWLDocumentFormat;
 import org.semanticweb.owlapi.model.OWLOntology;
-import org.semanticweb.owlapi.model.OWLOntologyFormat;
 
 import io.dlminer.learn.Hypothesis;
 import io.dlminer.learn.HypothesisEvaluator;
@@ -42,7 +42,7 @@ public class DLMinerOutput {
 	/**
 	 * the format to store hypotheses, e.g. OWL/XML, Turtle
 	 */
-	private OWLOntologyFormat hypothesisFormat;
+	private OWLDocumentFormat hypothesisFormat;
 	
 	
 	
@@ -100,7 +100,7 @@ public class DLMinerOutput {
 	/**
 	 * @return the hypothesisFormat
 	 */
-	public OWLOntologyFormat getHypothesisFormat() {
+	public OWLDocumentFormat getHypothesisFormat() {
 		return hypothesisFormat;
 	}
 
@@ -108,7 +108,7 @@ public class DLMinerOutput {
 	/**
 	 * @param hypothesisFormat the hypothesisFormat to set
 	 */
-	public void setHypothesisFormat(OWLOntologyFormat hypothesisFormat) {
+	public void setHypothesisFormat(OWLDocumentFormat hypothesisFormat) {
 		this.hypothesisFormat = hypothesisFormat;
 	}
 	

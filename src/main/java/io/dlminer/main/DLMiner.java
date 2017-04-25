@@ -11,22 +11,11 @@ import java.util.Map;
 import java.util.Set;
 
 import io.dlminer.refine.OperatorConfig;
-import org.coode.owlapi.turtle.TurtleOntologyFormat;
-import org.semanticweb.owlapi.io.OWLFunctionalSyntaxOntologyFormat;
-import org.semanticweb.owlapi.io.OWLXMLOntologyFormat;
-import org.semanticweb.owlapi.model.IRI;
-import org.semanticweb.owlapi.model.OWLAnnotation;
-import org.semanticweb.owlapi.model.OWLAnnotationProperty;
-import org.semanticweb.owlapi.model.OWLAxiom;
-import org.semanticweb.owlapi.model.OWLClass;
-import org.semanticweb.owlapi.model.OWLClassExpression;
-import org.semanticweb.owlapi.model.OWLDataFactory;
-import org.semanticweb.owlapi.model.OWLLiteral;
-import org.semanticweb.owlapi.model.OWLNamedIndividual;
-import org.semanticweb.owlapi.model.OWLObjectProperty;
-import org.semanticweb.owlapi.model.OWLOntology;
-import org.semanticweb.owlapi.model.OWLOntologyFormat;
-import org.semanticweb.owlapi.model.OWLSubClassOfAxiom;
+import org.semanticweb.owlapi.apibinding.OWLFunctionalSyntaxFactory;
+import org.semanticweb.owlapi.formats.FunctionalSyntaxDocumentFormat;
+import org.semanticweb.owlapi.formats.OWLXMLDocumentFormat;
+import org.semanticweb.owlapi.formats.TurtleDocumentFormat;
+import org.semanticweb.owlapi.model.*;
 import org.semanticweb.owlapi.reasoner.InferenceType;
 import org.semanticweb.owlapi.reasoner.OWLReasoner;
 
@@ -306,11 +295,11 @@ public class DLMiner implements DLMinerComponent {
         stats.setConceptsNumber(output.getConceptBuilder().getClassInstanceMap().size());
         stats.setRolesNumber(output.getConceptBuilder().getRoleInstanceMap().size());
         stats.setHypothesesNumber(hypotheses.size());
-        OWLOntologyFormat hypothesisFormat = null;
+        OWLDocumentFormat hypothesisFormat = null;
         if (input.getHypothesisFormat().equals(OntologyFormat.OWLXML)) {
-        	hypothesisFormat = new OWLXMLOntologyFormat();
+        	hypothesisFormat = new OWLXMLDocumentFormat();
     	} else if (input.getHypothesisFormat().equals(OntologyFormat.TURTLE)) {
-    		hypothesisFormat = new TurtleOntologyFormat();
+    		hypothesisFormat = new TurtleDocumentFormat();
     	}
         output.setHypothesisFormat(hypothesisFormat);
         if (!hypotheses.isEmpty()) {
@@ -585,7 +574,7 @@ public class DLMiner implements DLMinerComponent {
      * @param number the number of the hypotheses to store
      */
     public void saveHypotheses(File file, int number) {
-    	IRI iri = output.getOntology().getOntologyID().getOntologyIRI();
+    	IRI iri = output.getOntology().getOntologyID().getOntologyIRI().or(IRI.create("unknown"));
     	saveHypotheses(output.getHypotheses(), file, iri, number);
     }
     
@@ -652,7 +641,7 @@ public class DLMiner implements DLMinerComponent {
      * Files are temporary, so they should be deleted once not needed.
      */
     public Map<String, HypothesisEntry> getHypothesesData() {
-        OWLOntologyFormat format = new OWLFunctionalSyntaxOntologyFormat();     
+        OWLDocumentFormat format = new FunctionalSyntaxDocumentFormat();
         HypothesisSorter sorter = new HypothesisSorter(output.getHypotheses());
         sorter.indexByEntities();
         Map<Hypothesis, Set<String>> hypothesisToEntitiesMap = sorter.getHypothesisToEntitiesMap();
@@ -665,7 +654,7 @@ public class DLMiner implements DLMinerComponent {
             } catch (IOException e) {
                 e.printStackTrace();
             }
-            IRI iri = output.getOntology().getOntologyID().getOntologyIRI();
+            IRI iri = output.getOntology().getOntologyID().getOntologyIRI().or(IRI.create("unknown"));
             OntologyHandler handler = new OntologyHandler(hypothesis.axioms, iri);
             handler.saveOntology(file, format);
             HypothesisEntry entry = new HypothesisEntry(
@@ -691,7 +680,7 @@ public class DLMiner implements DLMinerComponent {
 
 
 	public void saveHypothesesAsSeparateFiles(File hypothesesPath) {
-		IRI iri = output.getOntology().getOntologyID().getOntologyIRI();
+		IRI iri = output.getOntology().getOntologyID().getOntologyIRI().or(IRI.create("unknown"));
 		saveHypothesesAsSeparateFiles(hypothesesPath, iri);		
 	}
 	

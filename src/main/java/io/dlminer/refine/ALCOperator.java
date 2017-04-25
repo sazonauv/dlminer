@@ -32,6 +32,7 @@ import org.semanticweb.owlapi.model.OWLObjectComplementOf;
 import org.semanticweb.owlapi.model.OWLObjectProperty;
 import org.semanticweb.owlapi.model.OWLObjectPropertyExpression;
 import org.semanticweb.owlapi.model.OWLOntology;
+import org.semanticweb.owlapi.model.parameters.Imports;
 import org.semanticweb.owlapi.reasoner.OWLReasoner;
 
 import io.dlminer.ont.LengthMetric;
@@ -158,7 +159,7 @@ public class ALCOperator extends RefinementOperator {
         }
 
         // simple told assertions (positive and negative)
-		Set<OWLAxiom> aboxAxioms = ontology.getABoxAxioms(true);
+		Set<OWLAxiom> aboxAxioms = ontology.getABoxAxioms(Imports.INCLUDED);
 		for (OWLAxiom ax : aboxAxioms) {
 			if (ax instanceof OWLClassAssertionAxiom) {
 				OWLClassAssertionAxiom axiom = (OWLClassAssertionAxiom) ax;

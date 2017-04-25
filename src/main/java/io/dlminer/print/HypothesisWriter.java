@@ -15,16 +15,16 @@ import java.util.UUID;
 
 import org.semanticweb.owlapi.model.IRI;
 import org.semanticweb.owlapi.model.OWLAxiom;
-import org.semanticweb.owlapi.model.OWLOntologyFormat;
+import org.semanticweb.owlapi.model.OWLDocumentFormat;
 
 
 public class HypothesisWriter {
 	
-	private OWLOntologyFormat format;
+	private OWLDocumentFormat format;
 	private IRI iri;
 	
 	
-	public HypothesisWriter(OWLOntologyFormat format, IRI iri) {		
+	public HypothesisWriter(OWLDocumentFormat format, IRI iri) {
 		this.format = format;
 		this.iri = iri;
 	}

@@ -6,12 +6,12 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import org.semanticweb.owlapi.apibinding.OWLManager;
+import org.semanticweb.owlapi.io.OWLObjectRenderer;
+import org.semanticweb.owlapi.manchestersyntax.renderer.ManchesterOWLSyntaxOWLObjectRendererImpl;
 import org.semanticweb.owlapi.model.OWLLogicalAxiom;
 import org.semanticweb.owlapi.model.OWLOntology;
 import org.semanticweb.owlapi.model.OWLOntologyCreationException;
 import org.semanticweb.owlapi.model.OWLOntologyManager;
-
-import uk.ac.manchester.cs.owl.owlapi.mansyntaxrenderer.ManchesterOWLSyntaxOWLObjectRendererImpl;
 
 /**
  * Created by zenkevich on 3/28/16.
@@ -80,7 +80,7 @@ public class OwlFileImprover {
             return "";
         }
         String result = "";
-        ManchesterOWLSyntaxOWLObjectRendererImpl rendering =
+        OWLObjectRenderer rendering =
                 new ManchesterOWLSyntaxOWLObjectRendererImpl();
         for (OWLLogicalAxiom axiom : ontology.getLogicalAxioms()) {
             result += rendering.render(axiom).trim() + "\n";

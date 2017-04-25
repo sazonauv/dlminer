@@ -19,7 +19,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import org.semanticweb.owlapi.dlsyntax.renderer.DLSyntaxObjectRenderer;
+import org.semanticweb.owlapi.io.OWLObjectRenderer;
 import org.semanticweb.owlapi.io.OWLRenderer;
+import org.semanticweb.owlapi.manchestersyntax.renderer.ManchesterOWLSyntaxObjectRenderer;
 import org.semanticweb.owlapi.model.OWLAxiom;
 import org.semanticweb.owlapi.model.OWLClassExpression;
 import org.semanticweb.owlapi.model.OWLEntity;
@@ -30,7 +33,6 @@ import io.dlminer.learn.Hypothesis;
 import io.dlminer.ont.OntologyHandler;
 import io.dlminer.sort.SortingOrder;
 import io.dlminer.sort.StringLengthComparator;
-import uk.ac.manchester.cs.owl.owlapi.mansyntaxrenderer.ManchesterOWLSyntaxOWLObjectRendererImpl;
 
 
 
@@ -190,9 +192,10 @@ public abstract class Out {
 	
 	
 	public static void printClassesMS(Collection<? extends OWLClassExpression> classes) {
-		ManchesterOWLSyntaxOWLObjectRendererImpl rendering = 
-				new ManchesterOWLSyntaxOWLObjectRendererImpl();
-		Out.p("\nClasses in Manchester syntax:");
+		//ManchesterOWLSyntaxObjectRenderer rendering =
+		//		new ManchesterOWLSyntaxObjectRenderer();
+        OWLObjectRenderer rendering = new DLSyntaxObjectRenderer();
+        Out.p("\nClasses in Manchester syntax:");
 		for (OWLClassExpression cl : classes) {
 			Out.p(rendering.render(cl));
 		}
@@ -202,24 +205,21 @@ public abstract class Out {
 	
 	
 	public static void printClassMS(OWLClassExpression cl) {
-		ManchesterOWLSyntaxOWLObjectRendererImpl rendering = 
-				new ManchesterOWLSyntaxOWLObjectRendererImpl();
+        OWLObjectRenderer rendering = new DLSyntaxObjectRenderer();
 		Out.p(rendering.render(cl));
 	}
 	
 	
 	
 	public static void printAxiomMS(OWLAxiom axiom) {
-		ManchesterOWLSyntaxOWLObjectRendererImpl rendering = 
-				new ManchesterOWLSyntaxOWLObjectRendererImpl();
+        OWLObjectRenderer rendering = new DLSyntaxObjectRenderer();
 		Out.p(rendering.render(axiom));
 	}
 	
 	
 	
 	public static void printAxiomsMS(Collection<? extends OWLAxiom> axioms) {
-		ManchesterOWLSyntaxOWLObjectRendererImpl rendering = 
-				new ManchesterOWLSyntaxOWLObjectRendererImpl();
+        OWLObjectRenderer rendering = new DLSyntaxObjectRenderer();
 		Out.p("\nAxioms in Manchester syntax:");
 		for (OWLAxiom axiom : axioms) {
 			Out.p(rendering.render(axiom));
@@ -230,8 +230,7 @@ public abstract class Out {
 	
 	
 	public static void printAxiomsMSLabels(OntologyHandler handler) {
-		ManchesterOWLSyntaxOWLObjectRendererImpl rendering = 
-				new ManchesterOWLSyntaxOWLObjectRendererImpl();
+        OWLObjectRenderer rendering = new DLSyntaxObjectRenderer();
 		List<String> axmsList = new ArrayList<>();
 		Out.p("\nAxioms in Manchester syntax:");
 		for (OWLAxiom axiom : handler.getLogicalAxioms()) {

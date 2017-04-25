@@ -1,6 +1,5 @@
 package io.dlminer.main;
 
-import org.semanticweb.owlapi.model.OWLOntologyFormat;
 
 import io.dlminer.ont.Logic;
 import io.dlminer.ont.OntologyFormat;

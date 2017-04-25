@@ -123,7 +123,7 @@ public class BelNetExperiment {
 
         // save results
         Out.p("\nSaving hypotheses");
-        IRI iri = miner.getOutput().getOntology().getOntologyID().getOntologyIRI();
+        IRI iri = miner.getOutput().getOntology().getOntologyID().getOntologyIRI().or(IRI.create("unkown"));
         if (!owlPath.exists()) {
             owlPath.mkdirs();
         }
