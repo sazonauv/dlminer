@@ -20,7 +20,18 @@ import io.dlminer.graph.OnlyEdge;
 import io.dlminer.graph.SomeEdge;
 
 import io.dlminer.main.DLMinerOutputI;
-import org.semanticweb.owlapi.model.*;
+import org.semanticweb.owlapi.model.OWLAxiom;
+import org.semanticweb.owlapi.model.OWLClass;
+import org.semanticweb.owlapi.model.OWLClassAssertionAxiom;
+import org.semanticweb.owlapi.model.OWLClassExpression;
+import org.semanticweb.owlapi.model.OWLDataProperty;
+import org.semanticweb.owlapi.model.OWLIndividual;
+import org.semanticweb.owlapi.model.OWLLiteral;
+import org.semanticweb.owlapi.model.OWLNamedIndividual;
+import org.semanticweb.owlapi.model.OWLObjectComplementOf;
+import org.semanticweb.owlapi.model.OWLObjectProperty;
+import org.semanticweb.owlapi.model.OWLObjectPropertyExpression;
+import org.semanticweb.owlapi.model.OWLOntology;
 import org.semanticweb.owlapi.reasoner.OWLReasoner;
 
 import io.dlminer.ont.LengthMetric;
@@ -132,7 +143,10 @@ public class ALCOperator extends RefinementOperator {
                 Set<OWLNamedIndividual> copyInstances = new HashSet<>(instances);
                 copyInstances.remove(null);
                 classInstanceMap.put(cl, copyInstances);
-                Out.p(++count + " / " + classes.size() + " classes are checked for instances");
+                // debug
+                if (++count % 10 == 0) {
+                    Out.p(count + " / " + classes.size() + " classes are checked for instances");
+                }
             }
         }
 

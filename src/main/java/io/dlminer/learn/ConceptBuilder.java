@@ -659,12 +659,14 @@ public class ConceptBuilder implements DLMinerComponent {
 			}			
 			processed.addAll(extensions);
             candidates.addAll(beam);
-			// debug		
-//			Out.p("iterations=" + (++iters)
-//					+ " concepts=" + nodeClusterMap.size()
-//					+ " candidates=" + candidates.size()
-//					+ " extensions=" + extensions.size()
-//					+ " current=" + current);
+			// debug
+            if (++iters % 1000 == 0) {
+                Out.p("iterations=" + iters
+                        + " concepts=" + expressionInstanceMap.size()
+                        + " candidates=" + candidates.size()
+                        + " extensions=" + extensions.size()
+                        + " current=" + current);
+            }
 		}		
 		Out.p("\nDL-Apriori has terminated");		
 	}

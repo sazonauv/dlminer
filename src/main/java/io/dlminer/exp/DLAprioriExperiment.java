@@ -6,6 +6,7 @@ import io.dlminer.main.DLMiner;
 import io.dlminer.main.DLMinerInput;
 import io.dlminer.ont.Logic;
 import io.dlminer.ont.ReasonerName;
+import io.dlminer.print.CSVWriter;
 import io.dlminer.print.Out;
 import io.dlminer.refine.OperatorConfig;
 import org.semanticweb.owlapi.model.OWLClassExpression;
@@ -23,19 +24,18 @@ public class DLAprioriExperiment {
     public static void main(String[] args) throws Exception {
 
         // check parameters number
-        if (args.length != 6) {
+        if (args.length != 7) {
             throw new RuntimeException(
-                    "You need exactly 6 parameters: ontology path, " +
-                            "\nmax role depth, " +
-                            "\nmin support, max concept length, " +
-                            "\nlogic, reasoner name.");
+                    "You need exactly 7 parameters: ontology path, csv path," +
+                            "\nmax role depth, max concept length, " +
+                            "\nlogic, reasoner name, redundancy flag.");
         }
 
 
         // process parameters
         File ontFile = new File(args[0]);
-        Integer roleDepth = Integer.parseInt(args[1]);
-        Integer minSupport = Integer.parseInt(args[2]);
+        File csvFile = new File(args[1]);
+        Integer roleDepth = Integer.parseInt(args[2]);
         Integer maxConceptLength = Integer.parseInt(args[3]);
         Logic logic = null;
         for (Logic l : Logic.values()) {
@@ -49,6 +49,12 @@ public class DLAprioriExperiment {
                 reasonerName = rname;
             }
         }
+        boolean checkRedundancy;
+        if (args[6].equals("t")) {
+            checkRedundancy = true;
+        } else {
+            checkRedundancy = false;
+        }
 
         // set parameters
         DLMinerInput input = new DLMinerInput(ontFile);
@@ -59,7 +65,7 @@ public class DLAprioriExperiment {
         OperatorConfig config = input.getConfig();
         config.maxDepth = roleDepth;
         config.maxLength = maxConceptLength;
-        config.minSupport = minSupport;
+        config.minSupport = 0;
         // optimisations
         config.checkDisjointness = true;
         config.useReasonerForAtomicClassInstances = true;
@@ -76,7 +82,7 @@ public class DLAprioriExperiment {
 
 
         // first ignore redundancy
-        config.checkRedundancy = true;
+        config.checkRedundancy = checkRedundancy;
         DLMiner miner = new DLMiner(input);
         try {
             miner.init();
@@ -114,6 +120,7 @@ public class DLAprioriExperiment {
 
         List<Integer> instanceNumbers = new ArrayList<>(instNumExprsMap.keySet());
         Collections.sort(instanceNumbers);
+        Map<Integer, Integer> instConceptNumMap = new LinkedHashMap<>();
         for (Integer minInstanceNumber : instanceNumbers) {
             int conceptNumber = 0;
             for (Integer instanceNumber : instNumExprsMap.keySet()) {
@@ -121,9 +128,15 @@ public class DLAprioriExperiment {
                     conceptNumber += instNumExprsMap.get(instanceNumber).size();
                 }
             }
+            instConceptNumMap.put(minInstanceNumber, conceptNumber);
             Out.p(minInstanceNumber + " instances : " + conceptNumber + " concepts");
         }
 
+
+        Out.p("\nSaving results to CSV");
+        CSVWriter csvWriter = new CSVWriter(csvFile, true);
+        csvWriter.saveConceptNumbersToCSV(ontFile.getName().replace(".owl", ""), instConceptNumMap);
+        csvWriter.close();
 
         Out.p("\nAll is done.\n");
 

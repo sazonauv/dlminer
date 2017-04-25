@@ -6,7 +6,7 @@ import java.util.Set;
 
 import io.dlminer.ont.LengthMetric;
 import org.semanticweb.owlapi.model.*;
-import org.semanticweb.owlapi.reasoner.OWLReasoner;
+
 
 public class ALCNode extends CNode {
 

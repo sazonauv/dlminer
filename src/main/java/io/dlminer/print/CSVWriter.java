@@ -7,6 +7,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 
 import io.dlminer.exp.CDLOutput;
 import io.dlminer.exp.GSOutput;
@@ -39,49 +40,7 @@ public class CSVWriter {
 	}
 	
 		
-			
-	public static void write(String[][] arr, String fileName, String fileHeader) {
-		String workingDir = System.getProperty("user.dir");
-		File file = new File(workingDir + "/reports/"+fileName+".csv");
-		Out.p("\nWriting to " + file);
-		FileWriter fileWriter = null;
-		try {
-			// If the file doesn't exist then create it
-			if (!file.exists()) {
-				file.createNewFile();
-			}			
-			fileWriter = new FileWriter(file);			
-			// Write the CSV file header
-			fileWriter.append(fileHeader);			
-			// Add a new line separator after the header
-			fileWriter.append(CSV.NEW_LINE_SEPARATOR);			
-			for (int i=0; i<arr.length; i++) {				
-				for (int j=0; j<arr[0].length; j++) {
-					fileWriter.append(arr[i][j]);
-					fileWriter.append(CSV.COMMA_DELIMITER);
-				}
-				fileWriter.append(CSV.NEW_LINE_SEPARATOR);
-			}			
-		} catch (Exception e) {			
-			e.printStackTrace();
-		} finally {			
-			close(fileWriter);			             
-		}
-	}
-	
-	
-	
-	public static String combineHeader(int nMetrics) {
-		String header = "\\rotatebox{90}{Ontology}" + CSV.COMMA_DELIMITER
-				+ "\\rotatebox{90}{DL expressivity}" + CSV.COMMA_DELIMITER;
-		for (int i=0; i<nMetrics; i++) {
-			header += (OntologyAnalyser.METRIC_NAMES[i] + CSV.COMMA_DELIMITER);
-		}
-		header += "\\rotatebox{90}{Time (ms)}";		
-		return header;
-	}
-	
-	
+
 	
 	public void append(String[] entry) {		
 		try {											
@@ -133,39 +92,7 @@ public class CSVWriter {
 		}
 	}
 	
-	
-	
-	public static void writeWithRowNames(String[][] arr, String fileName,
-			String fileHeader, String[] rowNames) {
-		String workingDir = System.getProperty("user.dir");
-		File file = new File(workingDir + "/reports/"+fileName+".csv");
-		FileWriter fileWriter = null;
-		try {
-			// If the file doesn't exist then create it
-			if (!file.exists()) {
-				file.createNewFile();
-			}			
-			fileWriter = new FileWriter(file);			
-			// Write the CSV file header
-			fileWriter.append(fileHeader);			
-			// Add a new line separator after the header
-			fileWriter.append(CSV.NEW_LINE_SEPARATOR);			
-			for (int i=0; i<arr.length; i++) {
-				fileWriter.append(rowNames[i]);
-				fileWriter.append(CSV.COMMA_DELIMITER);
-				for (int j=0; j<arr[0].length; j++) {
-					fileWriter.append(arr[i][j]);
-					fileWriter.append(CSV.COMMA_DELIMITER);
-				}
-				fileWriter.append(CSV.NEW_LINE_SEPARATOR);
-			}			
-		} catch (Exception e) {			
-			e.printStackTrace();
-		} finally {			
-			close(fileWriter);			             
-		}
-	}
-	
+
 	
 		
 	public void saveHypothesesToCSV(Collection<Hypothesis> hypotheses, 
@@ -678,8 +605,15 @@ public class CSVWriter {
     }
 
 
-
-
-
-	
+    public void saveConceptNumbersToCSV(String ontName, Map<Integer, Integer> instConceptNumMap) {
+        String[] entry = new String[instConceptNumMap.size()+1];
+        entry[0] = ontName;
+        int count = 1;
+        for (Integer instNum : instConceptNumMap.keySet()) {
+            Integer concNum = instConceptNumMap.get(instNum);
+            entry[count] = instNum + "-" + concNum;
+            count++;
+        }
+        append(entry);
+    }
 }

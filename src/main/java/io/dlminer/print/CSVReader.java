@@ -268,41 +268,8 @@ public class CSVReader {
 		}
 	}
 	
-	
-	public static void printHeatMaps(File dir) {
-		double[][] fitMap = getFitnessHeatMap(dir);
-		double[][] braMap = getBravenessHeatMap(dir);
-		double[][] timMap = getTimeHeatMap(dir);
-		Out.p(CSV.SPLIT_LINE + "fitness heat map" + CSV.SPLIT_LINE + " \n" + Out.printArray(fitMap));
-		Out.p(CSV.SPLIT_LINE + "braveness heat map" + CSV.SPLIT_LINE + " \n" + Out.printArray(braMap));
-		Out.p(CSV.SPLIT_LINE + "time heat map" + CSV.SPLIT_LINE + " \n" + Out.printArray(timMap));
-		String header = "Language " + CSV.COMMA_DELIMITER + 
-				"2 " + CSV.COMMA_DELIMITER + 
-				"4 " + CSV.COMMA_DELIMITER + 
-				"6 " + CSV.COMMA_DELIMITER + 
-				"8 ";
-		String[] langs = new String[] {
-			"G1 ", "G2 ", "G3 ", "G4 ", "G5 ", "G6", "G7"	
-		};		
-		CSVWriter.writeWithRowNames(toStringArray(fitMap), "fit_map", header, langs);
-		CSVWriter.writeWithRowNames(toStringArray(braMap), "bra_map", header, langs);
-		CSVWriter.writeWithRowNames(toStringArray(timMap), "tim_map", header, langs);
-	}
-	
-	
-	
-	/**
-	 * @param args
-	 */
-	public static void main(String[] args) {
-		if (args.length != 1) {
-			new IllegalArgumentException("Provide a folder path");
-		}
-		printCSVs(new File(args[0]));
-		printHeatMaps(new File(args[0]));
-	}
-	
-	
+
+
 	
 	public static void printCSVs(File dir) {
 		for (File csv : dir.listFiles()) {
