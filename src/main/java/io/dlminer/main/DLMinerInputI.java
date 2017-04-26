@@ -173,6 +173,8 @@ public interface DLMinerInputI {
 
     Boolean DEF_USE_REDUNDANCY = true;
 
+    Boolean DEF_STORE_INSTANCES = true;
+
 		
 	
 	// ====================== error messages ======================
@@ -191,7 +193,7 @@ public interface DLMinerInputI {
 	String WRONG_REASONER_TIMEOUT_ERR = "reasonerTimeout can only be positive!";
 	String WRONG_MIN_PRECISION_ERR = "minPrecision can only be positive!";
 	String WRONG_MIN_CONCEPT_SUPPORT_ERR = "minConceptSupport cannot be negative!";
-	
+
 
 
 }

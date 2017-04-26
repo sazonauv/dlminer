@@ -1,6 +1,7 @@
 package io.dlminer.exp;
 
 
+import io.dlminer.graph.ALCNode;
 import io.dlminer.learn.ConceptBuilder;
 import io.dlminer.main.DLMiner;
 import io.dlminer.main.DLMinerInput;
@@ -9,8 +10,6 @@ import io.dlminer.ont.ReasonerName;
 import io.dlminer.print.CSVWriter;
 import io.dlminer.print.Out;
 import io.dlminer.refine.OperatorConfig;
-import org.semanticweb.owlapi.model.OWLClassExpression;
-import org.semanticweb.owlapi.model.OWLNamedIndividual;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -31,11 +30,11 @@ public class DLAprioriExperiment {
     public static void main(String[] args) throws Exception {
 
         // check parameters number
-        if (args.length != 7) {
+        if (args.length != 8) {
             throw new RuntimeException(
-                    "You need exactly 7 parameters: ontology path, csv path," +
+                    "You need exactly 8 parameters: ontology path, csv path," +
                             "\nmax role depth, max concept length, " +
-                            "\nlogic, reasoner name, redundancy flag.");
+                            "\nlogic, reasoner name, redundancy flag, max number of concepts.");
         }
 
 
@@ -62,6 +61,7 @@ public class DLAprioriExperiment {
         } else {
             checkRedundancy = false;
         }
+        Integer maxConceptNumber = Integer.parseInt(args[7]);
 
         // set parameters
         DLMinerInput input = new DLMinerInput(ontFile);
@@ -77,6 +77,7 @@ public class DLAprioriExperiment {
         config.checkDisjointness = true;
         config.useReasonerForAtomicClassInstances = true;
         config.useReasonerForClassInstances = false;
+        config.storeInstances = false;
         config.useDataProperties = false;
         config.useNegation = true;
         config.useDisjunction = true;
@@ -101,48 +102,49 @@ public class DLAprioriExperiment {
         ConceptBuilder conceptBuilder = miner.getOutput().getConceptBuilder();
 
         // generate concepts
-        conceptBuilder.buildConcepts();
+        conceptBuilder.buildConcepts(maxConceptNumber);
 
-        Map<OWLClassExpression, Set<OWLNamedIndividual>> exprInstMap = conceptBuilder.getClassExpressionInstanceMap();
-        Out.p("\n" + exprInstMap.size() + " concepts are built");
+        Set<ALCNode> nodes = conceptBuilder.getNodes();
+        Out.p("\n" + nodes.size() + " concepts are built");
 
         double totalTime = 0;
-        for (OWLClassExpression expr : exprInstMap.keySet()) {
-            totalTime += conceptBuilder.getTimeByExpression(expr);
+        for (ALCNode node : nodes) {
+            Double time = conceptBuilder.getTimeByExpression(node.getConcept());
+            totalTime += (time == null) ? 0 : time;
         }
-        Out.p("\nTotal time of checking instances = " + totalTime + " seconds");
+        Out.p("\nTotal time of checking instances = " + Out.fn(totalTime) + " seconds");
 
 
-        Out.p("\nAmong them at least X instances have Y concepts:");
-        Map<Integer, Set<OWLClassExpression>> instNumExprsMap = new HashMap<>();
-        for (OWLClassExpression expr : exprInstMap.keySet()) {
-            int instNum = exprInstMap.get(expr).size();
-            Set<OWLClassExpression> exprs = instNumExprsMap.get(instNum);
-            if (exprs == null) {
-                exprs = new HashSet<>();
-                instNumExprsMap.put(instNum, exprs);
+        Map<Integer, Set<ALCNode>> instNumNodesMap = new HashMap<>();
+        for (ALCNode node : nodes) {
+            Integer instNum = (node.coverage == null) ? 0 : node.coverage;
+            Set<ALCNode> instNodes = instNumNodesMap.get(instNum);
+            if (instNodes == null) {
+                instNodes = new HashSet<>();
+                instNumNodesMap.put(instNum, instNodes);
             }
-            exprs.add(expr);
+            instNodes.add(node);
         }
 
-        List<Integer> instanceNumbers = new ArrayList<>(instNumExprsMap.keySet());
+//        Out.p("\nAmong them at least X instances have Y concepts:");
+        List<Integer> instanceNumbers = new ArrayList<>(instNumNodesMap.keySet());
         Collections.sort(instanceNumbers);
-        Map<Integer, Integer> instConceptNumMap = new LinkedHashMap<>();
+        Map<Integer, Integer> instNodeNumMap = new LinkedHashMap<>();
         for (Integer minInstanceNumber : instanceNumbers) {
             int conceptNumber = 0;
-            for (Integer instanceNumber : instNumExprsMap.keySet()) {
+            for (Integer instanceNumber : instNumNodesMap.keySet()) {
                 if (instanceNumber >= minInstanceNumber) {
-                    conceptNumber += instNumExprsMap.get(instanceNumber).size();
+                    conceptNumber += instNumNodesMap.get(instanceNumber).size();
                 }
             }
-            instConceptNumMap.put(minInstanceNumber, conceptNumber);
-            Out.p(minInstanceNumber + " instances : " + conceptNumber + " concepts");
+            instNodeNumMap.put(minInstanceNumber, conceptNumber);
+//            Out.p(minInstanceNumber + " instances : " + conceptNumber + " concepts");
         }
 
 
         Out.p("\nSaving results to CSV");
         CSVWriter csvWriter = new CSVWriter(csvFile, true);
-        csvWriter.saveConceptNumbersToCSV(ontFile.getName().replace(".owl", ""), instConceptNumMap);
+        csvWriter.saveConceptNumbersToCSV(ontFile.getName().replace(".owl", ""), instNodeNumMap);
         csvWriter.close();
 
         Out.p("\nAll is done.\n");

@@ -4,7 +4,12 @@ import io.dlminer.graph.*;
 import io.dlminer.main.DLMinerOutputI;
 import io.dlminer.print.Out;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 import io.dlminer.refine.ALCOperator;
 import org.semanticweb.owlapi.model.*;
@@ -124,7 +129,7 @@ public class InstanceChecker {
         if (nodeInstanceMap.containsKey(thing)) {
             return nodeInstanceMap.get(thing);
         }
-        List<Expansion> expansions = new LinkedList<>(expansionClusterMap.keySet());
+        List<Expansion> expansions = new ArrayList<>(expansionClusterMap.keySet());
         nodeExpansionMap.put(thing, expansions);
         Set<OWLNamedIndividual> individuals = handler.getIndividuals();
         nodeInstanceMap.put(thing, individuals);
@@ -137,7 +142,7 @@ public class InstanceChecker {
 	    OWLClassExpression atom = node.getConcept();
         Set<OWLNamedIndividual> individuals = classInstanceMap.get(atom);
         nodeInstanceMap.put(node, individuals);
-        List<Expansion> expansions = new LinkedList<>();
+        List<Expansion> expansions = new ArrayList<>();
         if (individuals != null) {
             for (OWLNamedIndividual ind : individuals) {
                 Expansion exp = individualClusterMap.get(ind);
@@ -189,7 +194,7 @@ public class InstanceChecker {
             end = prevIndex;
         }
         // remove non-instances
-        List<Expansion> expansions = new LinkedList<>(nodeExpansionMap.get(general));
+        List<Expansion> expansions = new ArrayList<>(nodeExpansionMap.get(general));
         Set<OWLNamedIndividual> individuals = new HashSet<>(nodeInstanceMap.get(general));
         for (int i=start; i<=end; i++) {
             Set<OWLNamedIndividual> removals = instMap.get(thresholds.get(i));
@@ -213,8 +218,8 @@ public class InstanceChecker {
             return getInstancesOfDataValueRestriction(node, general);
         }
         List<Expansion> suspects = nodeExpansionMap.get(general);
-        List<Expansion> expansions = new LinkedList<>();
-        Set<OWLNamedIndividual> individuals = new HashSet<>();
+        List<Expansion> expansions = new ArrayList<>(1);
+        Set<OWLNamedIndividual> individuals = new HashSet<>(1);
         for (Expansion suspect : suspects) {
             if (isInstanceOf(suspect, node)) {
                 expansions.add(suspect);
@@ -224,6 +229,32 @@ public class InstanceChecker {
         nodeInstanceMap.put(node, individuals);
         nodeExpansionMap.put(node, expansions);
         return individuals;
+    }
+
+
+
+    public int countInstances(ALCNode node) {
+	    return countInstances(node, Integer.MAX_VALUE);
+    }
+
+
+    public int countInstances(ALCNode node, int maxInstanceNumber) {
+	    if (node.isOWLThing()) {
+	        return handler.getIndividuals().size();
+        }
+        if (node.isAtomic()) {
+	        return classInstanceMap.get(node.getConcept()).size();
+        }
+	    int count = 0;
+	    for (Expansion expansion : expansionClusterMap.keySet()) {
+            if (isInstanceOf(expansion, node)) {
+                count += expansionClusterMap.get(expansion).size();
+            }
+            if (count >= maxInstanceNumber) {
+                break;
+            }
+        }
+        return count;
     }
 
 
@@ -242,7 +273,7 @@ public class InstanceChecker {
 		for (Expansion exp : expansions) {
 			List<Expansion> cluster = localExpClusterMap.get(exp);
 			if (cluster == null) {
-				cluster = new LinkedList<>();				
+				cluster = new ArrayList<>();
 				localExpClusterMap.put(exp, cluster);
 			}
 			cluster.add(exp);			
@@ -310,6 +341,7 @@ public class InstanceChecker {
         }
         return instMap.keySet();
     }
+
 
 
 }

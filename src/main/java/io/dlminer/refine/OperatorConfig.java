@@ -60,6 +60,12 @@ public class OperatorConfig {
      */
     public boolean useDataProperties;
 
+    /**
+     * The number of thresholds for expressions with data properties
+     */
+    public int dataThresholdsNumber;
+
+
     // optimisations
     /**
      * The flag indicating whether disjoint classes are checked
@@ -72,16 +78,7 @@ public class OperatorConfig {
 
     public boolean checkRedundancy;
 
-
-
-    /**
-     * The number of thresholds for expressions with data properties
-     */
-    public int dataThresholdsNumber;
-
-
-
-
+    public boolean storeInstances;
 
 
 }

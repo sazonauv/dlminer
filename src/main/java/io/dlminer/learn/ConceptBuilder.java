@@ -79,10 +79,11 @@ public class ConceptBuilder implements DLMinerComponent {
 	
 	private ALCNode positiveNode;	
 	private ALCNode negativeNode;
-	
-		
-		
-	public ConceptBuilder(OntologyHandler handler, OWLReasoner reasoner, OperatorConfig config) {
+
+    private Set<ALCNode> nodes;
+
+
+    public ConceptBuilder(OntologyHandler handler, OWLReasoner reasoner, OperatorConfig config) {
         this.handler = handler;
         factory = handler.getDataFactory();
         this.reasoner = reasoner;
@@ -570,23 +571,28 @@ public class ConceptBuilder implements DLMinerComponent {
 
 	
 	private void aprioriALC() {
-		PriorityQueue<ALCNode> candidates = new PriorityQueue<>(100, 
+	    final int initialCapacity = 100;
+		PriorityQueue<ALCNode> candidates = new PriorityQueue<>(initialCapacity,
 				new NodeLengthComparator(SortingOrder.ASC));
-        Set<ALCNode> processed = new HashSet<>();
+        Set<ALCNode> processed = new HashSet<>(initialCapacity);
+        nodes = new HashSet<>(initialCapacity);
         // the first run
         ALCNode rootNode = processNode(factory.getOWLThing());
         candidates.add(rootNode);
         processed.add(rootNode);
+        nodes.add(rootNode);
         // if prediction
         if (positiveClass != null && negativeClass != null) {
             // set positive
             positiveNode = processNode(positiveClass);
             candidates.add(positiveNode);
             processed.add(positiveNode);
+            nodes.add(rootNode);
             // set negative
             negativeNode = processNode(negativeClass);
             candidates.add(negativeNode);
             processed.add(negativeNode);
+            nodes.add(rootNode);
         }
         // loop
         Out.p("\nEntering the main loop");
@@ -603,7 +609,7 @@ public class ConceptBuilder implements DLMinerComponent {
 			List<ALCNode> extensions = new ArrayList<>(refinements);
 			Collections.sort(extensions, new NodeLengthComparator(SortingOrder.ASC));			
 			// beam
-			List<ALCNode> beam = new LinkedList<>();
+			List<ALCNode> beam = new ArrayList<>();
 			// evaluate extensions			
 			for (ALCNode extension : extensions) {
 				OWLClassExpression concept = extension.getConcept();				
@@ -618,13 +624,18 @@ public class ConceptBuilder implements DLMinerComponent {
 						}
 					}
 					double t1 = System.nanoTime();
-                    Set<OWLNamedIndividual> instances;
-                    if (config.useReasonerForClassInstances) {
-                        instances = instanceChecker.getInstancesByReasoner(extension);
+                    Set<OWLNamedIndividual> instances = null;
+                    if (config.storeInstances) {
+                        if (config.useReasonerForClassInstances) {
+                            instances = instanceChecker.getInstancesByReasoner(extension);
+                        } else {
+                            instances = instanceChecker.getInstances(extension, current);
+                        }
+                        extension.coverage = instances.size();
                     } else {
-                        instances = instanceChecker.getInstances(extension, current);
+                        extension.coverage = instanceChecker.countInstances(extension);
                     }
-                    extension.coverage = instances.size();
+
                     // record time
                     double t2 = System.nanoTime();
                     double time = (t2 - t1)/1e9;
@@ -645,6 +656,7 @@ public class ConceptBuilder implements DLMinerComponent {
                         // store instances
                         if (!config.checkRedundancy || !extension.isRedundant()) {
                             expressionInstanceMap.put(concept, instances);
+                            nodes.add(extension);
                         }
 						// break the loop if the maximal number of concepts is reached
 						if (expressionInstanceMap.size() >= maxConceptNumber) {
@@ -667,7 +679,7 @@ public class ConceptBuilder implements DLMinerComponent {
                         + " extensions=" + extensions.size()
                         + " current=" + current);
             }
-		}		
+		}
 		Out.p("\nDL-Apriori has terminated");		
 	}
 	
@@ -681,8 +693,18 @@ public class ConceptBuilder implements DLMinerComponent {
 		}
 		ALCNode node = new ALCNode(conjs);
         double t1 = System.nanoTime();
-        Set<OWLNamedIndividual> instances = instanceChecker.getInstances(node);
-        node.coverage = (instances == null) ? 0 : instances.size();
+        if (config.storeInstances) {
+            Set<OWLNamedIndividual> instances = null;
+            if (config.useReasonerForClassInstances) {
+                instances = instanceChecker.getInstancesByReasoner(node);
+            } else {
+                instances = instanceChecker.getInstances(node);
+            }
+            instances = instanceChecker.getInstances(node);
+            node.coverage = (instances == null) ? 0 : instances.size();
+        } else {
+            node.coverage = instanceChecker.countInstances(node);
+        }
         double t2 = System.nanoTime();
 		double time = (t2 - t1)/1e9;		
 		expressionTimeMap.put(node.getConcept(), time);
@@ -1545,14 +1567,13 @@ public class ConceptBuilder implements DLMinerComponent {
 	}
 
 
-    public double getTimeByExpression(OWLClassExpression expr) {
+    public Double getTimeByExpression(OWLClassExpression expr) {
 		return expressionTimeMap.get(expr);
 	}
 
     public OperatorConfig getConfig() {
         return config;
     }
-
 
 
 	public void retainClassDefinitions(Set<Hypothesis> hypotheses) {
@@ -1576,5 +1597,9 @@ public class ConceptBuilder implements DLMinerComponent {
 		
 	}
 
+
+    public Set<ALCNode> getNodes() {
+	    return nodes;
+    }
 
 }

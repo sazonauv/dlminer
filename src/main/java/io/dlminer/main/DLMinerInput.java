@@ -517,6 +517,7 @@ public class DLMinerInput {
 	    config.checkRedundancy = DLMinerInputI.DEF_USE_REDUNDANCY;
         config.useReasonerForAtomicClassInstances = DLMinerInputI.DEF_USE_REASONER_FOR_ATOMIC_CLASS_INSTANCES;
 	    config.useReasonerForClassInstances = DLMinerInputI.DEF_USE_REASONER_FOR_CLASS_INSTANCES;
+	    config.storeInstances = DLMinerInputI.DEF_STORE_INSTANCES;
 
 	    // other parameters
 		maxHypothesesNumber = DLMinerInputI.DEF_MAX_HYPOTHESES_NUMBER;
