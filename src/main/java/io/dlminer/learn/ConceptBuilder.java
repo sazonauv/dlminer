@@ -205,7 +205,7 @@ public class ConceptBuilder implements DLMinerComponent {
 		for (OWLEntity en : signature) {
 			if (en.isOWLClass()) {
 				OWLClass cl = (OWLClass)en;
-				if (!cl.isOWLNothing()) {
+				if (!cl.isOWLThing() && !cl.isOWLNothing()) {
 					classes.add(cl);
 				}
 			} else if (en.isOWLObjectProperty()) {
@@ -633,7 +633,12 @@ public class ConceptBuilder implements DLMinerComponent {
                         }
                         extension.coverage = instances.size();
                     } else {
-                        extension.coverage = instanceChecker.countInstances(extension);
+                        try {
+                            extension.coverage = instanceChecker.countInstances(extension);
+                        } catch (Throwable e) {
+                            Out.p(concept);
+                            e.printStackTrace();
+                        }
                     }
 
                     // record time

@@ -153,11 +153,10 @@ public class ALCOperator extends RefinementOperator {
 
         // owl:Thing
         OWLOntology ontology = reasoner.getRootOntology();
-        OWLClass thing = factory.getOWLThing();
-        if (!classInstanceMap.containsKey(thing)) {
-            classInstanceMap.put(thing, ontology.getIndividualsInSignature());
-        }
-
+//        OWLClass thing = factory.getOWLThing();
+//        if (!classInstanceMap.containsKey(thing)) {
+//            classInstanceMap.put(thing, ontology.getIndividualsInSignature());
+//        }
         // simple told assertions (positive and negative)
 		Set<OWLAxiom> aboxAxioms = ontology.getABoxAxioms(Imports.INCLUDED);
 		for (OWLAxiom ax : aboxAxioms) {
@@ -182,6 +181,10 @@ public class ALCOperator extends RefinementOperator {
 
 		// disjoint classes
         if (config.checkDisjointness && config.useNegation) {
+		    for (OWLClass cl : classes) {
+                OWLClassExpression negCl = negationMap.get(cl);
+                classInstanceMap.put(negCl, new HashSet<>());
+            }
             for (OWLClass cl : classes) {
                 Set<OWLNamedIndividual> instances = classInstanceMap.get(cl);
                 if (!instances.isEmpty()) {
@@ -190,10 +193,6 @@ public class ALCOperator extends RefinementOperator {
                         for (OWLClass disjCl : disjCls) {
                             OWLClassExpression negCl = negationMap.get(disjCl);
                             Set<OWLNamedIndividual> negInstances = classInstanceMap.get(negCl);
-                            if (negInstances == null) {
-                                negInstances = new HashSet<>();
-                                classInstanceMap.put(negCl, negInstances);
-                            }
                             negInstances.addAll(instances);
                         }
                     }
