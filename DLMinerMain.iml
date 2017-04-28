@@ -25,8 +25,8 @@
     <orderEntry type="library" name="Maven: org.codehaus.woodstox:stax2-api:3.1.1" level="project" />
     <orderEntry type="library" name="Maven: org.apache.ws.commons.axiom:axiom-dom:1.2.14" level="project" />
     <orderEntry type="library" name="Maven: dk.brics.automaton:automaton:1.11-8" level="project" />
-    <orderEntry type="library" name="Maven: net.sourceforge.owlapi:owlexplanation:1.0.2" level="project" />
-    <orderEntry type="library" name="Maven: net.sourceforge.owlapi:telemetry:1.0.0" level="project" />
+    <orderEntry type="library" name="Maven: net.sourceforge.owlapi:owlexplanation:2.0.0" level="project" />
+    <orderEntry type="library" name="Maven: net.sourceforge.owlapi:telemetry:2.0.0" level="project" />
     <orderEntry type="library" name="Maven: net.sourceforge.owlapi:owlapi-distribution:4.2.8" level="project" />
     <orderEntry type="library" name="Maven: com.fasterxml.jackson.core:jackson-core:2.5.1" level="project" />
     <orderEntry type="library" name="Maven: com.fasterxml.jackson.core:jackson-databind:2.5.1" level="project" />
