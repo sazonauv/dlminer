@@ -31,13 +31,14 @@ public class DLMinerTest {
         }
 
         DLMinerInput input = new DLMinerInput(ontologyFile);
-        input.setMaxHypothesesNumber(10000);
+        input.setMaxHypothesesNumber(100000);
         input.setMinPrecision(0.95);
-        input.setUseCleaning(false);
+        input.setUseCleaning(true);
         input.setDlminerMode(DLMinerMode.CDL);
+        input.setSeedClassName(args[2]);
 
         OperatorConfig config = input.getConfig();
-        config.minSupport = 1;
+        config.minSupport = 100;
         config.useDataProperties = true;
 
         DLMiner miner = new DLMiner(input);

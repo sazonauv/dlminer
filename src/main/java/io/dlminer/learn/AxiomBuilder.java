@@ -28,14 +28,7 @@ import java.util.Set;
 
 import org.semanticweb.HermiT.structural.OWLAxioms;
 import org.semanticweb.HermiT.structural.ObjectPropertyInclusionManager;
-import org.semanticweb.owlapi.model.OWLAxiom;
-import org.semanticweb.owlapi.model.OWLClass;
-import org.semanticweb.owlapi.model.OWLClassExpression;
-import org.semanticweb.owlapi.model.OWLDataFactory;
-import org.semanticweb.owlapi.model.OWLNamedIndividual;
-import org.semanticweb.owlapi.model.OWLObjectProperty;
-import org.semanticweb.owlapi.model.OWLObjectPropertyExpression;
-import org.semanticweb.owlapi.model.OWLOntologyManager;
+import org.semanticweb.owlapi.model.*;
 import org.semanticweb.owlapi.reasoner.InferenceType;
 import org.semanticweb.owlapi.reasoner.OWLReasoner;
 
@@ -308,9 +301,11 @@ public class AxiomBuilder implements DLMinerComponent {
 		// check redundancy
 		OWLClassExpression expr1 = conceptBuilder.getExpressionByClass(cl1);
 		OWLClassExpression expr2 = conceptBuilder.getExpressionByClass(cl2);
-		OWLAxiom axiom = factory.getOWLSubClassOfAxiom(expr1, expr2);		
+        OWLSubClassOfAxiom axiom = factory.getOWLSubClassOfAxiom(expr1, expr2);
 		// check seed signature
-		if (seedClasses != null && !seedClasses.containsAll(axiom.getClassesInSignature())) {
+		if ( seedClasses != null &&
+                !seedClasses.containsAll(axiom.getSubClass().getClassesInSignature())
+                && !seedClasses.containsAll(axiom.getSuperClass().getClassesInSignature()) ) {
 			return null;
 		}
 		if (dlminerMode.equals(DLMinerMode.KBC)) {
