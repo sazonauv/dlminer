@@ -303,9 +303,7 @@ public class AxiomBuilder implements DLMinerComponent {
 		OWLClassExpression expr2 = conceptBuilder.getExpressionByClass(cl2);
         OWLSubClassOfAxiom axiom = factory.getOWLSubClassOfAxiom(expr1, expr2);
 		// check seed signature
-		if ( seedClasses != null &&
-                !seedClasses.containsAll(axiom.getSubClass().getClassesInSignature())
-                && !seedClasses.containsAll(axiom.getSuperClass().getClassesInSignature()) ) {
+		if (!obeysSignature(axiom)) {
 			return null;
 		}
 		if (dlminerMode.equals(DLMinerMode.KBC)) {
@@ -399,11 +397,28 @@ public class AxiomBuilder implements DLMinerComponent {
 		}
 		return h;
 	}
-	
-	
-	
-		
-	private int findMaxLength(Collection<OWLClass> cls) {
+
+
+
+    private boolean obeysSignature(OWLSubClassOfAxiom axiom) {
+        if (seedClasses == null) {
+            return true;
+        }
+	    if (!seedClasses.containsAll(axiom.getSuperClass().getClassesInSignature())
+                || axiom.getSuperClass().toString().contains("medicine")) {
+	        return false;
+        }
+        // no seeds
+	    for (OWLClass cl : axiom.getSubClass().getClassesInSignature()) {
+	        if (seedClasses.contains(cl)) {
+	            return false;
+            }
+        }
+        return true;
+    }
+
+
+    private int findMaxLength(Collection<OWLClass> cls) {
 		int maxLength = 0;
 		for (OWLClass cl : cls) {
 			OWLClassExpression expr = conceptBuilder.getExpressionByClass(cl);

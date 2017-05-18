@@ -249,7 +249,7 @@ public class DLMiner implements DLMinerComponent {
             OWLClass seedClass = handler.getClassByIRI(input.getSeedClassName());
             if (seedClass != null) {
                 seedClasses = new HashSet<>();
-//                seedClasses.addAll(reasoner.getEquivalentClasses(seedClass).getEntities());
+                seedClasses.addAll(reasoner.getEquivalentClasses(seedClass).getEntities());
                 seedClasses.addAll(reasoner.getSubClasses(seedClass, false).getFlattened());
                 OWLDataFactory factory = handler.getDataFactory();
                 seedClasses.remove(factory.getOWLThing());
