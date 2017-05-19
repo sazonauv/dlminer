@@ -3,7 +3,6 @@ package io.dlminer.learn;
 import io.dlminer.main.DLMinerComponent;
 import io.dlminer.main.DLMinerMode;
 import io.dlminer.main.DLMinerOutputI;
-import io.dlminer.ont.AxiomMetric;
 import io.dlminer.ont.LengthMetric;
 import io.dlminer.ont.OWLObjectPropertyChain;
 import io.dlminer.ont.OntologyHandler;
@@ -11,12 +10,10 @@ import io.dlminer.ont.ReasonerLoader;
 import io.dlminer.ont.ReasonerName;
 import io.dlminer.print.Out;
 import io.dlminer.sort.ConceptLengthComparator;
-import io.dlminer.sort.HypothesisSorter;
 import io.dlminer.sort.MapSetEntry;
 import io.dlminer.sort.MapValueSizeComparator;
 import io.dlminer.sort.SortingOrder;
 
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
@@ -26,8 +23,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import org.semanticweb.HermiT.structural.OWLAxioms;
-import org.semanticweb.HermiT.structural.ObjectPropertyInclusionManager;
 import org.semanticweb.owlapi.model.*;
 import org.semanticweb.owlapi.reasoner.InferenceType;
 import org.semanticweb.owlapi.reasoner.OWLReasoner;
@@ -303,7 +298,7 @@ public class AxiomBuilder implements DLMinerComponent {
 		OWLClassExpression expr2 = conceptBuilder.getExpressionByClass(cl2);
         OWLSubClassOfAxiom axiom = factory.getOWLSubClassOfAxiom(expr1, expr2);
 		// check seed signature
-		if (!obeysSignature(axiom)) {
+		if (!meetsSyntacticRestrictions(axiom)) {
 			return null;
 		}
 		if (dlminerMode.equals(DLMinerMode.KBC)) {
@@ -400,17 +395,22 @@ public class AxiomBuilder implements DLMinerComponent {
 
 
 
-    private boolean obeysSignature(OWLSubClassOfAxiom axiom) {
+    private boolean meetsSyntacticRestrictions(OWLSubClassOfAxiom axiom) {
         if (seedClasses == null) {
             return true;
         }
-	    if (!seedClasses.containsAll(axiom.getSuperClass().getClassesInSignature())
-                || axiom.getSuperClass().toString().contains("medicine")) {
+	    if (!seedClasses.containsAll(axiom.getSuperClass().getClassesInSignature())) {
 	        return false;
         }
-        // no seeds
+        // no top medicine class
+        for (OWLClass cl : axiom.getSuperClass().getClassesInSignature()) {
+            if (cl.toString().contains("medicine") || cl.isOWLThing()) {
+                return false;
+            }
+        }
+        // no seed classes
 	    for (OWLClass cl : axiom.getSubClass().getClassesInSignature()) {
-	        if (seedClasses.contains(cl)) {
+	        if (seedClasses.contains(cl) || cl.isOWLThing() || cl.toString().contains("001-999.99")) {
 	            return false;
             }
         }

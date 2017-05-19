@@ -34,10 +34,11 @@ public class DLMinerTest {
         input.setMaxHypothesesNumber(10000);
         input.setMinPrecision(0.9);
         input.setUseCleaning(true);
-        input.setDlminerMode(DLMinerMode.CDL);
+//        input.setDlminerMode(DLMinerMode.CDL);
         input.setSeedClassName(args[2]);
 
         OperatorConfig config = input.getConfig();
+        config.maxLength = 5;
         config.minSupport = 100;
         config.useDataProperties = true;
 
