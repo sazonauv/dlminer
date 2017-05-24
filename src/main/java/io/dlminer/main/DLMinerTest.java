@@ -38,7 +38,7 @@ public class DLMinerTest {
         input.setSeedClassName(args[2]);
 
         OperatorConfig config = input.getConfig();
-        config.maxLength = 5;
+        config.maxLength = 7;
         config.minSupport = 100;
         config.useDataProperties = true;
 
