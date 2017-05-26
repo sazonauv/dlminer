@@ -39,7 +39,7 @@ public class DLMinerTest {
 
         OperatorConfig config = input.getConfig();
         config.maxLength = 7;
-        config.minSupport = 100;
+        config.minSupport = 20;
         config.useDataProperties = true;
 
         DLMiner miner = new DLMiner(input);

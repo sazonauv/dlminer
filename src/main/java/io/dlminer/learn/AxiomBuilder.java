@@ -278,8 +278,7 @@ public class AxiomBuilder implements DLMinerComponent {
 		OWLAxiom codedAxiom = factory.getOWLSubClassOfAxiom(cl1, cl2);
 		if (classAxioms.contains(codedAxiom)) {
 			return null;
-		}		
-		classAxioms.add(codedAxiom);		
+		}
 		double t1 = System.nanoTime();
 		double support = HypothesisEvaluator.getSupport(cl1, cl2, classInstanceMap);				
 		if (useMinSupport && support < minSupport) {
@@ -301,6 +300,9 @@ public class AxiomBuilder implements DLMinerComponent {
 		if (!meetsSyntacticRestrictions(axiom)) {
 			return null;
 		}
+		// record the processed axiom
+        classAxioms.add(codedAxiom);
+		// expensive checks
 		if (dlminerMode.equals(DLMinerMode.KBC)) {
 			boolean isRed = true;
 			try {							
@@ -312,7 +314,7 @@ public class AxiomBuilder implements DLMinerComponent {
 				return null;
 			}
 		}
-		// check consistency and informativeness		
+		// check informativeness
 		double informTime = 0;					
 		if (ontologyReasoner != null && ontologyReasoner.isEntailmentCheckingSupported(axiom.getAxiomType())) {
 			boolean isEnt = true;
@@ -464,7 +466,6 @@ public class AxiomBuilder implements DLMinerComponent {
 				if (roleAxioms.contains(codedAxiom)) {
 					continue;
 				}
-				roleAxioms.add(codedAxiom);
 				double t1 = System.currentTimeMillis();
 				double support = HypothesisEvaluator.getSupport(prop1, prop2, roleInstanceMap);
 				if (useMinSupport && support <= minSupport) {
@@ -486,7 +487,9 @@ public class AxiomBuilder implements DLMinerComponent {
 				} else {
 					axiom = factory.getOWLSubObjectPropertyOfAxiom(expr1, expr2);
 				}
-				// check consistency and informativeness
+				// record the processed axiom
+                roleAxioms.add(codedAxiom);
+				// check informativeness
 				double informTime = 0;								
 				if (ontologyReasoner != null && ontologyReasoner.isEntailmentCheckingSupported(axiom.getAxiomType())) {
 					boolean isEnt = true;
