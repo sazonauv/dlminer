@@ -48,9 +48,13 @@ public class ALCOperator extends RefinementOperator {
 	private Map<OWLClassExpression, OWLClassExpression> negationMap;
 	private Map<OWLClassExpression, Set<OWLNamedIndividual>> classInstanceMap;
 
+    // inverses
+    private Set<OWLObjectPropertyExpression> propertyExpressions;
+
 	// record times of instance checking
 	private Map<OWLClassExpression, Double> classTimeMap;
 
+	// data properties
     private Map<OWLDataProperty, List<Double>> dataPropertyThresholdsMap;
     private Map<OWLDataProperty, Map<Double, Set<OWLNamedIndividual>>> dataPropertyInstancesMap;
     private Map<OWLDataProperty, Integer> dataPropertyStepMap;
@@ -72,10 +76,25 @@ public class ALCOperator extends RefinementOperator {
 		initNegationMap();
 		initClassHierachy();
 		mapRedundantClassesAndProperties();
+		addInverseObjectProperties();
 		initInstanceMap();
 		initDataPropertyThresholds();
 	}
 
+
+    private void addInverseObjectProperties() {
+	    propertyExpressions = new HashSet<>(properties);
+	    if (!config.useInverseObjectProperties) {
+	        return;
+        }
+        for (OWLObjectProperty prop : properties) {
+	        for (OWLObjectPropertyExpression propExpr : invPropertyMap.get(prop)) {
+	            if (propExpr.isAnonymous()) {
+	                propertyExpressions.add(propExpr);
+                }
+            }
+        }
+    }
 
 
     private void initDataPropertyThresholds() {
@@ -324,9 +343,9 @@ public class ALCOperator extends RefinementOperator {
         // add object property restrictions
         if (length <= config.maxLength - 2) {
             // existential restrictions
-            for (OWLObjectProperty prop : properties) {
-                if (!config.checkRedundancy || !isRedundantExistential(prop, node)) {
-                    extensions.add(getExistential(node, current, prop));
+            for (OWLObjectPropertyExpression propExp : propertyExpressions) {
+                if (!config.checkRedundancy || !isRedundantExistential(propExp, node)) {
+                    extensions.add(getExistential(node, current, propExp));
                 }
             }
             // universal restrictions
@@ -476,8 +495,11 @@ public class ALCOperator extends RefinementOperator {
 
 
     private boolean isRedundantExistential(
-			OWLObjectProperty prop, ALCNode node) {
-		return isDisjointWithPropertyDomains(prop, node);
+			OWLObjectPropertyExpression propExpr, ALCNode node) {
+	    if (propExpr.isAnonymous()) {
+	        return false;
+        }
+		return isDisjointWithPropertyDomains(propExpr.asOWLObjectProperty(), node);
 	}
 	
 		
@@ -853,7 +875,7 @@ public class ALCOperator extends RefinementOperator {
 	
 	
 	private ALCNode getExistential(ALCNode node, ALCNode current, 
-			OWLObjectProperty prop) {
+			OWLObjectPropertyExpression propExpr) {
 		// clone the root
 		ALCNode extension = current.clone();					
 		// find the equal node
@@ -862,7 +884,7 @@ public class ALCOperator extends RefinementOperator {
 		Set<OWLClassExpression> l1 = new HashSet<>(2);
 		Set<OWLClassExpression> l2 = new HashSet<>(2);
 		ALCNode empty = new ALCNode(l1, l2);
-		SomeEdge edge = new SomeEdge(equal, prop, empty);
+		SomeEdge edge = new SomeEdge(equal, propExpr, empty);
 		equal.addOutEdge(edge);
         // update the concept
         extension.updateConcept();

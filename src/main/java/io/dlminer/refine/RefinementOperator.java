@@ -23,7 +23,7 @@ public abstract class RefinementOperator implements Operator {
     protected Set<OWLDataProperty> dataProperties;
     protected Set<OWLObjectProperty> properties;
 	protected Set<OWLClass> classes;
-	
+
 	// reasoner	
 	protected OWLReasoner reasoner;
 	

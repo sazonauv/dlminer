@@ -162,6 +162,25 @@ public interface DLMinerInputI {
 
 
     /**
+     * Default flag for using object property subsumptions
+     */
+    Boolean DEF_USE_OBJECT_PROPERTY_SUBSUMPTIONS = true;
+
+
+    /**
+     * Default flag for using inverse object properties
+     */
+    Boolean DEF_USE_INVERSE_OBJECT_PROPERTIES = false;
+
+
+    /**
+     * Default flag for using object property chains
+     */
+    Boolean DEF_USE_OBJECT_PROPERTY_CHAINS = false;
+
+
+
+    /**
      * Default flag for using computationally complex measures
      */
     Boolean DEF_USE_COMPLEX_MEASURES = false;

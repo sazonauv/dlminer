@@ -525,18 +525,16 @@ public class ConceptBuilder implements DLMinerComponent {
 	
 	
 	private void buildRoleExpressions() {
-		if (config.maxDepth > 0) {
-			if (!languageRoleMap.containsKey(Language.R)) {
-				buildRoleExpressionForLanguage(properties, Language.R);
-			}
-			if (!languageRoleMap.containsKey(Language.INV_R)) {
-				buildRoleExpressionForLanguage(properties, Language.INV_R);
-			}
-			if (!languageRoleMap.containsKey(Language.R_CHAIN_S)) {
-				buildRoleExpressionForLanguage(properties, Language.R_CHAIN_S);
-			}
-			generateAndMapDataRoles();
-		}
+        if (config.useObjectPropertySubsumptions) {
+            buildRoleExpressionForLanguage(properties, Language.R);
+        }
+        if (config.useInverseObjectProperties) {
+            buildRoleExpressionForLanguage(properties, Language.INV_R);
+        }
+        if (config.useObjectPropertyChains) {
+            buildRoleExpressionForLanguage(properties, Language.R_CHAIN_S);
+        }
+        generateAndMapDataRoles();
 	}
 	
 	

@@ -5,7 +5,6 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.InputStream;
 
-import io.dlminer.ont.Logic;
 import io.dlminer.print.Out;
 import io.dlminer.refine.OperatorConfig;
 
@@ -34,13 +33,18 @@ public class DLMinerTest {
         input.setMaxHypothesesNumber(10000);
         input.setMinPrecision(0.9);
         input.setUseCleaning(true);
+//        input.setLogic(Logic.ALC);
 //        input.setDlminerMode(DLMinerMode.CDL);
-        input.setSeedClassName(args[2]);
+//        input.setSeedClassName(args[2]);
 
         OperatorConfig config = input.getConfig();
-        config.maxLength = 4;
-        config.minSupport = 20;
-        config.useDataProperties = true;
+        config.maxLength = 3;
+        config.minSupport = 1;
+        config.useObjectPropertyChains = true;
+//        config.useDataProperties = false;
+//        config.useDisjunction = true;
+//        config.useNegation = true;
+
 
         DLMiner miner = new DLMiner(input);
 		try {

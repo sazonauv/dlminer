@@ -66,6 +66,22 @@ public class OperatorConfig {
     public int dataThresholdsNumber;
 
 
+    /**
+     * The flag for using inverse properties
+     */
+    public boolean useInverseObjectProperties;
+
+    /**
+     * The flag for using object property subsumptions
+     */
+    public boolean useObjectPropertySubsumptions;
+
+    /**
+     * The flag for using object property chains
+     */
+    public boolean useObjectPropertyChains;
+
+
     // optimisations
     /**
      * The flag indicating whether disjoint classes are checked
@@ -79,6 +95,7 @@ public class OperatorConfig {
     public boolean checkRedundancy;
 
     public boolean storeInstances;
+
 
 
 }
