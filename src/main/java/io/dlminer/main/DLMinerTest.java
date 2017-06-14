@@ -33,18 +33,12 @@ public class DLMinerTest {
         input.setMaxHypothesesNumber(10000);
         input.setMinPrecision(0.9);
         input.setUseCleaning(true);
-//        input.setLogic(Logic.ALC);
 //        input.setDlminerMode(DLMinerMode.CDL);
 //        input.setSeedClassName(args[2]);
 
         OperatorConfig config = input.getConfig();
-        config.maxLength = 3;
-        config.minSupport = 1;
-        config.useObjectPropertyChains = true;
-//        config.useDataProperties = false;
-//        config.useDisjunction = true;
-//        config.useNegation = true;
-
+        config.maxLength = 5;
+        config.minSupport = 100;
 
         DLMiner miner = new DLMiner(input);
 		try {

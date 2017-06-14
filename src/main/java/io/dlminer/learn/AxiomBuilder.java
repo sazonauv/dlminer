@@ -398,21 +398,32 @@ public class AxiomBuilder implements DLMinerComponent {
 
 
     private boolean meetsSyntacticRestrictions(OWLSubClassOfAxiom axiom) {
+	    // no top diagnosis class in RHS and LHS
+        for (OWLClass cl : axiom.getSuperClass().getClassesInSignature()) {
+            if (cl.isOWLThing() || cl.toString().contains("001-999.99")) {
+                return false;
+            }
+        }
+        for (OWLClass cl : axiom.getSubClass().getClassesInSignature()) {
+            if (cl.isOWLThing() || cl.toString().contains("001-999.99")) {
+                return false;
+            }
+        }
         if (seedClasses == null) {
             return true;
         }
 	    if (!seedClasses.containsAll(axiom.getSuperClass().getClassesInSignature())) {
 	        return false;
         }
-        // no top medicine class
+        // no top medicine class in RHS
         for (OWLClass cl : axiom.getSuperClass().getClassesInSignature()) {
             if (cl.toString().contains("medicine") || cl.isOWLThing()) {
                 return false;
             }
         }
-        // no seed classes
+        // no seed classes in LHS
 	    for (OWLClass cl : axiom.getSubClass().getClassesInSignature()) {
-	        if (seedClasses.contains(cl) || cl.isOWLThing() || cl.toString().contains("001-999.99")) {
+	        if (seedClasses.contains(cl)) {
 	            return false;
             }
         }
