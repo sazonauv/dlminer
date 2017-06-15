@@ -11,7 +11,6 @@ import java.util.Map;
 import java.util.Set;
 
 import io.dlminer.refine.OperatorConfig;
-import org.semanticweb.owlapi.apibinding.OWLFunctionalSyntaxFactory;
 import org.semanticweb.owlapi.formats.FunctionalSyntaxDocumentFormat;
 import org.semanticweb.owlapi.formats.OWLXMLDocumentFormat;
 import org.semanticweb.owlapi.formats.TurtleDocumentFormat;
@@ -30,7 +29,6 @@ import io.dlminer.ont.Logic;
 import io.dlminer.ont.OntologyFormat;
 import io.dlminer.ont.OntologyHandler;
 import io.dlminer.ont.ReasonerLoader;
-import io.dlminer.print.CSVWriter;
 import io.dlminer.print.HypothesisWriter;
 import io.dlminer.print.Out;
 import io.dlminer.sort.HypothesisSorter;
@@ -152,12 +150,7 @@ public class DLMiner implements DLMinerComponent {
 
         // parse the ontology file
         long start = System.currentTimeMillis();
-        OntologyHandler handler = null;
-        if (input.isUseClosedWorldAssumption()) {
-            handler = new OntologyHandler(input.getOntologyFile());
-        } else {
-            handler = OntologyHandler.extractBotDataModule(input.getOntologyFile());
-        }
+        OntologyHandler handler = new OntologyHandler(input.getOntologyFile(), true);
 
         Out.p("\nOntology size:");
         Out.p("\tTBox size = " + handler.getTBoxAxioms().size());

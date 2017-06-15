@@ -74,6 +74,14 @@ public class OntologyHandler {
 	public OntologyHandler(String fileName) {		
 		loadOntology(fileName);		
 	}
+
+    public OntologyHandler(File file, boolean includeImports) {
+	    if (includeImports) {
+	        loadOntologyWithImports(file);
+        } else {
+            loadOntology(file);
+        }
+    }
 	
 	public OntologyHandler(File file) {		
 		loadOntology(file);		
@@ -175,21 +183,19 @@ public class OntologyHandler {
 		loadOntologyWithImports(ontFile);
 	}
 	
-	private void loadOntologyWithImports(File ontFile) {		
+	private void loadOntologyWithImports(File ontFile) {
 		manager = OWLManager.createOWLOntologyManager();
 		factory = manager.getOWLDataFactory();
-		ontology = null;		
 		AutoIRIMapper mapper = new AutoIRIMapper(ontFile.getParentFile(), true);
-		manager.addIRIMapper(mapper);		
+		OWLOntologyManager mantemp = OWLManager.createOWLOntologyManager();
+        mantemp.addIRIMapper(mapper);
 		try {
-			ontology = manager.loadOntologyFromOntologyDocument(ontFile);
-		} catch (OWLOntologyCreationException e) {
-			e.printStackTrace();
-		}
-		// include all imports
-		for (OWLOntology imp : ontology.getImportsClosure()) {			
-			manager.addAxioms(ontology, imp.getAxioms());
-		}
+            OWLOntology o = mantemp.loadOntologyFromOntologyDocument(ontFile);
+            // include all imports
+            ontology = manager.createOntology(o.getAxioms(Imports.INCLUDED));
+        } catch (OWLOntologyCreationException e) {
+            e.printStackTrace();
+        }
 	}
 	
 	

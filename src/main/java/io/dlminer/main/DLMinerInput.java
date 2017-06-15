@@ -64,7 +64,14 @@ public class DLMinerInput {
 	 * The file should be in one of standard OWL syntaxes, 
 	 * see https://en.wikipedia.org/wiki/Web_Ontology_Language.
 	 */
-	private InputStream ontologyFile;
+	private InputStream ontologyStream;
+
+
+
+    /**
+     * The file of an input ontology
+     */
+    private File ontologyFile;
 
 	
 	
@@ -221,39 +228,47 @@ public class DLMinerInput {
 	}
 
 
+
+
+    public File getOntologyFile() {
+        return ontologyFile;
+    }
+
+
 	
 	/**
-	 * @return the ontologyFile
+	 * @return the ontologyStream
 	 */
-	public InputStream getOntologyFile() {
-		return ontologyFile;
+	public InputStream getOntologyStream() {
+		return ontologyStream;
 	}
 
 
 
 	/**
-	 * @param ontologyFile the ontologyFile to set
+	 * @param ontologyStream the ontologyStream to set
 	 */
-	public void setOntologyFile(InputStream ontologyFile) {
-		this.ontologyFile = ontologyFile;
+	public void setOntologyStream(InputStream ontologyStream) {
+		this.ontologyStream = ontologyStream;
 	}
 	
 	
 	
 	/**
-	 * @param ontologyFile the ontologyFile to set
+	 * @param ontologyFile the ontologyStream to set
 	 */
 	public void setOntologyFile(File ontologyFile) {
+	    this.ontologyFile = ontologyFile;
 		InputStream ontologyStream = null;
         try {
         	ontologyStream = new FileInputStream(ontologyFile);
         } catch (FileNotFoundException e) {
             e.printStackTrace();
         }
-        this.ontologyFile = ontologyStream;
+        this.ontologyStream = ontologyStream;
 	}
-	
-	
+
+
 
 	
 	/**
@@ -480,24 +495,32 @@ public class DLMinerInput {
 
     // ====================== constructors ======================
 
+
+    /**
+     * @param ontologyFilePath ontologyFilePath
+     */
+    public DLMinerInput(String ontologyFilePath) {
+        setOntologyFile(new File(ontologyFilePath));
+        init();
+    }
 	
 
 	/**
-	 * @param ontologyFile ontologyFile
+	 * @param ontologyFile ontologyStream
 	 */
-	public DLMinerInput(File ontologyFile) {		
+	public DLMinerInput(File ontologyFile) {
 		setOntologyFile(ontologyFile);
         init();
 	}
 	
 	
 	/**
-	 * @param ontologyFile ontologyFile
+	 * @param ontologyStream ontologyStream
 	 */
-	public DLMinerInput(InputStream ontologyFile) {
-		this.ontologyFile = ontologyFile;
-		init();
-	}
+//	public DLMinerInput(InputStream ontologyStream) {
+//		this.ontologyStream = ontologyStream;
+//		init();
+//	}
 		
 
 	private void init() {
