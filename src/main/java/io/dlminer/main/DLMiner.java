@@ -547,7 +547,7 @@ public class DLMiner implements DLMinerComponent {
         // create an output ontology and add hypotheses        
         OntologyHandler hypothesesHandler = new OntologyHandler(iri);
         // add all annotations
-//        hypothesesHandler.addAnnotations(output.getOntology());
+        hypothesesHandler.addAnnotations(output.getOntology());
         // return only the specified number of hypotheses
         int count = 0;
         for (Hypothesis hypothesis : hypotheses) {

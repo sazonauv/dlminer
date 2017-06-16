@@ -22,13 +22,6 @@ public class DLMinerTest {
 	 * @param args
 	 */
 	public static void main(String[] args) {
-//		InputStream ontologyFile = null;
-//        try {
-//        	ontologyFile = new FileInputStream(args[0]);
-//        } catch (FileNotFoundException e) {
-//            e.printStackTrace();
-//        }
-
         DLMinerInput input = new DLMinerInput(args[0]);
         input.setMaxHypothesesNumber(10000);
         input.setMinPrecision(0.9);
@@ -37,8 +30,8 @@ public class DLMinerTest {
 //        input.setSeedClassName(args[2]);
 
         OperatorConfig config = input.getConfig();
-        config.maxLength = 2;
-        config.minSupport = 5;
+        config.maxLength = 5;
+        config.minSupport = 50;
 
         DLMiner miner = new DLMiner(input);
 		try {

@@ -398,14 +398,17 @@ public class AxiomBuilder implements DLMinerComponent {
 
 
     private boolean meetsSyntacticRestrictions(OWLSubClassOfAxiom axiom) {
+	    String[] ignoredStrings = new String[] {
+                "001-999.99", "00-99.99", "medicine"
+        };
 	    // no top diagnosis class in RHS and LHS
         for (OWLClass cl : axiom.getSuperClass().getClassesInSignature()) {
-            if (cl.isOWLThing() || cl.toString().contains("001-999.99")) {
+            if (cl.isOWLThing() || contains(cl.toString(), ignoredStrings)) {
                 return false;
             }
         }
         for (OWLClass cl : axiom.getSubClass().getClassesInSignature()) {
-            if (cl.isOWLThing() || cl.toString().contains("001-999.99")) {
+            if (cl.isOWLThing() || contains(cl.toString(), ignoredStrings)) {
                 return false;
             }
         }
@@ -417,7 +420,7 @@ public class AxiomBuilder implements DLMinerComponent {
         }
         // no top medicine class in RHS
         for (OWLClass cl : axiom.getSuperClass().getClassesInSignature()) {
-            if (cl.toString().contains("medicine") || cl.isOWLThing()) {
+            if (cl.isOWLThing() || contains(cl.toString(), ignoredStrings)) {
                 return false;
             }
         }
@@ -428,6 +431,16 @@ public class AxiomBuilder implements DLMinerComponent {
             }
         }
         return true;
+    }
+
+
+    private boolean contains(String subject, String[] objects) {
+	    for (String object : objects) {
+	        if (subject.contains(object)) {
+	            return true;
+            }
+        }
+        return false;
     }
 
 

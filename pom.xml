@@ -36,7 +36,7 @@
                 <configuration>
                     <archive>
                         <manifest>
-                            <mainClass>io.dlminer.exp.DLAprioriExperiment</mainClass>
+                            <mainClass>io.dlminer.exp.DiscernOntologyExperiment</mainClass>
                         </manifest>
                     </archive>
                     <descriptorRefs>
