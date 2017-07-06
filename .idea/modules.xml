@@ -2,7 +2,7 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file://$PROJECT_DIR$/DLMinerMain.iml" filepath="$PROJECT_DIR$/DLMinerMain.iml" />
+      <module fileurl="file://$PROJECT_DIR$/dlminer.iml" filepath="$PROJECT_DIR$/dlminer.iml" />
     </modules>
   </component>
 </project>
