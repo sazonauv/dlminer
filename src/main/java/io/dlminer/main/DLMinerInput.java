@@ -11,6 +11,7 @@ import java.io.InputStream;
 
 import io.dlminer.refine.OperatorConfig;
 import org.semanticweb.owlapi.model.OWLClass;
+import org.semanticweb.owlapi.model.OWLOntology;
 
 /**
  * @author Slava Sazonau
@@ -72,6 +73,13 @@ public class DLMinerInput {
      * The file of an input ontology
      */
     private File ontologyFile;
+
+
+
+    /**
+     * An input ontology that DL-Miner processes.
+     */
+    private OWLOntology ontology;
 
 	
 	
@@ -267,6 +275,16 @@ public class DLMinerInput {
         }
         this.ontologyStream = ontologyStream;
 	}
+
+
+
+    public OWLOntology getOntology() {
+        return ontology;
+    }
+
+    public void setOntology(OWLOntology ontology) {
+        this.ontology = ontology;
+    }
 
 
 
@@ -512,16 +530,18 @@ public class DLMinerInput {
 		setOntologyFile(ontologyFile);
         init();
 	}
+
+
+    /**
+     * @param ontology ontology
+     */
+    public DLMinerInput(OWLOntology ontology) {
+        setOntology(ontology);
+        init();
+    }
 	
 	
-	/**
-	 * @param ontologyStream ontologyStream
-	 */
-//	public DLMinerInput(InputStream ontologyStream) {
-//		this.ontologyStream = ontologyStream;
-//		init();
-//	}
-		
+
 
 	private void init() {
 

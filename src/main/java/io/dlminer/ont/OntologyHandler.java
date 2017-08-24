@@ -65,11 +65,25 @@ public class OntologyHandler {
 	
 	public OntologyHandler(OWLOntology ontology) {
 		this.ontology = ontology;
-		manager = ontology.getOWLOntologyManager();
-		factory = manager.getOWLDataFactory();
-		manager.setDefaultChangeBroadcastStrategy(
-				new SpecificOntologyChangeBroadcastStrategy(this.ontology));
+        initWithOntology();
 	}
+
+	private void initWithOntology() {
+        manager = ontology.getOWLOntologyManager();
+        factory = manager.getOWLDataFactory();
+        manager.setDefaultChangeBroadcastStrategy(
+                new SpecificOntologyChangeBroadcastStrategy(this.ontology));
+    }
+
+    public OntologyHandler(OWLOntology ontology, boolean includeImports) {
+        if (includeImports) {
+            loadOntologyWithImports(ontology);
+        } else {
+            this.ontology = ontology;
+            initWithOntology();
+        }
+    }
+
 	
 	public OntologyHandler(String fileName) {		
 		loadOntology(fileName);		
@@ -197,6 +211,18 @@ public class OntologyHandler {
             e.printStackTrace();
         }
 	}
+
+
+    private void loadOntologyWithImports(OWLOntology o) {
+        manager = OWLManager.createOWLOntologyManager();
+        factory = manager.getOWLDataFactory();
+        try {
+            // include all imports
+            ontology = manager.createOntology(o.getAxioms(Imports.INCLUDED));
+        } catch (OWLOntologyCreationException e) {
+            e.printStackTrace();
+        }
+    }
 	
 	
 	public OWLOntologyManager getManager() {

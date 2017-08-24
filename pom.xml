@@ -13,12 +13,12 @@
     <artifactId>dlminer-main</artifactId>
     <version>1.0</version>
 
-    <repositories>
+    <!--<repositories>
         <repository>
             <id>maven.aksw.internal</id>
             <url>http://maven.aksw.org/repository/internal/</url>
         </repository>
-    </repositories>
+    </repositories>-->
 
     <build>
         <plugins>

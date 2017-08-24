@@ -150,7 +150,12 @@ public class DLMiner implements DLMinerComponent {
 
         // parse the ontology file
         long start = System.currentTimeMillis();
-        OntologyHandler handler = new OntologyHandler(input.getOntologyFile(), true);
+        OntologyHandler handler = null;
+        if (input.getOntology() != null) {
+            handler = new OntologyHandler(input.getOntology(), true);
+        } else {
+            handler = new OntologyHandler(input.getOntologyFile(), true);
+        }
 
         Out.p("\nOntology size:");
         Out.p("\tTBox size = " + handler.getTBoxAxioms().size());
