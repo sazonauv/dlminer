@@ -13,12 +13,6 @@
     <artifactId>dlminer-main</artifactId>
     <version>1.0</version>
 
-    <!--<repositories>
-        <repository>
-            <id>maven.aksw.internal</id>
-            <url>http://maven.aksw.org/repository/internal/</url>
-        </repository>
-    </repositories>-->
 
     <build>
         <plugins>
@@ -91,31 +85,7 @@
                 </exclusion>
             </exclusions>
         </dependency>
-        <!--
-        <dependency>
-            <groupId>org.dllearner</groupId>
-            <artifactId>components-core</artifactId>
-            <version>1.2</version>
-            <exclusions>
-                <exclusion>
-                    <groupId>net.sourceforge.owlapi</groupId>
-                    <artifactId>owlapi-distribution</artifactId>
-                </exclusion>
-                <exclusion>
-                    <groupId>net.sourceforge.owlapi</groupId>
-                    <artifactId>owlapi-impl</artifactId>
-                </exclusion>
-                <exclusion>
-                    <groupId>net.sourceforge.owlapi</groupId>
-                    <artifactId>owlapi-apibinding</artifactId>
-                </exclusion>
-                <exclusion>
-                    <groupId>net.sourceforge.owlapi</groupId>
-                    <artifactId>owlapi-owlapi</artifactId>
-                </exclusion>
-            </exclusions>
-        </dependency>
-        -->
+
         <dependency>
             <groupId>net.sourceforge.owlapi</groupId>
             <artifactId>owlapi-distribution</artifactId>
