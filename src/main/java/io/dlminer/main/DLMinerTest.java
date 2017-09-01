@@ -23,7 +23,7 @@ public class DLMinerTest {
 	 */
 	public static void main(String[] args) {
         DLMinerInput input = new DLMinerInput(args[0]);
-        input.setMaxHypothesesNumber(10000);
+        input.setMaxHypothesesNumber(1000);
         input.setMinPrecision(0.9);
         input.setUseCleaning(true);
 //        input.setDlminerMode(DLMinerMode.CDL);
