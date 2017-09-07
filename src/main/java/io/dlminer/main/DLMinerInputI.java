@@ -1,6 +1,7 @@
 package io.dlminer.main;
 
 
+import io.dlminer.learn.AxiomPattern;
 import io.dlminer.ont.Logic;
 import io.dlminer.ont.OntologyFormat;
 import io.dlminer.ont.ReasonerLoader;
@@ -194,24 +195,20 @@ public interface DLMinerInputI {
 
     Boolean DEF_STORE_INSTANCES = true;
 
+    AxiomPattern DEF_AXIOM_PATTERN = AxiomPattern.SEEDS_RHS_LHS;
+
 		
 	
 	// ====================== error messages ======================
 	
-	// null parameter errors
-	String NULL_MAX_ROLE_DEPTH_ERR = "maxRoleDepth cannot be empty!";
-	String NULL_MAX_HYPOTHESES_NUMBER_ERR = "maxHypothesesNumber cannot be empty!";
-	String NULL_REASONER_TIMEOUT_ERR = "reasonerTimeout cannot be empty!";
-	String NULL_MIN_PRECISION_ERR = "minPrecision cannot be empty!";
-	String NULL_MIN_CONCEPT_SUPPORT_ERR = "minConceptSupport cannot be empty!";
-	
-	
+
 	// wrong parameter value errors
 	String WRONG_MAX_ROLE_DEPTH_ERR = "maxRoleDepth cannot be negative (can only be zero or positive)!";
 	String WRONG_MAX_HYPOTHESES_NUMBER_ERR = "maxHypothesesNumber can only be positive!";
 	String WRONG_REASONER_TIMEOUT_ERR = "reasonerTimeout can only be positive!";
 	String WRONG_MIN_PRECISION_ERR = "minPrecision can only be positive!";
 	String WRONG_MIN_CONCEPT_SUPPORT_ERR = "minConceptSupport cannot be negative!";
+
 
 
 

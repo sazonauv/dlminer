@@ -1,6 +1,7 @@
 package io.dlminer.exp;
 
 import io.dlminer.learn.Hypothesis;
+import io.dlminer.learn.AxiomConfig;
 import io.dlminer.main.DLMiner;
 import io.dlminer.main.DLMinerInput;
 import io.dlminer.ont.Logic;
@@ -70,33 +71,35 @@ public class BelNetExperiment {
 
         // set parameters
         DLMinerInput input = new DLMinerInput(ontFile);
-        input.setLogic(logic);
         input.setReasonerName(reasonerName);
         input.setMaxHypothesesNumber(hypothesesNumber);
         input.setReasonerTimeout(reasonerTimeout);
-        input.setMinPrecision(minPrecision);
-        input.setUseMinPrecision(true);
-        input.setUseCleaning(false);
         input.setUseClosedWorldAssumption(true);
 
         // language bias
-        OperatorConfig config = input.getConfig();
-        config.maxDepth = roleDepth;
-        config.maxLength = maxConceptLength;
-        config.minSupport = minSupport;
-        config.useDataProperties = false;
-        config.useNegation = true;
-        config.useDisjunction = true;
-        config.useUniversalRestriction = true;
+        OperatorConfig operatorConfig = input.getOperatorConfig();
+        operatorConfig.maxDepth = roleDepth;
+        operatorConfig.maxLength = maxConceptLength;
+        operatorConfig.minSupport = minSupport;
+        operatorConfig.useDataProperties = false;
+        operatorConfig.useNegation = true;
+        operatorConfig.useDisjunction = true;
+        operatorConfig.useUniversalRestriction = true;
+        operatorConfig.logic = logic;
         if (logic.equals(Logic.EL)) {
-            config.useNegation = false;
-            config.useDisjunction = false;
-            config.useUniversalRestriction = false;
+            operatorConfig.useNegation = false;
+            operatorConfig.useDisjunction = false;
+            operatorConfig.useUniversalRestriction = false;
         }
 
+        AxiomConfig axiomConfig = input.getAxiomConfig();
+        axiomConfig.minPrecision = minPrecision;
+        axiomConfig.useMinPrecision = true;
+        axiomConfig.useCleaning = false;
+
         // optimisations
-        config.checkDisjointness = true;
-        config.useReasonerForAtomicClassInstances = true;
+        operatorConfig.checkDisjointness = true;
+        operatorConfig.useReasonerForAtomicClassInstances = true;
 
 
         // run DL-Miner

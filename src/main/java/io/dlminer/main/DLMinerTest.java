@@ -1,10 +1,8 @@
 package io.dlminer.main;
 
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.InputStream;
 
+import io.dlminer.learn.AxiomConfig;
 import io.dlminer.print.Out;
 import io.dlminer.refine.OperatorConfig;
 
@@ -24,14 +22,14 @@ public class DLMinerTest {
 	public static void main(String[] args) {
         DLMinerInput input = new DLMinerInput(args[0]);
         input.setMaxHypothesesNumber(1000);
-        input.setMinPrecision(0.9);
-        input.setUseCleaning(true);
-//        input.setDlminerMode(DLMinerMode.CDL);
-//        input.setSeedClassName(args[2]);
 
-        OperatorConfig config = input.getConfig();
-        config.maxLength = 5;
-        config.minSupport = 50;
+        OperatorConfig operatorConfig = input.getOperatorConfig();
+        operatorConfig.maxLength = 4;
+        operatorConfig.minSupport = 1;
+
+        AxiomConfig axiomConfig = input.getAxiomConfig();
+        axiomConfig.minPrecision = 0.9;
+        axiomConfig.useCleaning = true;
 
         DLMiner miner = new DLMiner(input);
 		try {

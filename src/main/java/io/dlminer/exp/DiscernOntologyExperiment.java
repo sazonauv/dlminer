@@ -1,5 +1,6 @@
 package io.dlminer.exp;
 
+import io.dlminer.learn.AxiomConfig;
 import io.dlminer.main.DLMiner;
 import io.dlminer.main.DLMinerInput;
 import io.dlminer.print.Out;
@@ -37,13 +38,15 @@ public class DiscernOntologyExperiment {
         // set parameters
         DLMinerInput input = new DLMinerInput(ontologyFile);
         input.setMaxHypothesesNumber(hypothesesNumber);
-        input.setMinPrecision(minPrecision);
-        input.setUseCleaning(true);
 
         // language bias
-        OperatorConfig config = input.getConfig();
-        config.maxLength = maxConceptLength;
-        config.minSupport = minSupport;
+        OperatorConfig operatorConfig = input.getOperatorConfig();
+        operatorConfig.maxLength = maxConceptLength;
+        operatorConfig.minSupport = minSupport;
+
+        AxiomConfig axiomConfig = input.getAxiomConfig();
+        axiomConfig.minPrecision = minPrecision;
+        axiomConfig.useCleaning = true;
 
         // run DL-Miner
         DLMiner miner = new DLMiner(input);

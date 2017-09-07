@@ -9,6 +9,7 @@ import io.dlminer.ont.OntologyHandler;
 import io.dlminer.ont.ReasonerLoader;
 import io.dlminer.ont.ReasonerName;
 import io.dlminer.print.Out;
+import io.dlminer.refine.OperatorConfig;
 import io.dlminer.sort.ConceptLengthComparator;
 import io.dlminer.sort.MapSetEntry;
 import io.dlminer.sort.MapValueSizeComparator;
@@ -36,42 +37,30 @@ public class AxiomBuilder implements DLMinerComponent {
 	private OWLReasoner ontologyReasoner;
 	private OntologyHandler ontologyHandler;
 	private ConceptBuilder conceptBuilder;
+
+	// axiom components
 	private OWLReasoner hypothesisReasoner;
 	private OntologyHandler hypothesisHandler;
 	
 	// parameters
-	private double minSupport;	
-	private double minPrecision;
-	
-	private boolean useMinSupport;
-	private boolean useMinPrecision;	
-	private DLMinerMode dlminerMode;
+    private OperatorConfig operatorConfig;
+    private AxiomConfig axiomConfig;
 	
 	// axioms
 	private Set<OWLAxiom> classAxioms;
 	private Set<OWLAxiom> roleAxioms;
+
 	
-	private Set<OWLClass> seedClasses;
 	
-	
-	public AxiomBuilder(ConceptBuilder builder, 
-			double minSupport, double minPrecision, 
-			boolean useMinSupport, 
-			boolean useMinPrecision,
-			DLMinerMode dlminerMode, Set<OWLClass> seedClasses) {		
+	public AxiomBuilder(ConceptBuilder builder,
+                        OperatorConfig operatorConfig, AxiomConfig axiomConfig) {
 
 		this.factory = builder.getFactory();
 		this.ontologyReasoner = builder.getReasoner();
 		this.ontologyHandler = builder.getHandler();
 		this.conceptBuilder = builder;	
-		
-		this.minSupport = minSupport;
-		this.minPrecision = minPrecision;
-		
-		this.useMinSupport = useMinSupport;
-		this.useMinPrecision = useMinPrecision;
-		this.dlminerMode = dlminerMode;
-		this.seedClasses = seedClasses;
+		this.operatorConfig = operatorConfig;
+		this.axiomConfig = axiomConfig;
 	}
 
 
@@ -80,7 +69,7 @@ public class AxiomBuilder implements DLMinerComponent {
         classAxioms = new HashSet<>();
         roleAxioms = new HashSet<>();
 
-        if (dlminerMode.equals(DLMinerMode.KBC)) {
+        if (axiomConfig.dlminerMode.equals(DLMinerMode.KBC)) {
             initInternalReasoner();
         }
     }
@@ -100,6 +89,23 @@ public class AxiomBuilder implements DLMinerComponent {
 			e.printStackTrace();
 		}
 	}
+
+
+    public void setSeedEntities() {
+        // setting the seed signature
+        if (axiomConfig.seedClassName != null) {
+            OWLClass seedClass = ontologyHandler.getClassByIRI(axiomConfig.seedClassName);
+            if (seedClass != null) {
+                Set<OWLEntity> seedEntities = new HashSet<>();
+                seedEntities.addAll(ontologyReasoner.getEquivalentClasses(seedClass).getEntities());
+                seedEntities.addAll(ontologyReasoner.getSubClasses(seedClass, false).getFlattened());
+                seedEntities.remove(factory.getOWLThing());
+                seedEntities.remove(factory.getOWLNothing());
+                axiomConfig.seedEntities = seedEntities;
+            }
+            Out.p("\n" + axiomConfig.seedEntities.size() + " seed classes are selected");
+        }
+    }
 
 
 	private boolean isEmpty(OWLClass cl1, OWLClass cl2,
@@ -169,7 +175,7 @@ public class AxiomBuilder implements DLMinerComponent {
 		int maxLength = findMaxLength(cls);
 		Out.p(total + " axioms to check");
 		// if KBC
-		if (dlminerMode.equals(DLMinerMode.KBC)) {
+		if (axiomConfig.dlminerMode.equals(DLMinerMode.KBC)) {
 		    loop:
 			for (int length = 1; length <= 2*maxLength; length++) {
 				for (OWLClass cl2 : cls) {
@@ -198,7 +204,7 @@ public class AxiomBuilder implements DLMinerComponent {
 						// add a hypothesis
 						hypotheses.add(h);
 						// handle redundancy
-						if (h.precision >= minPrecision) {						
+						if (h.precision >= axiomConfig.minPrecision) {
 							try {
 								hypothesisHandler.addAxioms(h.axioms);
 								if (hypothesisReasoner.isConsistent()) {
@@ -236,7 +242,7 @@ public class AxiomBuilder implements DLMinerComponent {
 						Out.p(count + " / " + total + " axioms checked; " + hypotheses.size() + " axioms added");
 					}
 					OWLClassExpression expr1 = conceptBuilder.getExpressionByClass(cl1);
-					if (dlminerMode.equals(DLMinerMode.CDL) 
+					if (axiomConfig.dlminerMode.equals(DLMinerMode.CDL)
 							&& expr1.isAnonymous() && expr2.isAnonymous()) {
 						continue;
 					}
@@ -281,7 +287,7 @@ public class AxiomBuilder implements DLMinerComponent {
 		}
 		double t1 = System.nanoTime();
 		double support = HypothesisEvaluator.getSupport(cl1, cl2, classInstanceMap);				
-		if (useMinSupport && support < minSupport) {
+		if (axiomConfig.useMinSupport && support < operatorConfig.minSupport) {
 			return null;
 		}
 		Set<OWLNamedIndividual> pos1 = classInstanceMap.get(cl1);
@@ -289,7 +295,7 @@ public class AxiomBuilder implements DLMinerComponent {
 		double assumption = pos1.size() - support;
 		double precision = support/pos1.size();
 		double t2 = System.nanoTime();
-		if (useMinPrecision && precision < minPrecision) {
+		if (axiomConfig.useMinPrecision && precision < axiomConfig.minPrecision) {
 			return null;
 		}					
 		// check redundancy
@@ -303,7 +309,7 @@ public class AxiomBuilder implements DLMinerComponent {
 		// record the processed axiom
         classAxioms.add(codedAxiom);
 		// expensive checks
-		if (dlminerMode.equals(DLMinerMode.KBC)) {
+		if (axiomConfig.dlminerMode.equals(DLMinerMode.KBC)) {
 			boolean isRed = true;
 			try {							
 				isRed = hypothesisReasoner.isEntailed(axiom);
@@ -398,43 +404,73 @@ public class AxiomBuilder implements DLMinerComponent {
 
 
     private boolean meetsSyntacticRestrictions(OWLSubClassOfAxiom axiom) {
-	    String[] ignoredStrings = new String[] {
-                "001-999.99", "00-99.99", "medicine"
-        };
-	    // no top diagnosis class in RHS and LHS
+        if (axiomConfig.axiomPattern.equals(AxiomPattern.SEEDS_RHS)) {
+            return meetsSeedsOnRHS(axiom);
+        } else if (axiomConfig.axiomPattern.equals(AxiomPattern.SEEDS_LHS)) {
+            return meetsSeedsOnLHS(axiom);
+        } else {
+            return meetsSeedsOnLHSorRHS(axiom);
+        }
+    }
+
+    private boolean meetsSeedsOnLHSorRHS(OWLSubClassOfAxiom axiom) {
+        if (containsIgnoredStrings(axiom)) {
+            return false;
+        }
+        if (axiomConfig.seedEntities == null) {
+            return true;
+        }
+        for (OWLEntity ent : axiom.getSignature()) {
+            if (axiomConfig.seedEntities.contains(ent)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private boolean meetsSeedsOnLHS(OWLSubClassOfAxiom axiom) {
+        return true;
+    }
+
+
+    private boolean meetsSeedsOnRHS(OWLSubClassOfAxiom axiom) {
+        if (containsIgnoredStrings(axiom)) {
+            return false;
+        }
+        if (axiomConfig.seedEntities == null) {
+            return true;
+        }
+        if (!axiomConfig.seedEntities.containsAll(axiom.getSuperClass().getClassesInSignature())) {
+            return false;
+        }
         for (OWLClass cl : axiom.getSuperClass().getClassesInSignature()) {
-            if (cl.isOWLThing() || contains(cl.toString(), ignoredStrings)) {
+            if (cl.isOWLThing() || contains(cl.toString(), axiomConfig.ignoredStrings)) {
                 return false;
             }
         }
         for (OWLClass cl : axiom.getSubClass().getClassesInSignature()) {
-            if (cl.isOWLThing() || contains(cl.toString(), ignoredStrings)) {
+            if (axiomConfig.seedEntities.contains(cl)) {
                 return false;
-            }
-        }
-        if (seedClasses == null) {
-            return true;
-        }
-	    if (!seedClasses.containsAll(axiom.getSuperClass().getClassesInSignature())) {
-	        return false;
-        }
-        // no top medicine class in RHS
-        for (OWLClass cl : axiom.getSuperClass().getClassesInSignature()) {
-            if (cl.isOWLThing() || contains(cl.toString(), ignoredStrings)) {
-                return false;
-            }
-        }
-        // no seed classes in LHS
-	    for (OWLClass cl : axiom.getSubClass().getClassesInSignature()) {
-	        if (seedClasses.contains(cl)) {
-	            return false;
             }
         }
         return true;
     }
 
 
-    private boolean contains(String subject, String[] objects) {
+    private boolean containsIgnoredStrings(OWLSubClassOfAxiom axiom) {
+	    if (axiomConfig.ignoredStrings == null) {
+	        return false;
+        }
+        for (OWLClass cl : axiom.getClassesInSignature()) {
+            if (cl.isOWLThing() || contains(cl.toString(), axiomConfig.ignoredStrings)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+
+    private static boolean contains(String subject, String[] objects) {
 	    for (String object : objects) {
 	        if (subject.contains(object)) {
 	            return true;
@@ -492,7 +528,7 @@ public class AxiomBuilder implements DLMinerComponent {
 				}
 				double t1 = System.currentTimeMillis();
 				double support = HypothesisEvaluator.getSupport(prop1, prop2, roleInstanceMap);
-				if (useMinSupport && support <= minSupport) {
+				if (axiomConfig.useMinSupport && support <= operatorConfig.minSupport) {
 					continue;
 				}
 				Set<List<OWLNamedIndividual>> pos1 = roleInstanceMap.get(prop1);
@@ -500,7 +536,7 @@ public class AxiomBuilder implements DLMinerComponent {
 				double assumption = pos1.size() - support;
 				double precision = support/pos1.size();
 				double t2 = System.currentTimeMillis();
-				if (useMinPrecision && precision < minPrecision) {
+				if (axiomConfig.useMinPrecision && precision < axiomConfig.minPrecision) {
 					continue;
 				}
 				// generate the axiom
@@ -601,5 +637,6 @@ public class AxiomBuilder implements DLMinerComponent {
 			hypothesisReasoner.dispose();
 		}
 	}
-	
+
+
 }

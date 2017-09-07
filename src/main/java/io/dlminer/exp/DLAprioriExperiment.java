@@ -65,32 +65,32 @@ public class DLAprioriExperiment {
 
         // set parameters
         DLMinerInput input = new DLMinerInput(ontFile);
-        input.setLogic(logic);
         input.setReasonerName(reasonerName);
 
         // language bias
-        OperatorConfig config = input.getConfig();
-        config.maxDepth = roleDepth;
-        config.maxLength = maxConceptLength;
-        config.minSupport = 0;
+        OperatorConfig operatorConfig = input.getOperatorConfig();
+        operatorConfig.maxDepth = roleDepth;
+        operatorConfig.maxLength = maxConceptLength;
+        operatorConfig.minSupport = 0;
         // optimisations
-        config.checkDisjointness = true;
-        config.useReasonerForAtomicClassInstances = true;
-        config.useReasonerForClassInstances = false;
-        config.storeInstances = false;
-        config.useDataProperties = false;
-        config.useNegation = true;
-        config.useDisjunction = true;
-        config.useUniversalRestriction = true;
+        operatorConfig.checkDisjointness = true;
+        operatorConfig.useReasonerForAtomicClassInstances = true;
+        operatorConfig.useReasonerForClassInstances = false;
+        operatorConfig.storeInstances = false;
+        operatorConfig.useDataProperties = false;
+        operatorConfig.useNegation = true;
+        operatorConfig.useDisjunction = true;
+        operatorConfig.useUniversalRestriction = true;
+        operatorConfig.logic = logic;
         if (logic.equals(Logic.EL)) {
-            config.useNegation = false;
-            config.useDisjunction = false;
-            config.useUniversalRestriction = false;
+            operatorConfig.useNegation = false;
+            operatorConfig.useDisjunction = false;
+            operatorConfig.useUniversalRestriction = false;
         }
 
 
         // first ignore redundancy
-        config.checkRedundancy = checkRedundancy;
+        operatorConfig.checkRedundancy = checkRedundancy;
         DLMiner miner = new DLMiner(input);
         try {
             miner.init();

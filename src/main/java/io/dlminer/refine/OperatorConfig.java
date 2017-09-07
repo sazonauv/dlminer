@@ -1,10 +1,16 @@
 package io.dlminer.refine;
 
+import io.dlminer.ont.Logic;
+
 /**
  * Created by slava on 17/03/17.
  */
 public class OperatorConfig {
 
+    /**
+     * The logic for hypotheses
+     */
+    public Logic logic;
 
     /**
      * The maximal length of a concept that DL-Miner should inspect,

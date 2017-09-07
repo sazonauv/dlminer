@@ -1,5 +1,7 @@
 package io.dlminer.exp;
 
+import io.dlminer.learn.AxiomConfig;
+import io.dlminer.learn.AxiomPattern;
 import io.dlminer.main.DLMiner;
 import io.dlminer.main.DLMinerInput;
 import io.dlminer.print.Out;
@@ -16,13 +18,17 @@ public class HealthFactsExperiment {
     public static void main(String[] args) {
         DLMinerInput input = new DLMinerInput(args[0]);
         input.setMaxHypothesesNumber(50000);
-        input.setMinPrecision(0.9);
-        input.setUseCleaning(true);
-        input.setSeedClassName(args[2]);
 
-        OperatorConfig config = input.getConfig();
-        config.maxLength = 2;
-        config.minSupport = 30;
+        OperatorConfig operatorConfig = input.getOperatorConfig();
+        operatorConfig.maxLength = 2;
+        operatorConfig.minSupport = 30;
+
+        AxiomConfig axiomConfig = input.getAxiomConfig();
+        axiomConfig.minPrecision = 0.9;
+        axiomConfig.seedClassName = args[2];
+        axiomConfig.ignoredStrings = new String[] {"001-999.99", "00-99.99", "medicine"};
+        axiomConfig.axiomPattern = AxiomPattern.SEEDS_RHS;
+        axiomConfig.useCleaning = true;
 
         DLMiner miner = new DLMiner(input);
         try {

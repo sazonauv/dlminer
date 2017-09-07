@@ -10,6 +10,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import io.dlminer.learn.*;
 import io.dlminer.refine.OperatorConfig;
 import org.semanticweb.owlapi.formats.FunctionalSyntaxDocumentFormat;
 import org.semanticweb.owlapi.formats.OWLXMLDocumentFormat;
@@ -18,12 +19,6 @@ import org.semanticweb.owlapi.model.*;
 import org.semanticweb.owlapi.reasoner.InferenceType;
 import org.semanticweb.owlapi.reasoner.OWLReasoner;
 
-import io.dlminer.learn.AxiomBuilder;
-import io.dlminer.learn.ConceptBuilder;
-import io.dlminer.learn.Hypothesis;
-import io.dlminer.learn.HypothesisCleaner;
-import io.dlminer.learn.HypothesisEntry;
-import io.dlminer.learn.HypothesisEvaluator;
 import io.dlminer.ont.AxiomMetric;
 import io.dlminer.ont.Logic;
 import io.dlminer.ont.OntologyFormat;
@@ -112,10 +107,10 @@ public class DLMiner implements DLMinerComponent {
     public void verifyParameters() throws Exception {
 
         // check wrong values
-        if (input.getConfig().maxDepth < 0) {
+        if (input.getOperatorConfig().maxDepth < 0) {
             throw new DLMinerException(DLMinerInputI.WRONG_MAX_ROLE_DEPTH_ERR);
         }
-        if (input.getConfig().minSupport < 0) {
+        if (input.getOperatorConfig().minSupport < 0) {
             throw new DLMinerException(DLMinerInputI.WRONG_MIN_CONCEPT_SUPPORT_ERR);
         }
         if (input.getMaxHypothesesNumber() <= 0) {
@@ -124,7 +119,7 @@ public class DLMiner implements DLMinerComponent {
         if (input.getReasonerTimeout() <= 0) {
             throw new DLMinerException(DLMinerInputI.WRONG_REASONER_TIMEOUT_ERR);
         }
-        if (input.getMinPrecision() <= 0) {
+        if (input.getAxiomConfig().minPrecision <= 0) {
             throw new DLMinerException(DLMinerInputI.WRONG_MIN_PRECISION_ERR);
         }
 
@@ -207,59 +202,46 @@ public class DLMiner implements DLMinerComponent {
 
         Out.p("\nInitialising the concept builder");
         // config
-        OperatorConfig config = input.getConfig();
+        OperatorConfig operatorConfig = input.getOperatorConfig();
+        AxiomConfig axiomConfig = input.getAxiomConfig();
         // check disjunctions
-        if (input.getLogic().equals(Logic.EL)) {
-            config.useDisjunction = false;
-            config.useNegation = false;
-            config.useUniversalRestriction = false;
+        if (operatorConfig.logic.equals(Logic.EL)) {
+            operatorConfig.useDisjunction = false;
+            operatorConfig.useNegation = false;
+            operatorConfig.useUniversalRestriction = false;
         }
         // check negations
-        if (config.checkRedundancy && !handler.containsNegations()) {
-            config.useNegation = false;
+        if (operatorConfig.checkRedundancy && !handler.containsNegations()) {
+            operatorConfig.useNegation = false;
         }
         // check universals
-        if (config.checkRedundancy &&
+        if (operatorConfig.checkRedundancy &&
                 !handler.containsUniversals() && !handler.containsMaxRestrictions()) {
-            config.useUniversalRestriction = false;
+            operatorConfig.useUniversalRestriction = false;
         }
         // check data properties
-        if (config.checkRedundancy && !handler.containsDataProperties()) {
-            config.useDataProperties = false;
+        if (operatorConfig.checkRedundancy && !handler.containsDataProperties()) {
+            operatorConfig.useDataProperties = false;
         }
 
         // builder
-        ConceptBuilder conceptBuilder = new ConceptBuilder(handler, reasoner, config);
+        ConceptBuilder conceptBuilder = new ConceptBuilder(handler, reasoner, operatorConfig);
         conceptBuilder.init();
 
         // if prediction
-        if (input.getPositiveClass() != null) {
-            conceptBuilder.setPositiveClass(input.getPositiveClass());
+        if (axiomConfig.positiveClass != null) {
+            conceptBuilder.setPositiveClass(axiomConfig.positiveClass);
         }
-        if (input.getNegativeClass() != null) {
-            conceptBuilder.setNegativeClass(input.getNegativeClass());
+        if (axiomConfig.negativeClass != null) {
+            conceptBuilder.setNegativeClass(axiomConfig.negativeClass);
         }
 
         Out.p("\nInitialising the axiom builder");
-        // setting the seed signature
-        Set<OWLClass> seedClasses = null;
-        if (input.getSeedClassName() != null) {
-            OWLClass seedClass = handler.getClassByIRI(input.getSeedClassName());
-            if (seedClass != null) {
-                seedClasses = new HashSet<>();
-                seedClasses.addAll(reasoner.getEquivalentClasses(seedClass).getEntities());
-                seedClasses.addAll(reasoner.getSubClasses(seedClass, false).getFlattened());
-                OWLDataFactory factory = handler.getDataFactory();
-                seedClasses.remove(factory.getOWLThing());
-                seedClasses.remove(factory.getOWLNothing());
-            }
-            Out.p("\n" + seedClasses.size() + " seed classes are selected");
-        }
         AxiomBuilder axiomBuilder = new AxiomBuilder(conceptBuilder,
-                input.getConfig().minSupport, input.getMinPrecision(),
-                input.isUseMinSupport(), input.isUseMinPrecision(),
-                input.getDlminerMode(), seedClasses);
+                operatorConfig, axiomConfig);
         axiomBuilder.init();
+        axiomBuilder.setSeedEntities();
+
 
 
         // create output
@@ -326,7 +308,7 @@ public class DLMiner implements DLMinerComponent {
             Out.p("\nInitialising the evaluator");
             HypothesisEvaluator evaluator = new HypothesisEvaluator(output);
             evaluator.init();
-            if (input.isUseConsistency()) {
+            if (input.getAxiomConfig().useConsistency) {
                 evaluator.evaluateConsistency(hypotheses, stats);
             }
             evaluator.evaluateMainMeasures(hypotheses, stats);
@@ -354,7 +336,7 @@ public class DLMiner implements DLMinerComponent {
         AxiomBuilder axiomBuilder = output.getAxiomBuilder();
         
         long start = System.currentTimeMillis();
-        if (!input.getDlminerMode().equals(DLMinerMode.CDL)) {
+        if (!input.getAxiomConfig().dlminerMode.equals(DLMinerMode.CDL)) {
         	// build roles
         	Out.p("\nBuilding roles");        
         	conceptBuilder.buildRoles();        
@@ -378,7 +360,7 @@ public class DLMiner implements DLMinerComponent {
         
     	// build concepts
     	Out.p("\nBuilding at most " + maxConceptNumber 
-    			+ " concepts of length at most " + input.getConfig().maxLength);
+    			+ " concepts of length at most " + input.getOperatorConfig().maxLength);
     	start = System.currentTimeMillis();
     	conceptBuilder.buildConcepts(maxConceptNumber);
     	end = System.currentTimeMillis();
@@ -394,7 +376,7 @@ public class DLMiner implements DLMinerComponent {
 //        Out.printClassesMS(conceptBuilder.getExpressionClassMap().keySet());
 
     	// build hypotheses
-    	Out.p("\nBuilding hypotheses of length at most " + 2*input.getConfig().maxLength);
+    	Out.p("\nBuilding hypotheses of length at most " + 2*input.getOperatorConfig().maxLength);
     	start = System.currentTimeMillis();        	
     	Set<Hypothesis> classAxioms = axiomBuilder.generateInitialClassAxioms(
     	        input.getMaxHypothesesNumber());
@@ -406,11 +388,11 @@ public class DLMiner implements DLMinerComponent {
     	Out.p("\nCleaning hypotheses");
     	start = System.currentTimeMillis();
     	Set<Hypothesis> cleanClassAxioms = classAxioms;        
-    	if (input.isUseCleaning()) {
+    	if (input.getAxiomConfig().useCleaning) {
     		HypothesisCleaner cleaner = new HypothesisCleaner(
     				conceptBuilder, classAxioms, output.getReasoner());
     		cleanClassAxioms = cleaner.cleanSeparately();
-    		if (input.getConfig().useDataProperties) {
+    		if (input.getOperatorConfig().useDataProperties) {
                 cleanClassAxioms = cleaner.cleanDataRestrictions(cleanClassAxioms);
             }
     	}
@@ -470,7 +452,7 @@ public class DLMiner implements DLMinerComponent {
     	Set<Hypothesis> goodHypotheses = new HashSet<>();
     	int half = input.getMaxHypothesesNumber()/2;
     	for (Hypothesis h : newHypotheses) {
-    		if (h.precision >= input.getMinPrecision()) {
+    		if (h.precision >= input.getAxiomConfig().minPrecision) {
     			goodHypotheses.add(h);
     		}
     		if (goodHypotheses.size() >= half) {
@@ -488,7 +470,7 @@ public class DLMiner implements DLMinerComponent {
     	Set<Hypothesis> badHypotheses = new HashSet<>();
     	int half = input.getMaxHypothesesNumber()/2;
     	for (Hypothesis h : newHypotheses) {
-    		if (h.precision < input.getMinPrecision()) {
+    		if (h.precision < input.getAxiomConfig().minPrecision) {
     			badHypotheses.add(h);
     		}
     		if (badHypotheses.size() >= half) {
