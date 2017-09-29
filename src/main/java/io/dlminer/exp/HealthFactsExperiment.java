@@ -21,13 +21,13 @@ public class HealthFactsExperiment {
 
         OperatorConfig operatorConfig = input.getOperatorConfig();
         operatorConfig.maxLength = 2;
-        operatorConfig.minSupport = 30;
+        operatorConfig.minSupport = 50;
 
         AxiomConfig axiomConfig = input.getAxiomConfig();
         axiomConfig.minPrecision = 0.9;
         axiomConfig.seedClassName = args[2];
-        axiomConfig.ignoredStrings = new String[] {"001-999.99", "00-99.99", "medicine"};
-        axiomConfig.axiomPattern = AxiomPattern.SEEDS_RHS;
+        axiomConfig.ignoredStrings = new String[] {"Lab", "Drug", "Encounter", "Thing"};
+        axiomConfig.axiomPattern = AxiomPattern.SEEDS_LHS;
         axiomConfig.useCleaning = true;
 
         DLMiner miner = new DLMiner(input);
