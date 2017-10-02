@@ -407,6 +407,9 @@ public class AxiomBuilder implements DLMinerComponent {
 	    if (containsIgnoredStrings(axiom)) {
 	        return false;
         }
+        if (axiomConfig.seedEntities == null) {
+            return true;
+        }
         if (axiomConfig.axiomPattern.equals(AxiomPattern.SEEDS_RHS)) {
             return meetsSeedsOnRHS(axiom);
         } else if (axiomConfig.axiomPattern.equals(AxiomPattern.SEEDS_LHS)) {
@@ -417,9 +420,6 @@ public class AxiomBuilder implements DLMinerComponent {
     }
 
     private boolean meetsSeedsOnLHSorRHS(OWLSubClassOfAxiom axiom) {
-        if (axiomConfig.seedEntities == null) {
-            return true;
-        }
         for (OWLEntity ent : axiom.getSignature()) {
             if (axiomConfig.seedEntities.contains(ent)) {
                 return true;
@@ -429,9 +429,6 @@ public class AxiomBuilder implements DLMinerComponent {
     }
 
     private boolean meetsSeedsOnLHS(OWLSubClassOfAxiom axiom) {
-        if (axiomConfig.seedEntities == null) {
-            return true;
-        }
         if (!axiomConfig.seedEntities.containsAll(axiom.getSubClass().getClassesInSignature())) {
             return false;
         }
@@ -445,9 +442,6 @@ public class AxiomBuilder implements DLMinerComponent {
 
 
     private boolean meetsSeedsOnRHS(OWLSubClassOfAxiom axiom) {
-        if (axiomConfig.seedEntities == null) {
-            return true;
-        }
         if (!axiomConfig.seedEntities.containsAll(axiom.getSuperClass().getClassesInSignature())) {
             return false;
         }
