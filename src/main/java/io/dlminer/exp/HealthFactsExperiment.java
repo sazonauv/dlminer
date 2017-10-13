@@ -21,7 +21,7 @@ public class HealthFactsExperiment {
 
         OperatorConfig operatorConfig = input.getOperatorConfig();
         operatorConfig.maxLength = 2;
-        operatorConfig.minSupport = 50;
+        operatorConfig.minSupport = 2;
 
         AxiomConfig axiomConfig = input.getAxiomConfig();
         axiomConfig.minPrecision = 0.9;
